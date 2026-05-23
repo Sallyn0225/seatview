@@ -1,0 +1,78 @@
+# === Dependencies ===
+node_modules/
+.pnpm-store/
+jspm_packages/
+
+# === Build output ===
+dist/
+build/
+out/
+.astro/
+.output/
+*.tsbuildinfo
+
+# === Cloudflare / Wrangler ===
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# === Drizzle ===
+# drizzle-kit migrations should be committed; only ignore generated meta
+drizzle/.drizzle/
+.drizzle/
+
+# === Environment variables ===
+.env
+.env.*
+!.env.example
+!.env.template
+
+# === Logs ===
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# === Test / Coverage ===
+coverage/
+.nyc_output/
+*.lcov
+
+# === Editor / IDE ===
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# === Python (Trellis scripts cache) ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# === Claude Code (personal config only) ===
+.claude/settings.local.json
+.claude/.credentials.json
+.claude/projects/
+.claude/conversations/
+
+# === Codex (personal config only) ===
+.codex/.credentials.json
+.codex/sessions/
+.codex/logs/
+
+# === Misc temp files ===
+*.tmp
+*.bak
+*.orig

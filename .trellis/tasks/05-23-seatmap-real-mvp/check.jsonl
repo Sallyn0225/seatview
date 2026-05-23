@@ -1,0 +1,5 @@
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/prd.md", "reason": "核心 PRD：所有验收条件（Acceptance Criteria）+ Definition of Done 在此。Check sub-agent 用它逐条比对实现完成度。Out of Scope 也在此，防止过度实现。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/cloudflare-astro-stack.md", "reason": "验证 Cloudflare 全栈集成正确性的参考：wrangler.jsonc 绑定齐全、Drizzle 用法符合最佳实践、R2 直传策略正确、KV 滑动窗口算法实现正确、Turnstile 两步验证未跳过、i18n routing 配置标准化。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/frontend-libraries.md", "reason": "验证前端库使用是否符合推荐：Astro Island hydration 指令是否正确（client:load/visible/idle）、Lighthouse 性能影响、组件 SSR 兼容性、移动端手势冲突处理。"}
+{"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Quality check 时验证跨层数据一致性：D1 字段 → Drizzle schema → API response → 前端类型 → UI 显示 是否同步。本项目典型陷阱：photos 表新加字段但前端没渲染。"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Quality check 时识别重复实现：是否多处自己实现 i18n 字符串读取、是否多处自己写限流逻辑、是否复制了同一个组件而非抽提。"}
