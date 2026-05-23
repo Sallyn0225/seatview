@@ -52,7 +52,7 @@
   5. 客户端处理图片（见 R5）
   6. 填写表单：**座位号文本（必填）**、演出日期（选填，shadcn Date Picker）、活动名（选填）、简短描述（选填）
   7. **强制勾选版权同意框**（见 R11）后才能提交
-  8. 通过 Turnstile 校验 → 客户端直传 R2（presigned URL）→ Worker 写 D1
+  8. 通过 Turnstile 校验 → 客户端直传 R2（presigned URL；失败自动重试 3 次共 ~5s，详见 ADR-12）→ Worker 写 D1
 - R4.4 用户**不可编辑/撤回**已上传内容（MVP 简化）
 
 ### R5. 图片处理（客户端）
@@ -74,7 +74,7 @@
 
 ### R7. 维护者后台（最简）
 
-- R7.1 隐藏路径 `/<lang>/admin`，**环境变量密码**校验（无注册账号）
+- R7.1 隐藏路径 `/<lang>/admin`，**Cloudflare Access (Zero Trust) SSO** 保护，详见 ADR-11
 - R7.2 功能：
   - 浏览所有上传图片列表
   - 删除不当内容（清 D1 记录 + R2 对象）
@@ -321,6 +321,39 @@ TTL: 24h(date counts) / 30s(cooldown)
   - ✅ 两条通道互补，降低贡献门槛
   - ⚠️ 教程文档需投入维护精力
 
+### ADR-10: 上传立即可见，无审核队列
+
+- **Context**: 是否引入 `pending` 状态让维护者预审？
+- **Decision**: 上传成功后立即写入 D1 并对所有用户可见；维护者通过 `/admin` 事后下架不当内容（R7.2）
+- **Consequences**:
+  - ✅ 贡献者收到即时反馈，激励上传
+  - ✅ MVP 无须实现审核队列 UI
+  - ⚠️ 短时间内可能出现不当内容暴露窗口；依赖 Turnstile + CC BY-NC 强制勾选 + IP 限频做前置门槛
+  - ⚠️ 用户举报机制延后到 V2（见 Out of Scope）
+
+### ADR-11: 维护者后台用 Cloudflare Access (Zero Trust) 保护
+
+- **Context**: 隐藏路径 + 环境变量密码的安全级别不足，且密码轮转、共享、泄漏都缺少审计；Cloudflare 在边缘层提供免费的 Zero Trust SSO 网关
+- **Decision**: `/<lang>/admin` 路由前置 **Cloudflare Access** policy（Zero Trust 免费版，50 用户内免费），用 GitHub 或 Google SSO 校验维护者身份；Worker 通过 `Cf-Access-Authenticated-User-Email` 头识别维护者
+- **Consequences**:
+  - ✅ Cloudflare 边缘层即拒未授权请求，Worker 完全看不到匿名流量
+  - ✅ SSO 登录有完整审计日志，密码不在代码/环境变量中
+  - ✅ 维护者轮换不需要改密码，只改 Access policy
+  - ⚠️ 部署需在 Cloudflare Zero Trust 控制台手动配置一次 application + policy
+  - ⚠️ 自定义域名需启用 Cloudflare proxy（橙色云）才能用 Access
+  - ⚠️ 本地开发需 mock `Cf-Access-Authenticated-User-Email` 头或用 `cloudflared` tunnel
+
+### ADR-12: 客户端直传 R2 失败自动重试
+
+- **Context**: 客户端直传 R2 受用户网络 / 信号波动影响，单次失败不应直接抛错给用户
+- **Decision**: presigned URL 上传失败时，客户端最多重试 **2 次**（共 3 次尝试），指数退避 1s / 3s；全部失败才提示用户手动重传
+- **Consequences**:
+  - ✅ 移动网络抖动场景下用户体验显著改善
+  - ✅ 实现成本低（fetch + try/catch 包装 + 简单 backoff）
+  - ⚠️ 重试期间用户看到"上传中…"维持 ~5s 是可以接受的
+  - ⚠️ Turnstile token 在重试期间复用同一份，避免 token 浪费
+  - ⚠️ 失败仅指网络错误 / 5xx；4xx (如 presigned URL 过期) 不重试，直接报错
+
 ## Acceptance Criteria
 
 - [ ] 用户可在左侧场馆树点击任意场馆 → 进入该场馆的（默认）sub-map 页
@@ -345,7 +378,7 @@ TTL: 24h(date counts) / 30s(cooldown)
 
 - TypeScript 类型完整，无 `any`
 - Lighthouse 性能评分 ≥ 80（桌面端首页 + 场馆页）
-- 部署到 Cloudflare Workers 验证通过（含 D1 / KV / R2 / Turnstile 绑定）
+- 部署到 Cloudflare Workers 验证通过（含 D1 / KV / R2 / Turnstile 绑定 + Cloudflare Access policy 配置完成）
 - 至少 5 个真实场馆数据（取 `top-15-venues.md` 中容量 / 频次 TOP 5）+ 演示标注数据进入 D1
 - README 包含本地开发 + 部署 + 环境变量步骤
 - `CONTRIBUTING.md` 包含"如何添加新场馆"的图文教程（PR template + 字段说明）
@@ -364,6 +397,11 @@ TTL: 24h(date counts) / 30s(cooldown)
 - 多语言场馆名自动翻译（仅手动维护）
 - 离线模式 / PWA
 - 服务端图片处理 fallback
+- 上传内容预审 / 审核队列 / 待审核状态（见 ADR-10）
+- 用户举报按钮 / `reports` 表 / 维护者审核工作流（V2 评估，目前依赖维护者主动巡查）
+- `photos` 表 `artist` 字段与艺人维度搜索（V2 加 schema migration；MVP 不预留字段以保持 schema 紧凑）
+- `sub_map` 版本管理与场馆改造迁移工具（场馆改造时手动通过 PR 处理：归档旧标注 → 上传新坐席图 → 重新引导用户上传）
+- 限频附加 `client_id` (localStorage UUID) 维度（出现共享 IP 滥用再加；MVP 仅靠 IP hash）
 
 ## Open Questions（剩余）
 
@@ -374,6 +412,7 @@ TTL: 24h(date counts) / 30s(cooldown)
 - [ ] Q9: Lighthouse 性能优化策略（坐席图大图懒加载、瀑布流虚拟化）→ 在实施阶段验证
 - [x] ~~Q10: 维护者 PR 流程~~ → ADR-9 已决策（双通道）
 - [x] ~~U-Q1~U-Q7~~ → ADR-5 ~ ADR-9 已固化所有用户决策
+- [x] ~~Expansion Sweep (2026-05-24)~~ → 新增 ADR-10/11/12；未选项（artist 字段 / sub_map 版本 / 举报机制 / client_id 限频）进 Out of Scope
 
 ## Research References
 
