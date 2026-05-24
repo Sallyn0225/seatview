@@ -19,3 +19,12 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
 <!-- TRELLIS:END -->
+
+## 项目级上下文（与 `.trellis/` 平级，跨任务通用）
+
+项目根有两份全局上下文文件，**任何 sub-agent 在面向用户的设计或实现工作开始前必读**：
+
+- **`PRODUCT.md`** —— 产品定位：双类用户、双语等价、Brand Personality、Anti-references、6 条 Design Principles、WCAG 2.1 AA 基线。
+- **`DESIGN.md`** —— 视觉设计语言（当前 seed 阶段）：创意北极星「The Quiet Folio · 静纸」、Restrained 色彩策略、Noto 同源双语字体方向、Flat Folio 无阴影规则、Named Rules、Do's and Don'ts。
+
+由 `/impeccable` skill（位于 `.claude/skills/impeccable/`）维护，与 Trellis 的 spec / task 上下文不互相替代。

@@ -1,4 +1,6 @@
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/prd.md", "reason": "核心 PRD：所有验收条件（Acceptance Criteria）+ Definition of Done 在此。Check sub-agent 用它逐条比对实现完成度。Out of Scope 也在此，防止过度实现。"}
+{"file": "PRODUCT.md", "reason": "Check 时验证实现是否落实产品立场：Anti-references 是否被触犯（SaaS 渐变 / 票务站拥挤 / 极简冷漠 / 社交平台喧闹 / 模态优先）、6 条 Design Principles 是否贯彻（图片 ≥70% 视觉重量、双语等价、缝隙时刻的温度、抢票零摩擦、信任靠透明）、WCAG 2.1 AA 基线是否达到（对比度、键盘可达、prefers-reduced-motion、44×44px 触达区、alt 文本、色彩非唯一信息通道）。"}
+{"file": "DESIGN.md", "reason": "Check 时比对实现是否符合视觉规范：Restrained 色彩策略是否守住（accent ≤10%）、是否出现 #000/#fff/glassmorphism/box-shadow 装饰/em dash/border-left>1px/gradient text 等禁忌、Two Tongues Rule 是否保持（中日同源 Noto 家族）、Photo-Caption Rule 是否守住（元数据不与照片争重）、Flat Folio Rule 是否守住（无 box-shadow 作装饰）、Do's/Don'ts 是否全部满足。"}
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/cloudflare-astro-stack.md", "reason": "验证 Cloudflare 全栈集成正确性的参考：wrangler.jsonc 绑定齐全、Drizzle 用法符合最佳实践、R2 直传策略正确、KV 滑动窗口算法实现正确、Turnstile 两步验证未跳过、i18n routing 配置标准化。"}
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/frontend-libraries.md", "reason": "验证前端库使用是否符合推荐：Astro Island hydration 指令是否正确（client:load/visible/idle）、Lighthouse 性能影响、组件 SSR 兼容性、移动端手势冲突处理。"}
 {"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Quality check 时验证跨层数据一致性：D1 字段 → Drizzle schema → API response → 前端类型 → UI 显示 是否同步。本项目典型陷阱：photos 表新加字段但前端没渲染。"}
