@@ -330,7 +330,7 @@ export default function StagingForm({
           line; the two channels stay distinct (name-only here, add-data there). */}
       <p className="mt-12 text-sm">
         <a
-          href="https://github.com/seatview/seatmap-real"
+          href="https://github.com/Sallyn0225/seatview"
           target="_blank"
           rel="noopener noreferrer"
           className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
