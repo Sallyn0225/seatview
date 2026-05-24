@@ -38,3 +38,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 2: SeatView 生产部署上线 seat.genchi.top
+
+**Date**: 2026-05-24
+**Task**: SeatView 生产部署上线 seat.genchi.top
+**Branch**: `main`
+
+### Summary
+
+把 SeatView MVP 部署到 Cloudflare 生产并验证。先修复 preview/deploy 脚本（裸 wrangler dev 读根配置吐 [object Object]，改用 -c dist/server/wrangler.json，移除根 main）。用户 wrangler login 后：创建 D1(seatmap-real)/KV(RATE_LIMIT+SESSION)/R2(seatmap-images)，填真实 id + PUBLIC_SITE_URL=https://seat.genchi.top + PUBLIC_R2_BASE_URL=https://img.genchi.top + custom_domain 路由，远端 D1 migrate，npm run deploy 上线。验证：/zh/ 与场馆页 200 SSR、/api/photos 返回空数组（D1 通）、/admin + /api/admin/* 302 跳 Cloudflare Access 登录（边缘鉴权生效，用户确认可登入）。用户在控制台配好生产 Turnstile widget + 设 TURNSTILE_SECRET_KEY secret（复用为 HMAC 密钥+IP 盐）+ 接 R2 img.genchi.top 自定义域名。chrome-devtools 实测线上场馆页 LCP 1073ms/CLS 0.01。官方 Lighthouse 综合分待用户在 pagespeed.web.dev 跑（PSI 公共 API 无 key 被 429）。任务已归档。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6df2c93` | (see git log) |
+| `40976da` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
