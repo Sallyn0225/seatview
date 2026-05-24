@@ -74,7 +74,10 @@ export const GET: APIRoute = async ({ request, url }) => {
     return new Response(JSON.stringify(payload), {
       status: 200,
       // No edge cache — admin views must reflect deletes immediately.
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
     });
   } catch (err) {
     console.error("[admin:photos] list query failed", { err: String(err) });
@@ -144,6 +147,9 @@ export const DELETE: APIRoute = async ({ request }) => {
   const payload: AdminDeletePhotoResponse = { id, objectPurged };
   return new Response(JSON.stringify(payload), {
     status: 200,
-    headers: { "content-type": "application/json", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
 };

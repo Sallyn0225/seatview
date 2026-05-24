@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { venueName } from "@/i18n";
-import {
-  buildVenueTree,
-  type RegionNode,
-} from "@/data/venues";
+import { buildVenueTree, type RegionNode } from "@/data/venues";
 import { prefectureName, regionName } from "@/data/prefectures";
 import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/storage";
 import { cn } from "@/lib/utils";

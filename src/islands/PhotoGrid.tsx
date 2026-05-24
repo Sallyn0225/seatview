@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   MasonryPhotoAlbum,
   type Photo as AlbumPhoto,
@@ -278,7 +272,11 @@ export default function PhotoGrid({
       {hasMore && (
         <div ref={sentinelRef} className="pt-4" aria-hidden={!loading}>
           {loading && (
-            <div className="flex flex-col items-center gap-2" role="status" aria-live="polite">
+            <div
+              className="flex flex-col items-center gap-2"
+              role="status"
+              aria-live="polite"
+            >
               <span className="sr-only">{t.grid.loading}</span>
               <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 <SkeletonBlock className="aspect-[3/4]" />
@@ -415,5 +413,10 @@ function PhotoCard({
 }
 
 function SkeletonBlock({ className }: { className?: string }) {
-  return <div className={cn("bg-card w-full rounded-none", className)} aria-hidden="true" />;
+  return (
+    <div
+      className={cn("bg-card w-full rounded-none", className)}
+      aria-hidden="true"
+    />
+  );
 }

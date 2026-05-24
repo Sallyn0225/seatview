@@ -17,10 +17,7 @@
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { verifyTicket } from "@/server/upload-ticket";
-import {
-  incrementDaily,
-  startCooldown,
-} from "@/server/rate-limit";
+import { incrementDaily, startCooldown } from "@/server/rate-limit";
 import {
   putImage,
   IMAGE_CONTENT_TYPE,
@@ -28,7 +25,11 @@ import {
 } from "@/server/r2/images";
 import { getDb } from "@/server/db";
 import { insertPhoto } from "@/server/photos";
-import { UPLOAD_COOLDOWN_S, type CommitResponse, type UploadErrorCode } from "@/lib/upload";
+import {
+  UPLOAD_COOLDOWN_S,
+  type CommitResponse,
+  type UploadErrorCode,
+} from "@/lib/upload";
 
 export const prerender = false;
 
@@ -134,7 +135,12 @@ export const POST: APIRoute = async ({ request }) => {
     // a counter write failure must not fail an already-persisted upload.
     try {
       await incrementDaily(env.RATE_LIMIT, "upload", t.ipHash);
-      await startCooldown(env.RATE_LIMIT, "upload", t.ipHash, UPLOAD_COOLDOWN_S);
+      await startCooldown(
+        env.RATE_LIMIT,
+        "upload",
+        t.ipHash,
+        UPLOAD_COOLDOWN_S,
+      );
     } catch (err) {
       console.warn("[upload:commit] rate-limit bookkeeping failed", {
         err: String(err),

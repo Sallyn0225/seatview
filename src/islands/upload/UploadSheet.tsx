@@ -79,9 +79,10 @@ export default function UploadSheet({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageBytes, setImageBytes] = useState<number>(0);
   // Intrinsic dimensions of the compressed WebP (real aspect ratio → masonry).
-  const [imageDims, setImageDims] = useState<{ width: number; height: number } | null>(
-    null,
-  );
+  const [imageDims, setImageDims] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [compressProgress, setCompressProgress] = useState(0);
@@ -136,7 +137,8 @@ export default function UploadSheet({
   const step2Done = imageFile != null && !compressing;
   const step3Done = metaConfirmed && seatLabel.trim().length > 0;
   const step4Done = consent;
-  const anyProgress = point != null || imageFile != null || seatLabel.length > 0;
+  const anyProgress =
+    point != null || imageFile != null || seatLabel.length > 0;
 
   const statusOf = (step: StepIndex): StepStatus => {
     if (step === activeStep) return "current";
@@ -220,7 +222,12 @@ export default function UploadSheet({
       setCompressing(true);
       setCompressProgress(0);
       try {
-        const { file: webp, bytes, width, height } = await compressToWebp(
+        const {
+          file: webp,
+          bytes,
+          width,
+          height,
+        } = await compressToWebp(
           file,
           (p) => setCompressProgress(Math.round(p)),
           controller.signal,
@@ -432,11 +439,7 @@ export default function UploadSheet({
         </div>
 
         {succeeded ? (
-          <SuccessPage
-            t={t}
-            onAgain={uploadAnother}
-            onBack={onClose}
-          />
+          <SuccessPage t={t} onAgain={uploadAnother} onBack={onClose} />
         ) : (
           <>
             {/* Scrolling step column */}
@@ -582,7 +585,8 @@ export default function UploadSheet({
                   />
                   <span className="text-foreground/85">
                     {(() => {
-                      const parts = t.uploadSheet.step4.consent.split("{license}");
+                      const parts =
+                        t.uploadSheet.step4.consent.split("{license}");
                       return (
                         <>
                           {parts[0]}
@@ -813,7 +817,9 @@ function Step2Body({
     return (
       <div className="pt-1" role="status" aria-live="polite">
         <p className="text-foreground text-sm [font-variant-numeric:tabular-nums]">
-          {fillTemplate(t.uploadSheet.step2.progress, { percent: String(progress) })}
+          {fillTemplate(t.uploadSheet.step2.progress, {
+            percent: String(progress),
+          })}
         </p>
         <div className="bg-card mt-2 h-1 w-full overflow-hidden rounded">
           <div
@@ -851,8 +857,12 @@ function Step2Body({
               : "border-border bg-background hover:bg-card",
         )}
       >
-        <span className="text-foreground text-sm">{t.uploadSheet.step2.dropzone}</span>
-        <span className="text-muted-foreground text-xs">{t.uploadSheet.step2.note}</span>
+        <span className="text-foreground text-sm">
+          {t.uploadSheet.step2.dropzone}
+        </span>
+        <span className="text-muted-foreground text-xs">
+          {t.uploadSheet.step2.note}
+        </span>
       </button>
       {error && (
         <div className="mt-2 text-sm" role="alert">

@@ -129,7 +129,8 @@ export function clusterPoints(
   // Give multi-member clusters a distinct, stable id so React keys don't clash
   // with the single-pin case (member[0].id is reused as the pin id).
   for (const cluster of clusters) {
-    if (cluster.members.length > 1) cluster.id = `cluster:${cluster.members[0]!.photo.id}`;
+    if (cluster.members.length > 1)
+      cluster.id = `cluster:${cluster.members[0]!.photo.id}`;
   }
 
   return clusters;

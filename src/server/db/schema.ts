@@ -2,7 +2,13 @@
 //
 // Only user-generated content lives in D1; venue metadata is static JSON/TS in
 // the Git repo (ADR-1). `created_at` / `deleted_at` are Unix epoch ms integers.
-import { sqliteTable, text, real, integer, index } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  real,
+  integer,
+  index,
+} from "drizzle-orm/sqlite-core";
 
 /** Annotation point + uploaded seat-view photo. */
 export const photos = sqliteTable(

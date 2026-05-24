@@ -51,11 +51,36 @@ function sqlStr(value) {
 // A small pool of realistic-but-fake seat metadata per sub-map. Seat labels are
 // user-authored free text (R9.5) so they stay in the user's original language.
 const seatPool = [
-  { seat: "1F E列 23番", event: "Spring Live 2026", date: "2026-04-12", desc: "正面、ステージまで近め。" },
-  { seat: "2F C-15", event: null, date: null, desc: "視界は良好だが少し遠い。" },
-  { seat: "アリーナ B4ブロック 12", event: "ARENA TOUR", date: "2026-03-20", desc: null },
-  { seat: "スタンド 207 4列 88", event: null, date: "2026-02-08", desc: "柱が少し気になる位置。" },
-  { seat: "1F A列 5番", event: "Fan Meeting", date: null, desc: "最前列、神席。" },
+  {
+    seat: "1F E列 23番",
+    event: "Spring Live 2026",
+    date: "2026-04-12",
+    desc: "正面、ステージまで近め。",
+  },
+  {
+    seat: "2F C-15",
+    event: null,
+    date: null,
+    desc: "視界は良好だが少し遠い。",
+  },
+  {
+    seat: "アリーナ B4ブロック 12",
+    event: "ARENA TOUR",
+    date: "2026-03-20",
+    desc: null,
+  },
+  {
+    seat: "スタンド 207 4列 88",
+    event: null,
+    date: "2026-02-08",
+    desc: "柱が少し気になる位置。",
+  },
+  {
+    seat: "1F A列 5番",
+    event: "Fan Meeting",
+    date: null,
+    desc: "最前列、神席。",
+  },
   { seat: "3F バルコニー 12-3", event: null, date: null, desc: null },
 ];
 
@@ -126,5 +151,11 @@ for (const file of files) {
 }
 
 await mkdir(seedsDir, { recursive: true });
-await writeFile(join(seedsDir, "0001_demo_photos.sql"), lines.join("\n"), "utf8");
-console.log(`Wrote seeds/0001_demo_photos.sql with ${rowCount} demo annotation rows.`);
+await writeFile(
+  join(seedsDir, "0001_demo_photos.sql"),
+  lines.join("\n"),
+  "utf8",
+);
+console.log(
+  `Wrote seeds/0001_demo_photos.sql with ${rowCount} demo annotation rows.`,
+);

@@ -45,6 +45,9 @@ export async function putImage(
 }
 
 /** Delete an image object (used by maintainer soft-delete, ADR-6). */
-export async function deleteImage(bucket: R2Bucket, key: string): Promise<void> {
+export async function deleteImage(
+  bucket: R2Bucket,
+  key: string,
+): Promise<void> {
   await bucket.delete(key);
 }

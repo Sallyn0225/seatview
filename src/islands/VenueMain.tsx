@@ -57,7 +57,10 @@ export default function VenueMain({
 }: VenueMainProps) {
   const { t } = useLocale(locale);
 
-  const initialActiveId = resolveInitialSubMapId(venue.subMaps, initialSubMapId);
+  const initialActiveId = resolveInitialSubMapId(
+    venue.subMaps,
+    initialSubMapId,
+  );
 
   // Active sub-map, kept in sync with SubMapTabs via the broadcast event.
   const [activeSubMapId, setActiveSubMapId] = useState<string | undefined>(
@@ -169,15 +172,12 @@ export default function VenueMain({
   // A new photo landed (D1 write done). Prepend it to the full point set so the
   // seatmap shows the new pin immediately, and bump the grid key so the grid
   // re-pulls newest-first from the API (also picks up anyone else's uploads).
-  const handleUploaded = useCallback(
-    (photo: PhotoDto) => {
-      setPhotos((prev) =>
-        prev.some((p) => p.id === photo.id) ? prev : [photo, ...prev],
-      );
-      setGridRefreshKey((k) => k + 1);
-    },
-    [],
-  );
+  const handleUploaded = useCallback((photo: PhotoDto) => {
+    setPhotos((prev) =>
+      prev.some((p) => p.id === photo.id) ? prev : [photo, ...prev],
+    );
+    setGridRefreshKey((k) => k + 1);
+  }, []);
 
   // No client-side disable: the 10/day cap is enforced server-side (R8.1) and
   // surfaced as an inline error inside the Sheet's Step 5, not by greying the

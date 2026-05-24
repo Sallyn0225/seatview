@@ -61,11 +61,15 @@ const rule3Parts = t.home.rule3.split("{license}");
     <SiteHeader locale={locale} />
 
     <main class="flex-1">
-      {/* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */}
+      {
+        /* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */
+      }
       <section
         class="mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]"
       >
-        <h1 class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl">
+        <h1
+          class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl"
+        >
           SeatView
         </h1>
         <p class="text-foreground/80 mt-2 font-serif text-2xl lg:text-3xl">
@@ -74,7 +78,9 @@ const rule3Parts = t.home.rule3.split("{license}");
 
         <hr class="border-border my-8 w-20" />
 
-        <p class="text-foreground max-w-prose text-lg leading-relaxed lg:text-xl">
+        <p
+          class="text-foreground max-w-prose text-lg leading-relaxed lg:text-xl"
+        >
           {t.home.heroLine}
         </p>
 
@@ -100,8 +106,12 @@ const rule3Parts = t.home.rule3.split("{license}");
         </div>
       </section>
 
-      {/* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */}
-      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+      {
+        /* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */
+      }
+      <section
+        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
+      >
         <SectionHeading primary={t.home.howTitle} alt={t.home.howTitleAlt} />
         <ol class="mt-8 grid gap-8 sm:grid-cols-3">
           {
@@ -125,8 +135,12 @@ const rule3Parts = t.home.rule3.split("{license}");
         </ol>
       </section>
 
-      {/* ── 推荐先看 / おすすめ — minimal text links, zero images (decision 3) ── */}
-      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+      {
+        /* ── 推荐先看 / おすすめ — minimal text links, zero images (decision 3) ── */
+      }
+      <section
+        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
+      >
         <SectionHeading
           primary={t.home.recommendTitle}
           alt={t.home.recommendTitleAlt}
@@ -165,8 +179,12 @@ const rule3Parts = t.home.rule3.split("{license}");
         </ul>
       </section>
 
-      {/* ── 关于上传 / 投稿について ───────────────────────────────────────── */}
-      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+      {
+        /* ── 关于上传 / 投稿について ───────────────────────────────────────── */
+      }
+      <section
+        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
+      >
         <SectionHeading
           primary={t.home.uploadTitle}
           alt={t.home.uploadTitleAlt}
@@ -201,7 +219,9 @@ const rule3Parts = t.home.rule3.split("{license}");
         </p>
       </section>
 
-      {/* ── 贡献新场馆入口 (R13.2) ────────────────────────────────────────── */}
+      {
+        /* ── 贡献新场馆入口 (R13.2) ────────────────────────────────────────── */
+      }
       <section class="mx-auto max-w-[680px] px-6 pb-8">
         <p class="text-sm">
           <a

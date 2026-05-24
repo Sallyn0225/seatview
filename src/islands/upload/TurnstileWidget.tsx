@@ -122,5 +122,7 @@ export default function TurnstileWidget({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div ref={containerRef} data-turnstile={reactId} className="min-h-[65px]" />;
+  return (
+    <div ref={containerRef} data-turnstile={reactId} className="min-h-[65px]" />
+  );
 }

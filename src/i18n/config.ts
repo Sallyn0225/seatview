@@ -18,9 +18,7 @@ export function asLocale(value: string | undefined): Locale {
  * Pick the best locale from a raw `Accept-Language` header. Falls back to the
  * default locale when nothing matches. Used by the root `/` redirect.
  */
-export function resolveLocaleFromAcceptLanguage(
-  header: string | null,
-): Locale {
+export function resolveLocaleFromAcceptLanguage(header: string | null): Locale {
   if (!header) return defaultLocale;
   // Parse "ja,en-US;q=0.9,zh;q=0.8" into ordered base language tags.
   const ranked = header

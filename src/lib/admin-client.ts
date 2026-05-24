@@ -40,10 +40,7 @@ async function parseErrorCode(
   }
 }
 
-async function jsonRequest<T>(
-  url: string,
-  init: RequestInit,
-): Promise<T> {
+async function jsonRequest<T>(url: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(url, init);

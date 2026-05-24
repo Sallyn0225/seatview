@@ -149,7 +149,8 @@ const ja: Messages = {
   },
   home: {
     subtitle: "リアル座席ビュー",
-    heroLine: "チケットを取る前の30秒、その席から実際に見える景色を確かめておく。",
+    heroLine:
+      "チケットを取る前の30秒、その席から実際に見える景色を確かめておく。",
     cta: "図鑑をひらく",
     howTitle: "使い方",
     howTitleAlt: "怎么用",
@@ -169,7 +170,8 @@ const ja: Messages = {
     rule2: "他人の顔や個人を識別できる情報は隠してください。",
     rule3: "投稿は {license} で共有されます",
     license: "CC BY-NC 4.0 ↗",
-    limitNote: "1日あたり10枚まで投稿できます。みんなが見る内容の質を保つためです。",
+    limitNote:
+      "1日あたり10枚まで投稿できます。みんなが見る内容の質を保つためです。",
   },
   staging: {
     pageTitle: "見たい会場",
@@ -194,13 +196,15 @@ const ja: Messages = {
     turnstileError: "認証に失敗しました。更新して再度お試しください。",
     loadError: "名録を今読み込めません。",
     end: "ここまでが現在の全投稿です。",
-    githubChannel: "もっと手伝える？GitHub から座席図やデータを直接追加できます",
+    githubChannel:
+      "もっと手伝える？GitHub から座席図やデータを直接追加できます",
   },
   error: {
     notFoundTitle: "このページは見つかりません",
     notFoundBody: "リンクが切れているか、アドレスが違うようです。",
     genericTitle: "このページで問題が起きました",
-    genericBody: "あなたのせいではありません。少し時間をおいて開いてみてください。",
+    genericBody:
+      "あなたのせいではありません。少し時間をおいて開いてみてください。",
     backHome: "図鑑をひらく",
     backLastVenue: "前回見ていた会場へ戻る",
   },

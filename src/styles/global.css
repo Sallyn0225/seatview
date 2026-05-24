@@ -22,12 +22,10 @@
   --radius: 0.5rem;
 
   /* fonts (Noto same-family CN↔JP per The Two Tongues Rule) */
-  --font-serif:
-    "Noto Serif SC", "Noto Serif JP", ui-serif, Georgia, serif;
+  --font-serif: "Noto Serif SC", "Noto Serif JP", ui-serif, Georgia, serif;
   --font-sans:
     "Noto Sans SC", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:
-    "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
 }
 
 /* ── Light (paper face) ───────────────────────────────────────────────── */

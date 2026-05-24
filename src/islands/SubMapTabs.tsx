@@ -65,10 +65,7 @@ export default function SubMapTabs({
         return (
           <div key={subMap.id} className="flex shrink-0 items-center">
             {index > 0 && (
-              <span
-                aria-hidden="true"
-                className="text-border mx-3 select-none"
-              >
+              <span aria-hidden="true" className="text-border mx-3 select-none">
                 ·
               </span>
             )}

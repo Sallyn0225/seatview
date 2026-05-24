@@ -54,7 +54,8 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 
   const offset = parseCount(url.searchParams.get("offset")) ?? 0;
-  const limit = parseCount(url.searchParams.get("limit")) ?? ADMIN_STAGING_BATCH;
+  const limit =
+    parseCount(url.searchParams.get("limit")) ?? ADMIN_STAGING_BATCH;
 
   try {
     const db = getDb(env.DB);
@@ -66,7 +67,10 @@ export const GET: APIRoute = async ({ request, url }) => {
     };
     return new Response(JSON.stringify(payload), {
       status: 200,
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
     });
   } catch (err) {
     console.error("[admin:staging] list query failed", { err: String(err) });
@@ -96,11 +100,18 @@ export const PATCH: APIRoute = async ({ request }) => {
     const db = getDb(env.DB);
     const ok = await setStagingProcessed(db, id, processed);
     if (!ok) return jsonError("not_found", 404);
-    console.info("[admin:staging] processed flag set", { id, processed, by: email });
+    console.info("[admin:staging] processed flag set", {
+      id,
+      processed,
+      by: email,
+    });
     const payload: AdminStagingMutationResponse = { id };
     return new Response(JSON.stringify(payload), {
       status: 200,
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
     });
   } catch (err) {
     console.error("[admin:staging] processed update failed", {
@@ -136,7 +147,10 @@ export const DELETE: APIRoute = async ({ request }) => {
     const payload: AdminStagingMutationResponse = { id };
     return new Response(JSON.stringify(payload), {
       status: 200,
-      headers: { "content-type": "application/json", "cache-control": "no-store" },
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
     });
   } catch (err) {
     console.error("[admin:staging] delete failed", { id, err: String(err) });

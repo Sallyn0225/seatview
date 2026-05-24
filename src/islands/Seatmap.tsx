@@ -170,11 +170,7 @@ export default function Seatmap({
   if (error) {
     return (
       <SeatmapFrame subMapId={subMap.id}>
-        <LoadFailure
-          locale={locale}
-          onRetry={() => onRetry?.()}
-          fill
-        />
+        <LoadFailure locale={locale} onRetry={() => onRetry?.()} fill />
       </SeatmapFrame>
     );
   }
@@ -225,10 +221,7 @@ export default function Seatmap({
             }}
             contentStyle={{ width: "100%", height: "100%" }}
           >
-            <div
-              className="relative size-full"
-              onPointerDown={wakeControls}
-            >
+            <div className="relative size-full" onPointerDown={wakeControls}>
               <ChartImage subMap={subMap} locale={locale} />
 
               {/* Annotation overlay: pins + cluster bubbles. */}
@@ -354,9 +347,7 @@ function ChartImage({
   dimmed?: boolean;
 }) {
   const alt =
-    locale === "ja"
-      ? `座席図 ${subMap.label_jp}`
-      : `坐席图 ${subMap.label_zh}`;
+    locale === "ja" ? `座席図 ${subMap.label_jp}` : `坐席图 ${subMap.label_zh}`;
   return (
     <img
       src={subMap.imageUrl}

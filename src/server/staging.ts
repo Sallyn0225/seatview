@@ -112,10 +112,7 @@ export async function setStagingProcessed(
  * no media and no soft-delete column (prd Data Model), so this is a real DELETE.
  * Returns true when a row was removed, false when the id was absent.
  */
-export async function deleteStagingVenue(
-  db: Db,
-  id: string,
-): Promise<boolean> {
+export async function deleteStagingVenue(db: Db, id: string): Promise<boolean> {
   const existing = await db
     .select({ id: stagingVenues.id })
     .from(stagingVenues)

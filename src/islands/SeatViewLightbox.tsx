@@ -248,10 +248,18 @@ export default function SeatViewLightbox({
         buttonPrev: isSequence ? undefined : () => null,
         buttonNext: isSequence ? undefined : () => null,
         iconPrev: () => (
-          <ChevronLeft className="size-7" aria-hidden="true" strokeWidth={1.25} />
+          <ChevronLeft
+            className="size-7"
+            aria-hidden="true"
+            strokeWidth={1.25}
+          />
         ),
         iconNext: () => (
-          <ChevronRight className="size-7" aria-hidden="true" strokeWidth={1.25} />
+          <ChevronRight
+            className="size-7"
+            aria-hidden="true"
+            strokeWidth={1.25}
+          />
         ),
         iconClose: () => (
           <X className="size-6" aria-hidden="true" strokeWidth={1.25} />
@@ -444,7 +452,10 @@ function DetailSheet({ dto, locale, labels, onClose }: DetailSheetProps) {
         )}
         <p className="pt-1 text-xs text-[oklch(0.72_0.006_86)] [font-variant-numeric:tabular-nums]">
           {labels.uploadedAt}{" "}
-          <time dateTime={new Date(dto.createdAt).toISOString()} title={uploadedTitle}>
+          <time
+            dateTime={new Date(dto.createdAt).toISOString()}
+            title={uploadedTitle}
+          >
             {uploaded}
           </time>
         </p>

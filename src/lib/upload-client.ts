@@ -31,7 +31,9 @@ export class UploadError extends Error {
   }
 }
 
-async function parseErrorCode(res: Response): Promise<UploadErrorCode | "network"> {
+async function parseErrorCode(
+  res: Response,
+): Promise<UploadErrorCode | "network"> {
   try {
     const data = (await res.json()) as { error?: UploadErrorCode };
     return data.error ?? "server_error";

@@ -21,12 +21,8 @@ const { locale, withSearch = false } = Astro.props;
 const hasTreeTrigger = Astro.slots.has("tree-trigger");
 ---
 
-<header
-  class="border-border bg-background sticky top-0 z-40 border-b"
->
-  <div
-    class="flex h-12 items-center gap-3 px-4 lg:h-14 lg:px-6"
-  >
+<header class="border-border bg-background sticky top-0 z-40 border-b">
+  <div class="flex h-12 items-center gap-3 px-4 lg:h-14 lg:px-6">
     {
       hasTreeTrigger && (
         <div class="lg:hidden">

@@ -55,7 +55,10 @@ export const onRequest = defineMiddleware((context, next) => {
       }
       return new Response(
         "403 Forbidden — this page requires maintainer access.",
-        { status: 403, headers: { "content-type": "text/plain; charset=utf-8" } },
+        {
+          status: 403,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        },
       );
     }
   }

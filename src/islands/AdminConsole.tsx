@@ -292,7 +292,9 @@ function PhotoRow({
       setConfirming(false);
     } catch (err) {
       const code = err instanceof AdminError ? err.code : "server_error";
-      setRowError(code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError);
+      setRowError(
+        code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+      );
     } finally {
       setWorking(false);
     }
@@ -510,7 +512,9 @@ function StagingAdminRow({
       onProcessedChange(venue.id, next);
     } catch (err) {
       const code = err instanceof AdminError ? err.code : "server_error";
-      setRowError(code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError);
+      setRowError(
+        code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+      );
     } finally {
       setWorking(false);
     }
@@ -524,7 +528,9 @@ function StagingAdminRow({
       onDeleted(venue.id);
     } catch (err) {
       const code = err instanceof AdminError ? err.code : "server_error";
-      setRowError(code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError);
+      setRowError(
+        code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+      );
       setWorking(false);
     }
   }, [venue.id, onDeleted, t]);

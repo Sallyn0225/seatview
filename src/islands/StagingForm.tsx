@@ -286,7 +286,9 @@ export default function StagingForm({
           <span aria-hidden="true" className="text-muted-foreground mx-2">
             ＼/
           </span>
-          <span className="text-muted-foreground">{t.staging.listTitleAlt}</span>
+          <span className="text-muted-foreground">
+            {t.staging.listTitleAlt}
+          </span>
         </h2>
 
         {venues.length === 0 && !listError ? (

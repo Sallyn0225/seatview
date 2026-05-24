@@ -9,7 +9,11 @@
 // photos.performance_date) or null.
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 
@@ -110,7 +114,9 @@ export default function DateField({
 
   // ── Months / years view helpers ────────────────────────────────────────────
   const isSelectedMonth = (m: number) =>
-    selected != null && selected.getFullYear() === year && selected.getMonth() === m;
+    selected != null &&
+    selected.getFullYear() === year &&
+    selected.getMonth() === m;
   const isTodayMonth = (m: number) =>
     today.getFullYear() === year && today.getMonth() === m;
   const isSelectedYear = (y: number) =>
@@ -200,7 +206,9 @@ export default function DateField({
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setViewMonth(new Date(year - stepYears, month - stepMonths, 1))}
+              onClick={() =>
+                setViewMonth(new Date(year - stepYears, month - stepMonths, 1))
+              }
               aria-label={navPrevLabel}
               className="hover:bg-secondary focus-visible:ring-ring grid size-8 place-items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
@@ -222,7 +230,9 @@ export default function DateField({
             )}
             <button
               type="button"
-              onClick={() => setViewMonth(new Date(year + stepYears, month + stepMonths, 1))}
+              onClick={() =>
+                setViewMonth(new Date(year + stepYears, month + stepMonths, 1))
+              }
               aria-label={navNextLabel}
               className="hover:bg-secondary focus-visible:ring-ring grid size-8 place-items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
@@ -257,7 +267,9 @@ export default function DateField({
                         isSelected(day)
                           ? "bg-foreground text-background"
                           : "hover:bg-secondary text-foreground",
-                        !isSelected(day) && isToday(day) && "ring-border ring-1",
+                        !isSelected(day) &&
+                          isToday(day) &&
+                          "ring-border ring-1",
                       )}
                     >
                       {day}
@@ -284,7 +296,9 @@ export default function DateField({
                     isSelectedMonth(m)
                       ? "bg-foreground text-background"
                       : "hover:bg-secondary text-foreground",
-                    !isSelectedMonth(m) && isTodayMonth(m) && "ring-border ring-1",
+                    !isSelectedMonth(m) &&
+                      isTodayMonth(m) &&
+                      "ring-border ring-1",
                   )}
                 >
                   {m + 1}月
@@ -295,26 +309,30 @@ export default function DateField({
 
           {view === "years" && (
             <div className="grid grid-cols-3 gap-1">
-              {Array.from({ length: 12 }, (_, i) => yearPageStart + i).map((y) => (
-                <button
-                  key={y}
-                  type="button"
-                  onClick={() => {
-                    setViewMonth(new Date(y, month, 1));
-                    setView("months");
-                  }}
-                  className={cn(
-                    "h-9 rounded text-sm [font-variant-numeric:tabular-nums]",
-                    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                    isSelectedYear(y)
-                      ? "bg-foreground text-background"
-                      : "hover:bg-secondary text-foreground",
-                    !isSelectedYear(y) && isTodayYear(y) && "ring-border ring-1",
-                  )}
-                >
-                  {y}
-                </button>
-              ))}
+              {Array.from({ length: 12 }, (_, i) => yearPageStart + i).map(
+                (y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => {
+                      setViewMonth(new Date(y, month, 1));
+                      setView("months");
+                    }}
+                    className={cn(
+                      "h-9 rounded text-sm [font-variant-numeric:tabular-nums]",
+                      "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                      isSelectedYear(y)
+                        ? "bg-foreground text-background"
+                        : "hover:bg-secondary text-foreground",
+                      !isSelectedYear(y) &&
+                        isTodayYear(y) &&
+                        "ring-border ring-1",
+                    )}
+                  >
+                    {y}
+                  </button>
+                ),
+              )}
             </div>
           )}
         </div>

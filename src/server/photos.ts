@@ -69,10 +69,7 @@ export async function listSubMapPhotos(
  * Note: per R11.4 the copyright-consent state is NOT stored — the upload only
  * reaching this point means the box was checked client-side; D1 stays tight.
  */
-export async function insertPhoto(
-  db: Db,
-  row: NewPhotoRow,
-): Promise<PhotoDto> {
+export async function insertPhoto(db: Db, row: NewPhotoRow): Promise<PhotoDto> {
   await db.insert(photos).values(row);
   return rowToPhotoDto({
     id: row.id,
@@ -167,9 +164,6 @@ export async function softDeletePhoto(
   const row = existing[0];
   if (!row) return null;
 
-  await db
-    .update(photos)
-    .set({ deletedAt: now })
-    .where(eq(photos.id, id));
+  await db.update(photos).set({ deletedAt: now }).where(eq(photos.id, id));
   return row.imageKey;
 }

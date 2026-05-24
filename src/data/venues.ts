@@ -1,16 +1,15 @@
 import type { Venue } from "@/types";
-import {
-  regions,
-  type Prefecture,
-  type Region,
-} from "./prefectures";
+import { regions, type Prefecture, type Region } from "./prefectures";
 
 // Static venue metadata bundled from data/venues/*.json at build time (ADR-1).
 // Maintainers add venues via GitHub PR (R13); the glob picks them up with no
 // code changes. eager:true so the full set is available for Fuse.js search.
-const modules = import.meta.glob<{ default: Venue }>("../../data/venues/*.json", {
-  eager: true,
-});
+const modules = import.meta.glob<{ default: Venue }>(
+  "../../data/venues/*.json",
+  {
+    eager: true,
+  },
+);
 
 export const venues: Venue[] = Object.values(modules)
   .map((m) => m.default)
