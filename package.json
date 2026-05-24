@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "wrangler dev",
-    "deploy": "astro build && wrangler deploy",
+    "preview": "astro build && wrangler dev -c dist/server/wrangler.json",
+    "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
     "astro": "astro",
     "typecheck": "astro check",
     "cf-typegen": "wrangler types",

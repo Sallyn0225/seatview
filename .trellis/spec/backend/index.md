@@ -48,6 +48,17 @@ decision — each diverged for a verified reason.
   back to `.dev.vars` `DEV_ADMIN_EMAIL` locally. Fail-closed (403). Routes
   ALSO re-check `maintainerEmail` (defense-in-depth vs edge misconfig).
 - **IP privacy**: only salted SHA-256 `ip_hash` is ever stored (`src/server/ip.ts`); never the raw IP. No consent flag is stored (R11.4 — gating client-side is enough).
+- **Local preview / deploy use the BUILT config, not the source config**. The
+  root `wrangler.jsonc` has NO `main` — it only declares bindings/vars that the
+  adapter inherits. `astro build` emits the runnable `dist/server/wrangler.json`
+  (`main: entry.mjs` + an `ASSETS` binding). So `npm run preview` =
+  `astro build && wrangler dev -c dist/server/wrangler.json` and `npm run deploy`
+  = `astro build && wrangler deploy -c dist/server/wrangler.json`. A bare
+  `wrangler dev` against the root config boots the adapter source entrypoint
+  without ASSETS and SSR returns the literal `[object Object]` (config issue, not
+  a Windows issue). Binding-management commands (`wrangler d1 migrations apply`,
+  `wrangler kv namespace create`, `wrangler secret put`) still read the root
+  `wrangler.jsonc`; the `db:*` scripts are unaffected by the missing `main`.
 
 ---
 

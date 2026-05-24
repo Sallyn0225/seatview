@@ -8,10 +8,23 @@
   //   wrangler r2 bucket create seatmap-images
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "seatmap-real",
-  // The Astro Cloudflare adapter injects the real server entrypoint and the
-  // built-asset directory at build time; keep `main` pointed at the adapter
-  // entrypoint here so `astro build` / `wrangler dev` resolve it.
-  "main": "@astrojs/cloudflare/entrypoints/server",
+  // NOTE: intentionally NO top-level `main` here.
+  //
+  // This file is the SOURCE config: it only declares the bindings/vars that
+  // `@astrojs/cloudflare` v13 inherits at build time. The adapter derives the
+  // real server entrypoint itself and writes the RUNNABLE config to
+  // `dist/server/wrangler.json` (`"main": "entry.mjs"` + an `ASSETS` binding to
+  // `../client`). So `wrangler dev` / `wrangler deploy` must point at THAT built
+  // config (`-c dist/server/wrangler.json`); see package.json `preview`/`deploy`.
+  //
+  // A `main` here pointing at `@astrojs/cloudflare/entrypoints/server` would
+  // make a bare `wrangler dev` (against this file) boot the adapter's source
+  // entrypoint WITHOUT the ASSETS binding and WITHOUT the built routes, so SSR
+  // responses render the literal string `[object Object]`. Removing `main`
+  // keeps this file purely a binding-declaration config: `astro build` still
+  // emits the correct `dist/server/wrangler.json`, and binding-management
+  // commands (`wrangler d1 migrations apply`, `wrangler kv namespace create`,
+  // `wrangler secret put`, …) still resolve `database_name`/bindings from here.
   "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
 
