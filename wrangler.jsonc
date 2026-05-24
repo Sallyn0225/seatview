@@ -1,10 +1,16 @@
 {
   // SeatView (seatmap-real) — Cloudflare Workers config.
   //
-  // ⚠️ The `*_id` / namespace ids below are placeholders. Before first deploy,
-  // run the create commands and paste the returned ids here:
+  // The `*_id` / namespace ids below are the REAL production resource ids.
+  // They are resource identifiers, NOT secrets — Cloudflare access is gated by
+  // account credentials (API token / OAuth), not by id obscurity, so these are
+  // safe to commit even if this repo goes public. The only real secret is
+  // TURNSTILE_SECRET_KEY, which lives in .dev.vars (local) / `wrangler secret
+  // put` (prod) — NEVER in this file.
+  // To recreate the resources from scratch:
   //   wrangler d1 create seatmap-real
   //   wrangler kv namespace create RATE_LIMIT
+  //   wrangler kv namespace create SESSION
   //   wrangler r2 bucket create seatmap-images
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "seatmap-real",
@@ -43,7 +49,7 @@
     {
       "binding": "DB",
       "database_name": "seatmap-real",
-      "database_id": "YOUR_D1_DATABASE_ID",
+      "database_id": "9a587168-33ad-4037-af9e-fd6172c77252",
       "migrations_dir": "./migrations"
     }
   ],
@@ -69,19 +75,18 @@
   //     account / session system (ADR-2: no registration), so nothing actually
   //     writes sessions — but the adapter injects this binding into the built
   //     worker config regardless, so we declare it here (with its own namespace)
-  //     to keep the binding resolvable and the build warning-free. Create it
-  //     once before deploy and paste the id below:
+  //     to keep the binding resolvable and the build warning-free. Created via:
   //         wrangler kv namespace create SESSION
   //     (Alternatively, set `session.driver` in astro.config.mjs to opt out; we
   //     keep the binding so the session API stays available if ever needed.)
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT",
-      "id": "YOUR_RATE_LIMIT_KV_NAMESPACE_ID"
+      "id": "eecec3f3135642d787e42b0483192ecf"
     },
     {
       "binding": "SESSION",
-      "id": "YOUR_SESSION_KV_NAMESPACE_ID"
+      "id": "48cfec0aedcd49349b9ee947a3c8b210"
     }
   ],
 
