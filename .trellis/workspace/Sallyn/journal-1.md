@@ -105,3 +105,37 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 4: 修复移动端上传相册 + 日期选择器跨年跨月
+
+**Date**: 2026-05-24
+**Task**: 修复移动端上传相册 + 日期选择器跨年跨月
+**Branch**: `main`
+
+### Summary
+
+排查三个用户报告问题。(1) 移动端上传只能调起相机：根因 UploadSheet.tsx 的 input capture=environment，删除后对齐 shape-upload-sheet.md 的唤起本地选图。(2) 日期选择器无法快速跨年跨月：DateField.tsx 手写逐月日历增加 days/months/years 三级钻取（点头部逐级展开、点选逐级收回），保持手写+Flat-Folio、零新依赖。(3) 双语分隔符 ＼/ 经查是锁定设计（Are.na 版面式排版，spec 明确排除 /），不改。浏览器实测日期钻取链路 + DOM 核验 capture 移除，typecheck 0 errors，trellis-check 通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `89f3465` | (see git log) |
+| `3e562b3` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
