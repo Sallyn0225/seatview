@@ -80,7 +80,7 @@ seatmap-real/
 
 ## 本地开发
 
-前置：Node ≥ 20。
+前置：Node ≥ 22.12（Astro 6 要求）。
 
 ```bash
 # 1. 安装依赖
