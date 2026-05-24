@@ -1,5 +1,7 @@
 # SeatView
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 > 内部代号 `seatmap-real` ／ 对外品牌名 **SeatView** · 真实视角图集 / リアル座席ビュー
 
 聚合日本（含部分海外）演唱会场馆**真实座位视角图**的网站。用户在场馆官方坐席图上标注自己的座位、上传该位置的实拍照片；其他人点击坐席图上的标注点，就能在 Lightbox 里预览那个座位的真实视角。**无需注册**即可浏览与上传，靠 IP 限频 + Cloudflare Turnstile 防滥用。全栈跑在 Cloudflare 一家：Workers（SSR + 静态资源）+ D1 + KV + R2。
@@ -212,7 +214,7 @@ npm run deploy                 # astro build && wrangler deploy -c dist/server/w
 
 ## 上传内容版权（CC BY-NC 4.0）
 
-- **站点代码**：MIT（见 [`LICENSE`](LICENSE)）。
+- **站点代码**：Apache 2.0（见 [`LICENSE`](LICENSE)）。
 - **用户上传的照片与其元数据**：**[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)**。上传表单底部有**强制勾选**的同意框（R11 / ADR-5）：
 
   > ☐ 我确认拥有此照片的版权，并同意以 CC BY-NC 4.0 协议分享给本站及其他用户参考。我已遮蔽他人面部 / 不当个人信息。
@@ -232,5 +234,5 @@ npm run deploy                 # astro build && wrangler deploy -c dist/server/w
 
 ## 许可
 
-- 站点代码：MIT — [`LICENSE`](LICENSE)
+- 站点代码：Apache 2.0 — [`LICENSE`](LICENSE)
 - 用户上传内容：CC BY-NC 4.0 — https://creativecommons.org/licenses/by-nc/4.0/

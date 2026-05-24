@@ -43,7 +43,7 @@
     {
       "binding": "DB",
       "database_name": "seatmap-real",
-      "database_id": "9a587168-33ad-4037-af9e-fd6172c77252",
+      "database_id": "YOUR_D1_DATABASE_ID",
       "migrations_dir": "./migrations"
     }
   ],
@@ -77,11 +77,11 @@
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT",
-      "id": "eecec3f3135642d787e42b0483192ecf"
+      "id": "YOUR_RATE_LIMIT_KV_NAMESPACE_ID"
     },
     {
       "binding": "SESSION",
-      "id": "48cfec0aedcd49349b9ee947a3c8b210"
+      "id": "YOUR_SESSION_KV_NAMESPACE_ID"
     }
   ],
 

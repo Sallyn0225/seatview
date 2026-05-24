@@ -1,3 +1,0 @@
-{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "前端质量门槛（typecheck/规范），check 阶段据此核验"}
-{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "island 组件改动的一致性检查依据"}
-{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/shape-home-explainer.md", "reason": "核验移除跳转后首页行为与（被推翻部分外的）说明页设计仍一致"}

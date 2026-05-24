@@ -147,4 +147,4 @@ npm run build          # 构建（会把 data/venues/*.json 打进 bundle）
 
 - 只想提名字：用站内「想看的场馆」页。
 - 数据填写疑问：在 PR 里 @ 维护者，或开一个 Issue。
-- 站点代码以 MIT 协议开源；你贡献的场馆**元数据**（名字、坐席图占位、sub-map 标签）随站点代码一同以 MIT 协议提供。用户上传的**照片内容**则是 CC BY-NC 4.0（与本教程无关，见 [README](README.md) 与 [LICENSE](LICENSE)）。
+- 站点代码以 Apache 2.0 协议开源；你贡献的场馆**元数据**（名字、坐席图占位、sub-map 标签）随站点代码一同以 Apache 2.0 协议提供。用户上传的**照片内容**则是 CC BY-NC 4.0（与本教程无关，见 [README](README.md) 与 [LICENSE](LICENSE)）。

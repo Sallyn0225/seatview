@@ -1,0 +1,42 @@
+name: 🐛 Bug 报告 / Bug report
+description: 报告网站功能异常
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么？
+      description: 描述问题，以及你期望的正确行为。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开 …
+        2. 点击 …
+        3. 看到 …
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: 出问题的区域
+      options:
+        - 浏览 / 坐席图 / Lightbox
+        - 上传照片
+        - 搜索 / 场馆列表
+        - 想看的场馆（暂存区）
+        - 后台 / admin
+        - 其他
+    validations:
+      required: false
+  - type: input
+    id: env
+    attributes:
+      label: 设备 / 浏览器
+      placeholder: 例：iPhone 15 Safari / Windows Chrome 120
+    validations:
+      required: false

@@ -70,16 +70,17 @@ __pycache__/
 *.pyo
 *.pyd
 
-# === Claude Code (personal config only) ===
-.claude/settings.local.json
-.claude/.credentials.json
-.claude/projects/
-.claude/conversations/
-
-# === Codex (personal config only) ===
-.codex/.credentials.json
-.codex/sessions/
-.codex/logs/
+# === AI development scaffolding (local-only; NOT part of the open-source repo) ===
+# Trellis workflow + Claude/Codex agent config assist local development but are
+# intentionally untracked so the public repo stays focused on the product. The
+# local files are kept on disk — only their git tracking is removed. Delete a
+# line below if you ever decide to publish that tool.
+.trellis/
+.claude/
+.codex/
+.agents/
+skills-lock.json
+AGENTS.md
 
 # === Misc temp files ===
 *.tmp

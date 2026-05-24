@@ -1,0 +1,37 @@
+name: 🏟️ 场馆请求 / Venue request
+description: 请求添加一个新场馆，或反馈现有场馆数据有误
+title: "[场馆] "
+labels: ["venue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你帮 SeatView 补充场馆！
+
+        - **只想报个名字** → 也可以直接用站内「想看的场馆」页（`/zh/staging`），其他用户还能 +1。
+        - **会用 GitHub 改文件** → 更快的方式是按仓库根目录的 `CONTRIBUTING.md` 直接提一个场馆 JSON 的 Pull Request，维护者审核后即可上线。
+
+        如果以上都不方便，填下面的表单即可，剩下交给维护者。
+  - type: input
+    id: venue-name
+    attributes:
+      label: 场馆名 / 会場名
+      description: 中文名、日文名、罗马字都行，能填多个更有助于检索。
+      placeholder: 例：横浜アリーナ / 横滨竞技场 / Yokohama Arena
+    validations:
+      required: true
+  - type: input
+    id: prefecture
+    attributes:
+      label: 所在都道府县 / 都道府県
+      description: 海外场馆请填「海外 / overseas」。
+      placeholder: 例：神奈川県（神奈川县）
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: 补充信息
+      description: 例如有几层 / 几个分区坐席图、官方坐席图链接、容量等。请勿上传有版权的官方坐席图。
+    validations:
+      required: false

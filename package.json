@@ -4,6 +4,7 @@
   "description": "SeatView — aggregated real-seat-view photo atlas for Japanese concert venues (internal codename: seatmap-real).",
   "type": "module",
   "private": true,
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=20"
   },
