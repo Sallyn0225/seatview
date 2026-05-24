@@ -1,0 +1,10 @@
+node_modules
+dist
+.astro
+.wrangler
+.playwright-mcp
+package-lock.json
+
+# prettier-plugin-astro@0.14.1 can't parse the inline `define:vars` <script> here.
+# Brackets escaped so they are matched literally, not as a glob character class.
+src/pages/\[lang\]/v/\[venueId\].astro

@@ -15,6 +15,8 @@
     "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
     "astro": "astro",
     "typecheck": "astro check",
+    "format": "prettier --write \"src/**/*.{ts,tsx,astro,css}\" \"scripts/**/*.{mjs,js}\" \"*.{ts,mjs}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,astro,css}\" \"scripts/**/*.{mjs,js}\" \"*.{ts,mjs}\"",
     "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply seatmap-real --local",
@@ -49,6 +51,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "drizzle-kit": "^0.31.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.7.0",
     "wrangler": "^4.83.0"
