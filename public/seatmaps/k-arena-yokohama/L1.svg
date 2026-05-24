@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="K Arena Yokohama L1 フロア placeholder seating chart">
+  <rect width="1200" height="800" fill="#f4f1ea" />
+  <rect x="16" y="16" width="1168" height="768" fill="none" stroke="#cdc6ba" stroke-width="2" rx="12" />
+  <ellipse cx="600" cy="336" rx="216" ry="144" fill="none" stroke="#cdc6ba" stroke-width="2" />
+  <ellipse cx="600" cy="496" rx="360" ry="240" fill="none" stroke="#cdc6ba" stroke-width="2" />
+  <ellipse cx="600" cy="656" rx="504" ry="336" fill="none" stroke="#cdc6ba" stroke-width="2" />
+  <rect x="396" y="96" width="408" height="64" rx="6" fill="#e6e1d6" stroke="#b7b0a2" stroke-width="2" />
+  <text x="600" y="134" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="#3a3631">STAGE</text>
+  <text x="600" y="400" text-anchor="middle" font-family="serif" font-size="40" fill="#2a2620">K Arena Yokohama</text>
+  <text x="600" y="444" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#6b655a">L1 フロア</text>
+  <text x="600" y="764" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="#9a9384">placeholder seating chart · 1200×800</text>
+</svg>

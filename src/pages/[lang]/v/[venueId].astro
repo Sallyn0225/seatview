@@ -1,0 +1,184 @@
+---
+// Venue detail page shell (R3 + shape-venue-page.md).
+//
+// Three-band desktop layout: a 280px sticky left venue tree (Folio Cream) + a
+// 900px-max main column (Warm Rice Paper). Tablet/mobile fold the tree into a
+// left drawer. This step builds the SHELL only — the seating chart, photo grid,
+// Lightbox and upload Sheet are placeholder slots inside VenueMain (steps 4-6).
+import Layout from "@/layouts/Layout.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import VenueTree from "@/islands/VenueTree.tsx";
+import VenueTreeDrawer from "@/islands/VenueTreeDrawer.tsx";
+import VenueSearch from "@/islands/VenueSearch.tsx";
+import SubMapTabs from "@/islands/SubMapTabs.tsx";
+import VenueMain from "@/islands/VenueMain.tsx";
+import { asLocale } from "@/i18n/config";
+import { getMessages, venueName } from "@/i18n";
+import { getVenue } from "@/data/venues";
+import { getPrefecture, prefectureName } from "@/data/prefectures";
+import { readSubMapFromUrl, resolveInitialSubMapId } from "@/lib/submap";
+import { env } from "cloudflare:workers";
+import { getDb } from "@/server/db";
+import { listSubMapPhotos } from "@/server/photos";
+import type { PhotoDto } from "@/lib/photos";
+
+export const prerender = false;
+
+const locale = asLocale(Astro.params.lang);
+const t = getMessages(locale);
+const { venueId } = Astro.params;
+
+const venue = venueId ? getVenue(venueId) : undefined;
+
+// Resolve the sub-map to show on entry (R3.2): the `?tab=` one if valid, else
+// the first sub-map. Done server-side so the title/tabs render correctly on the
+// first paint without a client round-trip.
+const requestedSubMapId = venue
+  ? readSubMapFromUrl(Astro.url, venue.subMaps)
+  : undefined;
+const initialSubMapId = venue
+  ? resolveInitialSubMapId(venue.subMaps, requestedSubMapId)
+  : undefined;
+
+// SSR-query the initial sub-map's annotation points (R3.4) so the seatmap's
+// first paint needs zero client requests (Lighthouse, DoD ≥80). Soft-deleted
+// rows are excluded at the query level (ADR-6). Fails soft: if the D1 binding
+// is missing or the query errors, we hand the island an empty set and let it
+// fall back to its empty Key State rather than 500 the whole page.
+let initialPhotos: PhotoDto[] = [];
+if (venue && initialSubMapId && env.DB) {
+  try {
+    initialPhotos = await listSubMapPhotos(
+      getDb(env.DB),
+      venue.id,
+      initialSubMapId,
+    );
+  } catch {
+    initialPhotos = [];
+  }
+}
+
+const prefecture = venue ? getPrefecture(venue.prefecture) : undefined;
+const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
+---
+
+<Layout locale={locale} title={title}>
+  {
+    venue ? (
+      <Fragment>
+      <div class="flex min-h-screen flex-col">
+        <SiteHeader locale={locale} withSearch>
+          <VenueSearch slot="search" locale={locale} client:idle />
+          <VenueTreeDrawer
+            slot="tree-trigger"
+            locale={locale}
+            activeVenueId={venue.id}
+            client:idle
+          />
+        </SiteHeader>
+
+        <div class="flex flex-1">
+          {/* Desktop venue tree: 280px, always-on, independent scroll. */}
+          <aside
+            class="border-border bg-card sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[280px] shrink-0 overflow-y-auto border-r px-3 py-4 lg:block"
+          >
+            <VenueTree locale={locale} activeVenueId={venue.id} client:idle />
+            <div class="border-border mt-4 border-t pt-3">
+              <a
+                href={`/${locale}/staging`}
+                class="text-muted-foreground hover:text-foreground focus-visible:ring-ring block rounded-sm px-2 py-1.5 text-xs focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {t.tree.stagingPrompt} →
+              </a>
+            </div>
+          </aside>
+
+          {/* Main column: breadcrumb → title → tabs → seatmap → upload → grid. */}
+          <main class="min-w-0 flex-1">
+            <div class="mx-auto max-w-[900px] px-4 py-6 lg:px-8 lg:py-8">
+              {/* Mobile-only search (header search is desktop-only). */}
+              <div class="mb-4 lg:hidden">
+                <VenueSearch locale={locale} client:idle />
+              </div>
+
+              <nav
+                aria-label={locale === "ja" ? "パンくず" : "面包屑"}
+                class="text-muted-foreground text-xs"
+              >
+                <span>{t.venue.country}</span>
+                {prefecture && (
+                  <>
+                    <span aria-hidden="true" class="mx-1.5">
+                      /
+                    </span>
+                    <span>{prefectureName(prefecture, locale)}</span>
+                  </>
+                )}
+              </nav>
+
+              <h1
+                class="text-foreground mt-2 font-serif text-3xl leading-tight lg:text-4xl"
+              >
+                {venueName(venue, locale)}
+              </h1>
+              <p class="text-muted-foreground mt-1 text-sm">
+                {venue.name_romaji}
+              </p>
+
+              <div class="border-border mt-4 border-b pb-1">
+                <SubMapTabs
+                  locale={locale}
+                  subMaps={venue.subMaps}
+                  initialSubMapId={initialSubMapId}
+                  client:idle
+                />
+              </div>
+
+              <div class="mt-6">
+                <VenueMain
+                  locale={locale}
+                  venue={venue}
+                  initialSubMapId={initialSubMapId}
+                  initialPhotos={initialPhotos}
+                  client:load
+                />
+              </div>
+            </div>
+          </main>
+        </div>
+
+        <SiteFooter locale={locale} />
+      </div>
+
+      {/* Record last-visited venue for the home redirect (R10.2). */}
+      <script is:inline define:vars={{ lastVenueId: venue.id }}>
+        try {
+          localStorage.setItem("seatview:last-venue", lastVenueId);
+        } catch (_) {
+          /* ignore privacy-mode errors */
+        }
+      </script>
+      </Fragment>
+    ) : (
+      <div class="flex min-h-screen flex-col">
+        <SiteHeader locale={locale} />
+        <main class="flex flex-1 items-center justify-center px-6 py-16">
+          <div class="max-w-md text-center">
+            <p class="text-foreground text-2xl font-medium">
+              {t.venue.notFoundTitle}
+            </p>
+            <p class="text-muted-foreground mt-3">{t.venue.notFoundBody}</p>
+            <a
+              href={`/${locale}/`}
+              class="border-foreground text-foreground hover:bg-secondary focus-visible:ring-ring mt-6 inline-flex h-11 items-center rounded-md border px-6 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {t.venue.backHome} →
+            </a>
+          </div>
+        </main>
+        <SiteFooter locale={locale} />
+      </div>
+    )
+  }
+</Layout>

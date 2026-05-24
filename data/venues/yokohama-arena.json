@@ -1,0 +1,25 @@
+{
+  "id": "yokohama-arena",
+  "name_zh": "横滨竞技馆",
+  "name_jp": "横浜アリーナ",
+  "name_romaji": "Yokohama Arena",
+  "prefecture": "kanagawa",
+  "city": "横浜市",
+  "aliases": [
+    "横浜アリーナ",
+    "横滨竞技馆",
+    "Yokohama Arena",
+    "横アリ",
+    "ヨコアリ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/yokohama-arena/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

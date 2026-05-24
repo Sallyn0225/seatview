@@ -1,0 +1,47 @@
+MIT License
+
+Copyright (c) 2026 SeatView contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+
+SCOPE OF THIS LICENSE
+
+The MIT license above covers the SeatView SITE CODE ONLY: everything in this
+repository under src/, scripts/, migrations/, seeds/, the build configuration,
+the static venue metadata in data/venues/, and the placeholder seating-chart
+SVGs in public/seatmaps/.
+
+It does NOT cover user-uploaded content. Seat-view photos and their metadata
+(seat label / performance date / event name / description) that users submit
+through the site are shared under the Creative Commons Attribution-NonCommercial
+4.0 International license (CC BY-NC 4.0):
+
+    https://creativecommons.org/licenses/by-nc/4.0/
+
+Uploaders confirm they hold the copyright to their photo and agree to the
+CC BY-NC 4.0 terms via a mandatory checkbox before submitting (see README
+"Upload content license" and prd.md R11 / ADR-5). User-uploaded content is
+stored in Cloudflare D1 + R2 at runtime and is never committed to this
+repository.
+
+Real venue seating charts may carry their own copyright. The charts shipped in
+public/seatmaps/ are LOCALLY-AUTHORED PLACEHOLDERS only; do not commit real
+copyrighted seating charts (see CONTRIBUTING.md).

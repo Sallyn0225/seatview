@@ -1,0 +1,46 @@
+---
+// 500 / generic error page (shape-error-pages.md §4: 404 + 500 share the SAME
+// shell — only copy + status differ). Astro renders this when a page throws an
+// unhandled error. It MUST stay purely static (no D1 / KV / R2 / API access) so
+// the error page can never itself error (§4). It reuses the same self-detected
+// locale strategy as 404 and the same ErrorShell.
+//
+// No "重试" primary button (§11: SSR-error retry needs a full reload and is low
+// value); the recovery actions are "打开图鉴" + the client-hydrated last-venue
+// link. The underlying exception is logged server-side and NEVER rendered to the
+// user (§9, logging-guidelines) — Astro already keeps the stack server-side.
+import Layout from "@/layouts/Layout.astro";
+import ErrorShell from "@/components/ErrorShell.astro";
+import { getMessages } from "@/i18n";
+import {
+  isLocale,
+  resolveLocaleFromAcceptLanguage,
+  type Locale,
+} from "@/i18n/config";
+import { STORAGE_KEYS } from "@/lib/storage";
+
+export const prerender = false;
+
+function detectLocale(): Locale {
+  const segment = Astro.url.pathname.split("/")[1];
+  if (isLocale(segment)) return segment;
+  const cookieLocale = Astro.cookies.get(STORAGE_KEYS.locale)?.value;
+  if (isLocale(cookieLocale)) return cookieLocale;
+  return resolveLocaleFromAcceptLanguage(
+    Astro.request.headers.get("accept-language"),
+  );
+}
+
+const locale = detectLocale();
+const t = getMessages(locale);
+---
+
+<Layout locale={locale} title={`${t.error.genericTitle} · SeatView`}>
+  <ErrorShell
+    locale={locale}
+    title={t.error.genericTitle}
+    body={t.error.genericBody}
+    homeLabel={t.error.backHome}
+    lastVenueLabel={t.error.backLastVenue}
+  />
+</Layout>

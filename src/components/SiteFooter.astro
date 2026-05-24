@@ -1,0 +1,63 @@
+---
+// Shared footer reused across pages (shape-home §6 / shape-venue-page).
+// Carries the GitHub "contribute a new venue" entry (R13.2) and the standard
+// about / privacy / terms links. Sans-only, Hairline Ash, no decoration.
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = getMessages(locale);
+
+// Real GitHub URL is finalized at deploy time; the slug matches the repo name.
+const githubRepo = "https://github.com/seatview/seatmap-real";
+---
+
+<footer class="border-border text-muted-foreground border-t px-4 py-8 lg:px-6">
+  <div class="mx-auto max-w-[680px] space-y-3 text-sm">
+    <p>
+      <a
+        href={githubRepo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+      >
+        {t.footer.contribute} ↗
+      </a>
+    </p>
+    <nav
+      aria-label={locale === "ja" ? "フッター" : "页脚"}
+      class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs"
+    >
+      <a
+        href={githubRepo}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hover:text-foreground focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+        >GitHub</a
+      >
+      <span aria-hidden="true">·</span>
+      <a
+        href={`/${locale}/`}
+        class="hover:text-foreground focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+        >{t.footer.about}</a
+      >
+      <span aria-hidden="true">·</span>
+      <a
+        href={`/${locale}/`}
+        class="hover:text-foreground focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+        >{t.footer.privacy}</a
+      >
+      <span aria-hidden="true">·</span>
+      <a
+        href={`/${locale}/`}
+        class="hover:text-foreground focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+        >{t.footer.terms}</a
+      >
+    </nav>
+    <p class="text-xs">{t.footer.copyright}</p>
+  </div>
+</footer>

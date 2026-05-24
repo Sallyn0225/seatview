@@ -1,0 +1,67 @@
+---
+// Staging area page (R6, shape-staging-page.md).
+//
+// "想看的场馆" wishlist: a single-field submission form on top, a hairline rule,
+// then the newest-first wishlist below — a 680px centered reading column, NO
+// venue tree (this requests UN-collected venues; a tree would contradict).
+// Reuses the shared chrome (SiteHeader) + footer (SiteFooter) like the home
+// page. SeatView's only photo-less page; temperature comes from copy + the
+// 芳名帳 / record-book metaphor, not photos (Sans-only — home holds the Serif
+// monopoly).
+//
+// The wishlist first batch is SSR-queried from D1 (newest-first, R6.4) so the
+// list paints request-free; the form + continuation paging live in the
+// client:load StagingForm island. Fail-soft: a missing/erroring D1 binding
+// hands the island an empty seed (it then shows the gentle empty state) rather
+// than 500-ing the whole page.
+import Layout from "@/layouts/Layout.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import StagingForm from "@/islands/StagingForm.tsx";
+import { asLocale } from "@/i18n/config";
+import { getMessages } from "@/i18n";
+import { env } from "cloudflare:workers";
+import { getDb } from "@/server/db";
+import { listStagingVenues, STAGING_BATCH } from "@/server/staging";
+import type { StagingVenueDto } from "@/lib/staging";
+
+export const prerender = false;
+
+const locale = asLocale(Astro.params.lang);
+const t = getMessages(locale);
+
+// SSR-query the first list batch (over-fetch one as a hasMore probe). Fail-soft.
+let initialVenues: StagingVenueDto[] = [];
+let initialHasMore = false;
+if (env.DB) {
+  try {
+    const rows = await listStagingVenues(getDb(env.DB), {
+      limit: STAGING_BATCH + 1,
+    });
+    initialHasMore = rows.length > STAGING_BATCH;
+    initialVenues = initialHasMore ? rows.slice(0, STAGING_BATCH) : rows;
+  } catch {
+    initialVenues = [];
+    initialHasMore = false;
+  }
+}
+---
+
+<Layout locale={locale} title={`${t.staging.pageTitle} · SeatView`}>
+  <div class="flex min-h-screen flex-col">
+    <SiteHeader locale={locale} />
+
+    <main class="flex-1">
+      <div class="mx-auto max-w-[680px] px-6 pt-12 pb-16 lg:pt-16">
+        <StagingForm
+          locale={locale}
+          initialVenues={initialVenues}
+          initialHasMore={initialHasMore}
+          client:load
+        />
+      </div>
+    </main>
+
+    <SiteFooter locale={locale} />
+  </div>
+</Layout>

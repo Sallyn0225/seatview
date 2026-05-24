@@ -1,0 +1,19 @@
+{
+  "id": "example-venue-slug",
+  "name_zh": "示例场馆（中文名）",
+  "name_jp": "サンプル会場（日本語名）",
+  "name_romaji": "Example Venue (romaji / English)",
+  "prefecture": "tokyo",
+  "city": "千代田区",
+  "aliases": ["别名 1", "別名 2", "Alias 3"],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/example-venue-slug/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

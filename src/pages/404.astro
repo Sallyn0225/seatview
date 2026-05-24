@@ -1,0 +1,51 @@
+---
+// 404 page (shape-error-pages.md decision 3: ALL 404s use one generic shell — no
+// venue-not-found special case). Lives at the pages root (NOT under [lang]/) so
+// it catches every unmatched route, which means it cannot read a [locale] route
+// param — it SELF-DETECTS the language from the URL path segment → the persisted
+// locale cookie → Accept-Language (§4). The detected locale is shown as primary;
+// the shell intentionally does not force a bilingual double-title here (§11:
+// 404s are mostly off-site link / typo'd URL, language intent is weak).
+//
+// The title/body are GENERIC and never echo the requested path (XSS / no
+// over-guessing the user's intent, §9). Reuses the shared ErrorShell.
+import Layout from "@/layouts/Layout.astro";
+import ErrorShell from "@/components/ErrorShell.astro";
+import { getMessages } from "@/i18n";
+import {
+  isLocale,
+  resolveLocaleFromAcceptLanguage,
+  type Locale,
+} from "@/i18n/config";
+import { STORAGE_KEYS } from "@/lib/storage";
+
+export const prerender = false;
+
+// 1) URL path segment (`/zh/...` or `/ja/...`). 2) persisted locale cookie.
+// 3) Accept-Language. Falls back to the default locale inside the helper.
+function detectLocale(): Locale {
+  const segment = Astro.url.pathname.split("/")[1];
+  if (isLocale(segment)) return segment;
+  const cookieLocale = Astro.cookies.get(STORAGE_KEYS.locale)?.value;
+  if (isLocale(cookieLocale)) return cookieLocale;
+  return resolveLocaleFromAcceptLanguage(
+    Astro.request.headers.get("accept-language"),
+  );
+}
+
+const locale = detectLocale();
+const t = getMessages(locale);
+
+// 404 status (Astro renders this page for unmatched routes; set the code).
+Astro.response.status = 404;
+---
+
+<Layout locale={locale} title={`${t.error.notFoundTitle} · SeatView`}>
+  <ErrorShell
+    locale={locale}
+    title={t.error.notFoundTitle}
+    body={t.error.notFoundBody}
+    homeLabel={t.error.backHome}
+    lastVenueLabel={t.error.backLastVenue}
+  />
+</Layout>

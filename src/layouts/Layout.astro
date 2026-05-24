@@ -1,0 +1,37 @@
+---
+import "@/styles/global.css";
+import { getMessages } from "@/i18n";
+import type { Locale } from "@/i18n/config";
+
+interface Props {
+  title?: string;
+  locale?: Locale;
+}
+
+const locale: Locale = Astro.props.locale ?? Astro.locals.locale ?? "zh";
+const t = getMessages(locale);
+const title = Astro.props.title ?? t.meta.title;
+const htmlLang = locale === "ja" ? "ja" : "zh-Hans";
+---
+
+<!doctype html>
+<html lang={htmlLang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={t.meta.tagline} />
+    <title>{title}</title>
+    <!-- Apply persisted theme before paint to avoid flash (R12). -->
+    <script is:inline>
+      (() => {
+        const stored = localStorage.getItem("theme");
+        const system = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const dark = stored === "dark" || (stored !== "light" && system);
+        document.documentElement.classList.toggle("dark", dark);
+      })();
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "id": "belluna-dome",
+  "name_zh": "Belluna Dome",
+  "name_jp": "ベルーナドーム",
+  "name_romaji": "Belluna Dome",
+  "prefecture": "saitama",
+  "city": "所沢市",
+  "aliases": [
+    "ベルーナドーム",
+    "Belluna Dome",
+    "西武ドーム",
+    "Seibu Dome",
+    "西武巨蛋",
+    "メットライフドーム"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/belluna-dome/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

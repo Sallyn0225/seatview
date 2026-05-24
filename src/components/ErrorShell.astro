@@ -1,0 +1,89 @@
+---
+// Full-screen error shell — shared by 404 and 500/generic (shape-error-pages.md
+// §4 decision: ONE shell component, only copy + status differ). A quiet paper
+// page: a single self-drawn 折角缺页 (dog-eared / torn-page) ink line, the
+// title + body, an INK-OUTLINE "打开图鉴" recovery button (NOT vermilion — error
+// recovery is navigation, not a contribution, §3), and a client-hydrated
+// secondary "回到上次场馆" link. Reuses the shared chrome + footer.
+//
+// The 500 path renders this with NO data/API dependency (so the error page can
+// never itself error). The folded-folio SVG uses currentColor (light/dark
+// adaptive); its draw-in is decorative and collapses under reduced-motion via
+// the global CSS rule. The "打开图鉴" button is a real <a> so the shell works
+// without JS; the last-venue link is the only JS-dependent bit and simply does
+// not render when JS is off / no localStorage.
+import type { Locale } from "@/i18n/config";
+import SiteHeader from "@/components/SiteHeader.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import LastVenueLink from "@/islands/LastVenueLink.tsx";
+
+interface Props {
+  locale: Locale;
+  /** Headline (detected/active locale). */
+  title: string;
+  /** Supporting line. */
+  body: string;
+  /** Recovery button copy → home ("打开图鉴 / 図鑑をひらく"). */
+  homeLabel: string;
+  /** Secondary client-hydrated last-venue link copy. */
+  lastVenueLabel: string;
+}
+
+const { locale, title, body, homeLabel, lastVenueLabel } = Astro.props;
+---
+
+<div class="flex min-h-screen flex-col">
+  <SiteHeader locale={locale} />
+
+  <main class="flex flex-1 items-start justify-center px-6 pt-[18vh] pb-16">
+    <div class="max-w-md text-center">
+      {/* Folded-folio torn-page mark — the ONE decorative figure (§4). */}
+      <svg
+        viewBox="0 0 64 64"
+        class="text-foreground mx-auto h-16 w-auto"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        {/* Folio leaf with a dog-eared (folded) top-right corner. */}
+        <path d="M14 6 h28 l10 10 v42 H14 Z"></path>
+        {/* The fold. */}
+        <path d="M42 6 v10 h10"></path>
+        {/* A torn diagonal across the page (乱丁 / 落丁 缺页 metaphor). */}
+        <path d="M20 34 l10 6 -8 6 12 5" stroke-dasharray="2 3"></path>
+      </svg>
+
+      <h1 class="text-foreground mt-8 text-2xl font-bold leading-snug">
+        {title}
+      </h1>
+      <p class="text-muted-foreground mt-3 text-base leading-relaxed">{body}</p>
+
+      <div class="mt-8 flex flex-col items-center">
+        <a
+          href={`/${locale}/`}
+          class="border-foreground text-foreground hover:bg-secondary focus-visible:ring-ring inline-flex h-12 items-center gap-2 rounded border-[1.5px] px-8 text-base font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none max-sm:w-full max-sm:max-w-[320px] max-sm:justify-center"
+        >
+          {homeLabel}
+          <svg
+            viewBox="0 0 24 24"
+            class="size-5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6"></path>
+          </svg>
+        </a>
+        <LastVenueLink locale={locale} label={lastVenueLabel} client:load />
+      </div>
+    </div>
+  </main>
+
+  <SiteFooter locale={locale} />
+</div>

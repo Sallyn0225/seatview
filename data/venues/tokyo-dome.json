@@ -1,0 +1,25 @@
+{
+  "id": "tokyo-dome",
+  "name_zh": "东京巨蛋",
+  "name_jp": "東京ドーム",
+  "name_romaji": "Tokyo Dome",
+  "prefecture": "tokyo",
+  "city": "文京区",
+  "aliases": [
+    "東京ドーム",
+    "东京巨蛋",
+    "Tokyo Dome",
+    "ビッグエッグ",
+    "Big Egg"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/tokyo-dome/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

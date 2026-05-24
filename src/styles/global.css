@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+/*
+  SeatView theme — "The Quiet Folio · 静纸" (see DESIGN.md).
+
+  Color strategy: Restrained. Body UI is composed only of 「墨」(ink) and
+  「纸」(paper); a single 朱赤 (vermilion) accent occupies ≤10% of any screen.
+
+  The No-Pure-Black-or-White Rule: never #000 / #fff. Every neutral carries a
+  warm OKLCH hue (h ≈ 70-95) with chroma 0.004-0.01.
+
+  DESIGN.md [to be resolved during implementation] tokens are pinned here:
+    Sumi Ink · 墨黑          → oklch(0.20 0.008 75)
+    Warm Rice Paper · 暖米白  → oklch(0.972 0.006 88)
+    Folio Cream · 纸面奶色    → oklch(0.935 0.008 86)
+    Hairline Ash · 灰发线色   → oklch(0.80 0.006 86)
+    Accent · 朱赤            → oklch(0.58 0.15 32)
+*/
+
+@theme {
+  /* radius */
+  --radius: 0.5rem;
+
+  /* fonts (Noto same-family CN↔JP per The Two Tongues Rule) */
+  --font-serif:
+    "Noto Serif SC", "Noto Serif JP", ui-serif, Georgia, serif;
+  --font-sans:
+    "Noto Sans SC", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+}
+
+/* ── Light (paper face) ───────────────────────────────────────────────── */
+:root {
+  --background: oklch(0.972 0.006 88); /* Warm Rice Paper */
+  --foreground: oklch(0.2 0.008 75); /* Sumi Ink */
+
+  --card: oklch(0.935 0.008 86); /* Folio Cream */
+  --card-foreground: oklch(0.2 0.008 75);
+
+  --popover: oklch(0.972 0.006 88);
+  --popover-foreground: oklch(0.2 0.008 75);
+
+  --primary: oklch(0.2 0.008 75); /* ink as primary chrome */
+  --primary-foreground: oklch(0.972 0.006 88);
+
+  --secondary: oklch(0.935 0.008 86); /* Folio Cream */
+  --secondary-foreground: oklch(0.2 0.008 75);
+
+  --muted: oklch(0.935 0.008 86);
+  --muted-foreground: oklch(0.46 0.007 82);
+
+  --accent: oklch(0.58 0.15 32); /* 朱赤 vermilion */
+  --accent-foreground: oklch(0.985 0.004 88);
+
+  --destructive: oklch(0.52 0.16 28);
+  --destructive-foreground: oklch(0.985 0.004 88);
+
+  --border: oklch(0.8 0.006 86); /* Hairline Ash */
+  --input: oklch(0.8 0.006 86);
+  --ring: oklch(0.58 0.15 32);
+}
+
+/* ── Dark (ink face) ──────────────────────────────────────────────────── */
+.dark {
+  --background: oklch(0.21 0.008 78); /* deep warm ink, not #000 */
+  --foreground: oklch(0.93 0.006 88); /* warm paper text */
+
+  --card: oklch(0.25 0.008 78);
+  --card-foreground: oklch(0.93 0.006 88);
+
+  --popover: oklch(0.21 0.008 78);
+  --popover-foreground: oklch(0.93 0.006 88);
+
+  --primary: oklch(0.93 0.006 88);
+  --primary-foreground: oklch(0.21 0.008 78);
+
+  --secondary: oklch(0.27 0.008 78);
+  --secondary-foreground: oklch(0.93 0.006 88);
+
+  --muted: oklch(0.27 0.008 78);
+  --muted-foreground: oklch(0.72 0.006 86);
+
+  --accent: oklch(0.64 0.155 33); /* slightly lifted vermilion for dark */
+  --accent-foreground: oklch(0.18 0.008 78);
+
+  --destructive: oklch(0.58 0.16 28);
+  --destructive-foreground: oklch(0.96 0.004 88);
+
+  --border: oklch(0.34 0.007 80); /* Hairline Ash, ink face */
+  --input: oklch(0.34 0.007 80);
+  --ring: oklch(0.64 0.155 33);
+}
+
+/* Map the design tokens onto Tailwind v4 utility theme so `bg-background`,
+   `text-foreground`, `border-border`, etc. resolve to the CSS variables. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    /* Tabular numerals for 座位号 / 日期 / 上传时间 (The Photo-Caption Rule). */
+    font-feature-settings: "tnum";
+    color-scheme: light dark;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* Flat Folio Rule: no decorative box-shadow. Respect reduced motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Lightbox metadata detail sheet slide-up (shape-lightbox.md §5). Reduced-motion
+   collapses this to instant via the rule above. */
+@keyframes yarl-detail-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Upload Sheet slide-in (shape-upload-sheet.md §11): desktop/tablet from the
+   right, mobile from the bottom. 250ms ease-out-quart. Reduced-motion makes it
+   instant via the prefers-reduced-motion rule above. */
+@keyframes seatview-sheet-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes seatview-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes seatview-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* Panel slides up from the bottom on mobile, in from the right on ≥768px. */
+.seatview-sheet-panel {
+  animation: seatview-sheet-up 250ms ease-out;
+}
+@media (min-width: 768px) {
+  .seatview-sheet-panel {
+    animation: seatview-sheet-right 250ms ease-out;
+  }
+}

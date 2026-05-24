@@ -1,0 +1,43 @@
+{
+  "id": "k-arena-yokohama",
+  "name_zh": "横滨 K Arena",
+  "name_jp": "Kアリーナ横浜",
+  "name_romaji": "K Arena Yokohama",
+  "prefecture": "kanagawa",
+  "city": "横浜市",
+  "aliases": ["K Arena", "Kアリーナ", "横浜 K", "K Arena Yokohama", "Kアリーナ横浜"],
+  "subMaps": [
+    {
+      "id": "L1",
+      "label_zh": "L1 一层",
+      "label_jp": "L1 フロア",
+      "imageUrl": "/seatmaps/k-arena-yokohama/L1.svg",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "id": "L3",
+      "label_zh": "L3 三层",
+      "label_jp": "L3 フロア",
+      "imageUrl": "/seatmaps/k-arena-yokohama/L3.svg",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "id": "L5",
+      "label_zh": "L5 五层",
+      "label_jp": "L5 フロア",
+      "imageUrl": "/seatmaps/k-arena-yokohama/L5.svg",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "id": "L7",
+      "label_zh": "L7 七层",
+      "label_jp": "L7 フロア",
+      "imageUrl": "/seatmaps/k-arena-yokohama/L7.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

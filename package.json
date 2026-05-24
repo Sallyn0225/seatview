@@ -1,0 +1,58 @@
+{
+  "name": "seatmap-real",
+  "version": "0.0.1",
+  "description": "SeatView — aggregated real-seat-view photo atlas for Japanese concert venues (internal codename: seatmap-real).",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "deploy": "astro build && wrangler deploy",
+    "astro": "astro",
+    "typecheck": "astro check",
+    "cf-typegen": "wrangler types",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply seatmap-real --local",
+    "db:migrate:prod": "wrangler d1 migrations apply seatmap-real --remote",
+    "db:seed:local": "wrangler d1 execute seatmap-real --local --file=./seeds/0001_demo_photos.sql",
+    "gen:seatmaps": "node scripts/gen-placeholder-seatmaps.mjs",
+    "gen:seed": "node scripts/gen-demo-seed.mjs"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.5.4",
+    "@astrojs/react": "^5.0.5",
+    "astro": "^6.3.0",
+    "browser-image-compression": "^2.0.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.0",
+    "fuse.js": "^7.0.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-photo-album": "^3.0.2",
+    "react-zoom-pan-pinch": "^3.6.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "yet-another-react-lightbox": "^3.21.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^22.19.19",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.31.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.83.0"
+  },
+  "overrides": {
+    "vite": "^7.3.2"
+  }
+}

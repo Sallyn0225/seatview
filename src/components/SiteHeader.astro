@@ -1,0 +1,58 @@
+---
+// Sticky top chrome reused across pages (shape-venue-page §5 / shape-home §6).
+// Warm Rice Paper background + a single Hairline Ash bottom border — NOT
+// glassmorphism, NOT blur (Flat Folio Rule). Height: 56px desktop / 48px mobile.
+//
+// Slots:
+//   • `search`   — venue pages drop the search island here (hidden on mobile,
+//                  where space is tight; the tree drawer carries discovery).
+//   • `tree-trigger` — venue pages drop the mobile tree hamburger here.
+import type { Locale } from "@/i18n/config";
+import LanguageSwitcher from "@/islands/LanguageSwitcher.tsx";
+import ThemeToggle from "@/islands/ThemeToggle.tsx";
+
+interface Props {
+  locale: Locale;
+  /** Whether this page renders a search island into the `search` slot. */
+  withSearch?: boolean;
+}
+
+const { locale, withSearch = false } = Astro.props;
+const hasTreeTrigger = Astro.slots.has("tree-trigger");
+---
+
+<header
+  class="border-border bg-background sticky top-0 z-40 border-b"
+>
+  <div
+    class="flex h-12 items-center gap-3 px-4 lg:h-14 lg:px-6"
+  >
+    {
+      hasTreeTrigger && (
+        <div class="lg:hidden">
+          <slot name="tree-trigger" />
+        </div>
+      )
+    }
+
+    <a
+      href={`/${locale}/`}
+      class="text-foreground focus-visible:ring-ring shrink-0 rounded-sm font-serif text-lg font-medium tracking-tight focus-visible:ring-2 focus-visible:outline-none"
+    >
+      SeatView
+    </a>
+
+    {
+      withSearch && (
+        <div class="hidden flex-1 justify-center lg:flex">
+          <slot name="search" />
+        </div>
+      )
+    }
+
+    <div class="ml-auto flex items-center gap-2">
+      <LanguageSwitcher locale={locale} client:idle />
+      <ThemeToggle locale={locale} client:idle />
+    </div>
+  </div>
+</header>

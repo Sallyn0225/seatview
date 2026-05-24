@@ -1,0 +1,97 @@
+{
+  // SeatView (seatmap-real) — Cloudflare Workers config.
+  //
+  // ⚠️ The `*_id` / namespace ids below are placeholders. Before first deploy,
+  // run the create commands and paste the returned ids here:
+  //   wrangler d1 create seatmap-real
+  //   wrangler kv namespace create RATE_LIMIT
+  //   wrangler r2 bucket create seatmap-images
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "seatmap-real",
+  // The Astro Cloudflare adapter injects the real server entrypoint and the
+  // built-asset directory at build time; keep `main` pointed at the adapter
+  // entrypoint here so `astro build` / `wrangler dev` resolve it.
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-04-15",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "observability": {
+    "enabled": true
+  },
+
+  // D1: photos + staging_venues (see src/server/db/schema.ts).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "seatmap-real",
+      "database_id": "TODO-fill-with-wrangler-d1-create-output",
+      "migrations_dir": "./migrations"
+    }
+  ],
+
+  // R2: user-uploaded seat-view images (client direct upload via presigned URL).
+  // Binding is `BUCKET` (not `IMAGES`) to avoid clashing with the adapter's
+  // optional Cloudflare Images binding default.
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "seatmap-images"
+    }
+  ],
+
+  // KV namespaces.
+  //   • RATE_LIMIT — IP rate-limit counters (upload 10/day, staging 5/day, 30s
+  //     cooldown; src/server/rate-limit.ts).
+  //   • SESSION — required by the Astro Cloudflare adapter, which auto-enables
+  //     its session API and looks up a KV binding named SESSION. SeatView has NO
+  //     account / session system (ADR-2: no registration), so nothing actually
+  //     writes sessions — but the adapter injects this binding into the built
+  //     worker config regardless, so we declare it here (with its own namespace)
+  //     to keep the binding resolvable and the build warning-free. Create it
+  //     once before deploy and paste the id below:
+  //         wrangler kv namespace create SESSION
+  //     (Alternatively, set `session.driver` in astro.config.mjs to opt out; we
+  //     keep the binding so the session API stays available if ever needed.)
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT",
+      "id": "TODO-fill-with-wrangler-kv-namespace-create-RATE_LIMIT-output"
+    },
+    {
+      "binding": "SESSION",
+      "id": "TODO-fill-with-wrangler-kv-namespace-create-SESSION-output"
+    }
+  ],
+
+  // Public (build-time + runtime) vars. The only secret is TURNSTILE_SECRET_KEY
+  // (.dev.vars locally, `wrangler secret put` in production). Uploads write to
+  // the bound R2 BUCKET directly, so no R2 S3 credentials are needed.
+  //
+  // PUBLIC_TURNSTILE_SITE_KEY uses Cloudflare's documented ALWAYS-PASS test site
+  // key for local/dev so the upload Turnstile step works offline. Swap to the
+  // real site key from the Turnstile dashboard before production deploy.
+  //
+  // ── Maintainer admin (R7 / ADR-11) ────────────────────────────────────────
+  // The `/<lang>/admin` page + `/api/admin/*` endpoints are protected by a
+  // Cloudflare Access (Zero Trust) application + policy configured ONCE in the
+  // Cloudflare dashboard (Zero Trust → Access → Applications). Steps:
+  //   1. Add a self-hosted application covering paths `/*/admin` and
+  //      `/api/admin/*` on the deployed domain (the domain must use the orange
+  //      Cloudflare proxy for Access to apply).
+  //   2. Add a policy: Allow → emails of the maintainer(s) (GitHub / Google IdP).
+  //   3. Access then authenticates at the edge and forwards
+  //      `Cf-Access-Authenticated-User-Email`; the Worker trusts that header
+  //      (src/server/admin-auth.ts). Anonymous traffic never reaches the Worker.
+  // No env var is needed in production for admin auth — Access is the gate.
+  // For LOCAL dev there is no Access edge, so set DEV_ADMIN_EMAIL in .dev.vars
+  // to mock an authenticated maintainer (NEVER set it in production).
+  "vars": {
+    "PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "PUBLIC_SITE_URL": "http://localhost:4321",
+    // Public-read base URL for uploaded R2 images (custom domain / r2.dev).
+    // image_key is appended to build the fetchable URL (src/lib/photos.ts).
+    // Empty locally → the seatmap renders pins fine (it never loads photos);
+    // the grid/Lightbox (step 5) get a same-origin /r2/ placeholder URL.
+    "PUBLIC_R2_BASE_URL": ""
+  }
+}

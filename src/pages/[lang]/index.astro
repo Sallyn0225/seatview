@@ -1,0 +1,223 @@
+---
+// Home / intro page — the "卷首页" (R10.1, shape-home-explainer.md).
+//
+// 中度图鉴卷首序 (decision 1): hero + three scrolling sections (使用流程三步 /
+// 示例场馆 / 上传规则 / footer). 整页雷朱赤完全不出现 (§3) — the page uses only
+// the four neutral tones; the hero CTA is an INK OUTLINE button (导航行为, not a
+// contribution — 朱赤 stays reserved for seatmap pins + upload/staging submit).
+//
+// This page is the ONE place Serif Display is allowed outside venue/event names
+// (Folio Title Rule): the hero wordmark + subtitle. Everything else is Sans.
+// Zero image resources (decision 3) — only inline → / ↗ glyphs.
+//
+// The Worker ALWAYS SSRs this explainer (it cannot read localStorage). The
+// last-visited-venue redirect (R10.2) runs client-side via the HomeRedirect
+// island after hydration; the CTA + example links are plain <a href> so the page
+// works with JS disabled (§7 fallback). Example venues are HARDCODED to
+// k-arena-yokohama + tokyo-garden-theater (display choice, not D1-driven, §9).
+import Layout from "@/layouts/Layout.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SectionHeading from "@/components/SectionHeading.astro";
+import HomeRedirect from "@/islands/HomeRedirect.tsx";
+import { asLocale } from "@/i18n/config";
+import { getMessages, venueName } from "@/i18n";
+import { getVenue } from "@/data/venues";
+
+const locale = asLocale(Astro.params.lang);
+const t = getMessages(locale);
+
+const CC_LICENSE_URL = "https://creativecommons.org/licenses/by-nc/4.0/";
+const GITHUB_REPO = "https://github.com/seatview/seatmap-real";
+
+// Hardcoded example venues (shape §9). venue-id MUST match data/venues/<id>.json.
+const EXAMPLE_IDS = ["k-arena-yokohama", "tokyo-garden-theater"] as const;
+const examples = EXAMPLE_IDS.map((id, i) => {
+  const venue = getVenue(id);
+  return {
+    id,
+    // Fall back to the slug if the JSON is missing (defensive; CTA still routes).
+    name: venue ? venueName(venue, locale) : id,
+    romaji: venue?.name_romaji ?? "",
+    note: i === 0 ? t.home.venue1Note : t.home.venue2Note,
+  };
+});
+// The hero CTA enters the first example venue (K Arena) when there is no
+// last-visited venue (the island intercepts that case before paint matters).
+const ctaHref = `/${locale}/v/${EXAMPLE_IDS[0]}`;
+
+const steps = [
+  { n: "①", title: t.home.step1Title, body: t.home.step1Body },
+  { n: "②", title: t.home.step2Title, body: t.home.step2Body },
+  { n: "③", title: t.home.step3Title, body: t.home.step3Body },
+];
+
+// Split the upload-rule-3 line around the {license} slot for the inline link.
+const rule3Parts = t.home.rule3.split("{license}");
+---
+
+<Layout locale={locale}>
+  <HomeRedirect locale={locale} client:load />
+
+  <div class="flex min-h-screen flex-col">
+    <SiteHeader locale={locale} />
+
+    <main class="flex-1">
+      {/* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */}
+      <section
+        class="mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]"
+      >
+        <h1 class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl">
+          SeatView
+        </h1>
+        <p class="text-foreground/80 mt-2 font-serif text-2xl lg:text-3xl">
+          {t.home.subtitle}
+        </p>
+
+        <hr class="border-border my-8 w-20" />
+
+        <p class="text-foreground max-w-prose text-lg leading-relaxed lg:text-xl">
+          {t.home.heroLine}
+        </p>
+
+        <div class="mt-8">
+          <a
+            href={ctaHref}
+            class="border-foreground text-foreground hover:bg-secondary focus-visible:ring-ring inline-flex h-12 items-center gap-2 rounded border-[1.5px] bg-transparent px-8 text-base font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none max-sm:w-full max-sm:max-w-[320px] max-sm:justify-center"
+          >
+            {t.home.cta}
+            <svg
+              viewBox="0 0 24 24"
+              class="size-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6"></path>
+            </svg>
+          </a>
+        </div>
+      </section>
+
+      {/* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */}
+      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+        <SectionHeading primary={t.home.howTitle} alt={t.home.howTitleAlt} />
+        <ol class="mt-8 grid gap-8 sm:grid-cols-3">
+          {
+            steps.map((step) => (
+              <li>
+                <p
+                  class="text-foreground text-2xl leading-none"
+                  aria-hidden="true"
+                >
+                  {step.n}
+                </p>
+                <p class="text-foreground mt-3 text-lg font-bold">
+                  {step.title}
+                </p>
+                <p class="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {step.body}
+                </p>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+
+      {/* ── 推荐先看 / おすすめ — minimal text links, zero images (decision 3) ── */}
+      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+        <SectionHeading
+          primary={t.home.recommendTitle}
+          alt={t.home.recommendTitleAlt}
+        />
+        <ul class="mt-6">
+          {
+            examples.map((ex) => (
+              <li class="border-border border-b last:border-b-0">
+                <a
+                  href={`/${locale}/v/${ex.id}`}
+                  class="group focus-visible:ring-ring -mx-2 flex items-baseline justify-between gap-4 rounded-sm px-2 py-4 focus-visible:ring-2 focus-visible:outline-none"
+                >
+                  <span class="min-w-0">
+                    <span class="text-foreground block font-serif text-xl group-hover:underline">
+                      {ex.name}
+                    </span>
+                    {ex.romaji && (
+                      <span class="text-muted-foreground block text-sm">
+                        {ex.romaji}
+                      </span>
+                    )}
+                    <span class="text-muted-foreground mt-0.5 block text-sm">
+                      {ex.note}
+                    </span>
+                  </span>
+                  <span
+                    class="text-muted-foreground shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  >
+                    →
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      {/* ── 关于上传 / 投稿について ───────────────────────────────────────── */}
+      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
+        <SectionHeading
+          primary={t.home.uploadTitle}
+          alt={t.home.uploadTitleAlt}
+        />
+        <ul class="text-foreground mt-6 space-y-2 text-base leading-relaxed">
+          <li class="flex gap-2">
+            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span>{t.home.rule1}</span>
+          </li>
+          <li class="flex gap-2">
+            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span>{t.home.rule2}</span>
+          </li>
+          <li class="flex gap-2">
+            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span>
+              {rule3Parts[0]}
+              <a
+                href={CC_LICENSE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-foreground focus-visible:ring-ring rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {t.home.license}
+              </a>
+              {rule3Parts[1]}
+            </span>
+          </li>
+        </ul>
+        <p class="text-muted-foreground mt-4 text-sm leading-relaxed">
+          {t.home.limitNote}
+        </p>
+      </section>
+
+      {/* ── 贡献新场馆入口 (R13.2) ────────────────────────────────────────── */}
+      <section class="mx-auto max-w-[680px] px-6 pb-8">
+        <p class="text-sm">
+          <a
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {t.footer.contribute} ↗
+          </a>
+        </p>
+      </section>
+    </main>
+
+    <SiteFooter locale={locale} />
+  </div>
+</Layout>

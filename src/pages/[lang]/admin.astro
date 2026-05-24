@@ -1,0 +1,60 @@
+---
+// Maintainer admin page (R7, ADR-11). Protected by Cloudflare Access at the edge
+// in production; the middleware admin guard also rejects requests with no
+// maintainer identity (and honours DEV_ADMIN_EMAIL in local dev). By the time
+// this renders the request is authenticated — we read the email purely to show
+// "已登录：…" and to pass it to the console for its own 403 fallback copy.
+//
+// All moderation (photo list + soft-delete, staging triage) happens in the
+// AdminConsole island via /api/admin/*. The page only:
+//   • resolves the maintainer email (Cf-Access header / dev mock),
+//   • builds a static venueId→labels map (ADR-1 data, no D1) so photo rows show
+//     readable venue / sub-map names instead of slugs,
+//   • passes PUBLIC_R2_BASE_URL so thumbnails resolve.
+import Layout from "@/layouts/Layout.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import AdminConsole from "@/islands/AdminConsole.tsx";
+import type { VenueLabels } from "@/islands/AdminConsole.tsx";
+import { asLocale } from "@/i18n/config";
+import { getMessages, venueName, subMapLabel } from "@/i18n";
+import { venues } from "@/data/venues";
+import { maintainerEmail } from "@/server/admin-auth";
+import { env } from "cloudflare:workers";
+
+export const prerender = false;
+
+const locale = asLocale(Astro.params.lang);
+const t = getMessages(locale);
+
+// Authenticated maintainer (guard already enforced in middleware; this is the
+// identity to display). Empty string is unreachable in practice (guard denies),
+// kept only so the prop type is a string.
+const email = maintainerEmail(Astro.request, env.DEV_ADMIN_EMAIL) ?? "";
+
+// Static venue/sub-map display labels for the photo list (ADR-1; no D1 query).
+const venueLabels: VenueLabels = {};
+for (const v of venues) {
+  const subMaps: Record<string, string> = {};
+  for (const sm of v.subMaps) subMaps[sm.id] = subMapLabel(sm, locale);
+  venueLabels[v.id] = { name: venueName(v, locale), subMaps };
+}
+
+const r2BaseUrl = import.meta.env.PUBLIC_R2_BASE_URL ?? "";
+---
+
+<Layout locale={locale} title={`${t.admin.title} · SeatView`}>
+  <div class="flex min-h-screen flex-col">
+    <SiteHeader locale={locale} />
+    <main class="flex-1">
+      <div class="mx-auto max-w-3xl px-6 pt-10 pb-16">
+        <AdminConsole
+          locale={locale}
+          email={email}
+          r2BaseUrl={r2BaseUrl}
+          venueLabels={venueLabels}
+          client:load
+        />
+      </div>
+    </main>
+  </div>
+</Layout>

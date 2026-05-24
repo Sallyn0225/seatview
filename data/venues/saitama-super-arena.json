@@ -1,0 +1,25 @@
+{
+  "id": "saitama-super-arena",
+  "name_zh": "埼玉超级竞技馆",
+  "name_jp": "さいたまスーパーアリーナ",
+  "name_romaji": "Saitama Super Arena",
+  "prefecture": "saitama",
+  "city": "さいたま市",
+  "aliases": [
+    "さいたまスーパーアリーナ",
+    "埼玉超级竞技馆",
+    "Saitama Super Arena",
+    "SSA",
+    "さいたまSA"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/saitama-super-arena/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}

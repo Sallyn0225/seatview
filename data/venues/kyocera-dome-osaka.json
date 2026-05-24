@@ -1,0 +1,26 @@
+{
+  "id": "kyocera-dome-osaka",
+  "name_zh": "京瓷巨蛋大阪",
+  "name_jp": "京セラドーム大阪",
+  "name_romaji": "Kyocera Dome Osaka",
+  "prefecture": "osaka",
+  "city": "大阪市",
+  "aliases": [
+    "京セラドーム",
+    "京瓷巨蛋",
+    "Kyocera Dome",
+    "Kyocera Dome Osaka",
+    "大阪ドーム",
+    "Osaka Dome"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/kyocera-dome-osaka/default.svg",
+      "width": 1200,
+      "height": 800
+    }
+  ]
+}
