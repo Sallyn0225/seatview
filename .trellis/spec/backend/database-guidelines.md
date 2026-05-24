@@ -66,8 +66,12 @@ client. This is the canonical anti-forgery pattern for this project.
   `width`/`height` + an expiry. The signature makes every field tamper-proof.
 - **Commit**: reads field values from the **verified ticket**, never from the
   multipart body (the body only carries the image bytes + the ticket string).
-- **Env**: `TURNSTILE_SECRET_KEY`, `UPLOAD_TICKET_SECRET`, `IP_HASH_SALT`,
-  bindings `DB` (D1), `BUCKET` (R2), `RATE_LIMIT` (KV). See `.dev.vars.example`.
+- **Env**: a single server secret `TURNSTILE_SECRET_KEY`, reused for three
+  purposes — ① Turnstile siteverify, ② the upload HMAC ticket signing key
+  (`src/server/upload-ticket.ts`), ③ the IP-hash salt (`src/server/ip.ts`).
+  There is intentionally NO separate `UPLOAD_TICKET_SECRET` / `IP_HASH_SALT`
+  (both files note this at their top). Plus bindings `DB` (D1), `BUCKET` (R2),
+  `RATE_LIMIT` (KV) (+ the adapter-required `SESSION` KV). See `.dev.vars.example`.
 
 ### 4. Validation & Error Matrix
 - Turnstile token missing/invalid → `400` (sign rejects before signing).

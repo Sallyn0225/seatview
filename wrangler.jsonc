@@ -28,6 +28,12 @@
   "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
 
+  // Production custom domain. On deploy, wrangler creates/binds this Worker route
+  // as a custom domain on the genchi.top zone (orange-proxied — also required for
+  // the Cloudflare Access admin gate, ADR-11). `custom_domain: true` makes
+  // wrangler manage the DNS record + cert for seat.genchi.top automatically.
+  "routes": [{ "pattern": "seat.genchi.top", "custom_domain": true }],
+
   "observability": {
     "enabled": true
   },
@@ -37,12 +43,15 @@
     {
       "binding": "DB",
       "database_name": "seatmap-real",
-      "database_id": "TODO-fill-with-wrangler-d1-create-output",
+      "database_id": "9a587168-33ad-4037-af9e-fd6172c77252",
       "migrations_dir": "./migrations"
     }
   ],
 
-  // R2: user-uploaded seat-view images (client direct upload via presigned URL).
+  // R2: user-uploaded seat-view images. The Worker writes bytes DIRECTLY to the
+  // bound `BUCKET` (see src/server/r2/images.ts + upload-ticket.ts) — this is a
+  // bound-bucket direct write, NOT a presigned-URL client upload (the upload is
+  // authorized by an HMAC ticket; no R2 S3 credentials / CORS needed).
   // Binding is `BUCKET` (not `IMAGES`) to avoid clashing with the adapter's
   // optional Cloudflare Images binding default.
   "r2_buckets": [
@@ -68,11 +77,11 @@
   "kv_namespaces": [
     {
       "binding": "RATE_LIMIT",
-      "id": "TODO-fill-with-wrangler-kv-namespace-create-RATE_LIMIT-output"
+      "id": "eecec3f3135642d787e42b0483192ecf"
     },
     {
       "binding": "SESSION",
-      "id": "TODO-fill-with-wrangler-kv-namespace-create-SESSION-output"
+      "id": "48cfec0aedcd49349b9ee947a3c8b210"
     }
   ],
 
@@ -99,12 +108,10 @@
   // For LOCAL dev there is no Access edge, so set DEV_ADMIN_EMAIL in .dev.vars
   // to mock an authenticated maintainer (NEVER set it in production).
   "vars": {
-    "PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
-    "PUBLIC_SITE_URL": "http://localhost:4321",
+    "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADVZn5TaE3SZeI6u",
+    "PUBLIC_SITE_URL": "https://seat.genchi.top",
     // Public-read base URL for uploaded R2 images (custom domain / r2.dev).
     // image_key is appended to build the fetchable URL (src/lib/photos.ts).
-    // Empty locally → the seatmap renders pins fine (it never loads photos);
-    // the grid/Lightbox (step 5) get a same-origin /r2/ placeholder URL.
-    "PUBLIC_R2_BASE_URL": ""
+    "PUBLIC_R2_BASE_URL": "https://img.genchi.top"
   }
 }
