@@ -3,6 +3,21 @@
 {"file": "DESIGN.md", "reason": "Check 时比对实现是否符合视觉规范：Restrained 色彩策略是否守住（accent ≤10%）、是否出现 #000/#fff/glassmorphism/box-shadow 装饰/em dash/border-left>1px/gradient text 等禁忌、Two Tongues Rule 是否保持（中日同源 Noto 家族）、Photo-Caption Rule 是否守住（元数据不与照片争重）、Flat Folio Rule 是否守住（无 box-shadow 作装饰）、Do's/Don'ts 是否全部满足。"}
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/cloudflare-astro-stack.md", "reason": "验证 Cloudflare 全栈集成正确性的参考：wrangler.jsonc 绑定齐全、Drizzle 用法符合最佳实践、R2 直传策略正确、KV 滑动窗口算法实现正确、Turnstile 两步验证未跳过、i18n routing 配置标准化。"}
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/frontend-libraries.md", "reason": "验证前端库使用是否符合推荐：Astro Island hydration 指令是否正确（client:load/visible/idle）、Lighthouse 性能影响、组件 SSR 兼容性、移动端手势冲突处理。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/shape-seatmap-component.md", "reason": "坐席图组件设计 brief。Check 时比对实现是否落实 brief 中已断言的设计决策：默认态是否「朱赤极淡描边 + 纸面奶色填充」、选中态是否「朱赤实心 + 墨黑描边」、控件 idle 5s 是否降到 50% opacity、聚合阈值是否 36px/scale 初值、reduced-motion 是否即时跳转、键盘 Tab 顺序是否按屏幕坐标、空/错文案是否中日双语、所有标注点视觉差异化是否到位（避免 SaaS clusters reflex）。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/shape-venue-page.md", "reason": "场馆页整页 shell 设计 brief。Check 时比对实现是否落实已锁定的设计决策：上传按钮是否为 Tinted fill 折中派（朱赤极淡填充 + 墨黑文字，非 ghost / 非 solid）、场馆名是否 Serif Display 单独成行的图鉴书页式（含面包屑 + 罗马字副标题 + 下方扁平 tags）、场馆树 MVP 是否默认展开有数据的区划、桌面场馆树是否独立滚动（不参与主区滚动）、移动端是否抽屉化、sub-map tabs 单 sub-map 时是否不渲染、瀑布流空/错/限频文案是否符合温度策略表。"}
+{"file": ".trellis/spec/guides/index.md", "reason": "thinking guides 索引。Check 时定位所有跨层/复用类思考清单，避免漏检。"}
 {"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Quality check 时验证跨层数据一致性：D1 字段 → Drizzle schema → API response → 前端类型 → UI 显示 是否同步。本项目典型陷阱：photos 表新加字段但前端没渲染。"}
 {"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Quality check 时识别重复实现：是否多处自己实现 i18n 字符串读取、是否多处自己写限流逻辑、是否复制了同一个组件而非抽提。"}
-{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/shape-seatmap-component.md", "reason": "坐席图组件设计 brief。Check 时比对实现是否落实 brief 中已断言的设计决策：默认态是否「朱赤极淡描边 + 纸面奶色填充」、选中态是否「朱赤实心 + 墨黑描边」、控件 idle 5s 是否降到 50% opacity、聚合阈值是否 36px/scale 初值、reduced-motion 是否即时跳转、键盘 Tab 顺序是否按屏幕坐标、空/错文案是否中日双语、所有标注点视觉差异化是否到位（避免 SaaS clusters reflex）。"}
+{"file": ".trellis/spec/frontend/index.md", "reason": "前端规范总索引。Check 时找到所有前端规范的入口，逐条比对实现完成度。"}
+{"file": ".trellis/spec/frontend/directory-structure.md", "reason": "Check 时验证 Astro pages / components / islands / lib / i18n 是否按规范布局，是否出现散落文件。"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "Check 时验证组件实现是否符合规范：.astro vs React Island 边界、shadcn/ui 改造合理、双语字段命名一致、Tailwind class 组织规整。"}
+{"file": ".trellis/spec/frontend/hook-guidelines.md", "reason": "Check 时验证 React Hooks 写法：依赖项完整、不在条件分支中调用、自定义 hook 命名以 use 开头、副作用清理函数齐全。"}
+{"file": ".trellis/spec/frontend/state-management.md", "reason": "Check 时验证状态管理策略落实：localStorage key 命名正确（seatview:*）、URL query 与组件 state 同步、跨组件信号无竞态、Lightbox 与坐席图状态一致性。"}
+{"file": ".trellis/spec/frontend/type-safety.md", "reason": "Check 时验证 TS 类型完整：无 any（PRD DoD）、Venue/SubMap/Photo 类型全栈复用、API response 类型与后端一致、Drizzle 推导类型未被绕过。"}
+{"file": ".trellis/spec/frontend/quality-guidelines.md", "reason": "Check 时验证前端质量基线：Lighthouse ≥ 80、a11y 检查项、bundle size、性能预算。"}
+{"file": ".trellis/spec/backend/index.md", "reason": "后端规范总索引。Check 时找到所有后端规范入口，逐条比对实现。"}
+{"file": ".trellis/spec/backend/directory-structure.md", "reason": "Check 时验证 Worker 入口、API routes、middleware、Drizzle schema/migrations、R2 helpers 是否按规范布局。"}
+{"file": ".trellis/spec/backend/database-guidelines.md", "reason": "Check 时验证 D1 + Drizzle 实现：schema 与 PRD Data Model 一致、migration 文件齐全、索引建立（idx_photos_venue）、软删除查询 WHERE deleted_at IS NULL 无遗漏。"}
+{"file": ".trellis/spec/backend/error-handling.md", "reason": "Check 时验证 API 错误返回规范：错误码统一、错误响应结构一致、用户可见文案中日双语、4xx/5xx 区分清晰。"}
+{"file": ".trellis/spec/backend/logging-guidelines.md", "reason": "Check 时验证 Worker 日志完整性：限流命中、Turnstile 失败、R2 重试、CF Access 拒绝等关键事件均有日志，无敏感信息泄漏。"}
+{"file": ".trellis/spec/backend/quality-guidelines.md", "reason": "Check 时验证后端质量基线：Worker CPU/内存预算、D1 查询效率、KV TTL 正确性、R2 presigned URL 过期窗口合理。"}
