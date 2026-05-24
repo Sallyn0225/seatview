@@ -6,3 +6,4 @@
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/top-15-venues.md", "reason": "首批 15 个高频场馆数据（偶像大师/BanG Dream/Love Live 近 5 年）。含日中英名、容量、都道府县、IP 出现频次、代表演唱会。Definition of Done 要求至少 5 个场馆数据进 D1，从此表头部选取。"}
 {"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "跨层数据流思考指南。本项目涉及客户端 (Astro/React) ↔ Worker API ↔ D1/R2/KV 多层，新增字段或修改数据格式时必须跨层一致（如 photos 表新增字段要同步更新 Drizzle schema、上传表单、瀑布流展示、Lightbox 渲染）。"}
 {"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "复用优先指南。本项目涉及大量重复模式：i18n 文案、多语言场馆名渲染、Turnstile 验证、限流中间件、上传组件复用（暂存区也用）。修改任何 constant/util 前 grep 全仓库。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/shape-seatmap-component.md", "reason": "坐席图组件设计 brief（/impeccable shape 产出，用户已确认）：明确 Restrained + 朱赤 light-first 视觉骨架、标注点的默认/选中/hover/focus 状态视觉差异化策略（默认朱赤极淡描边+纸面奶色填充；选中朱赤实心+墨黑描边）、聚合点 zoomTo 散开动画 + reduced-motion 降级、全套 Key States、Interaction Model 10 步、中日双语空/错文案。trellis-implement 实施坐席图组件前必读，所有视觉决策已断言落地，无需再问设计问题。"}

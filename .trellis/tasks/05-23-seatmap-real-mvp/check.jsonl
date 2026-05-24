@@ -5,3 +5,4 @@
 {"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/frontend-libraries.md", "reason": "验证前端库使用是否符合推荐：Astro Island hydration 指令是否正确（client:load/visible/idle）、Lighthouse 性能影响、组件 SSR 兼容性、移动端手势冲突处理。"}
 {"file": ".trellis/spec/guides/cross-layer-thinking-guide.md", "reason": "Quality check 时验证跨层数据一致性：D1 字段 → Drizzle schema → API response → 前端类型 → UI 显示 是否同步。本项目典型陷阱：photos 表新加字段但前端没渲染。"}
 {"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "Quality check 时识别重复实现：是否多处自己实现 i18n 字符串读取、是否多处自己写限流逻辑、是否复制了同一个组件而非抽提。"}
+{"file": ".trellis/tasks/05-23-seatmap-real-mvp/research/shape-seatmap-component.md", "reason": "坐席图组件设计 brief。Check 时比对实现是否落实 brief 中已断言的设计决策：默认态是否「朱赤极淡描边 + 纸面奶色填充」、选中态是否「朱赤实心 + 墨黑描边」、控件 idle 5s 是否降到 50% opacity、聚合阈值是否 36px/scale 初值、reduced-motion 是否即时跳转、键盘 Tab 顺序是否按屏幕坐标、空/错文案是否中日双语、所有标注点视觉差异化是否到位（避免 SaaS clusters reflex）。"}
