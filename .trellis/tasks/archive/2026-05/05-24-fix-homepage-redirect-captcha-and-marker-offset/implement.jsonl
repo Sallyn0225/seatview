@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/shape-home-explainer.md", "reason": "§8 入场判定/Logo 行为是被本次有意推翻的 last-venue 跳转设计；改首页前需对照原意"}
+{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/cloudflare-astro-stack.md", "reason": "Turnstile widget + PUBLIC_TURNSTILE_SITE_KEY 的原始集成约定，确认 site key 来源"}
+{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/shape-seatmap-component.md", "reason": "标注点 counter-scale/translate 居中技法来源，AnnotateSeatmap 复用此技法"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "React island 组件规范，改 AnnotateSeatmap/HomeRedirect 时遵循"}
