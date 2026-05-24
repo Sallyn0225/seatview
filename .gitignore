@@ -23,10 +23,16 @@ drizzle/.drizzle/
 .drizzle/
 
 # === Environment variables ===
+# `.env.development` / `.env.production` hold only PUBLIC_* build-time vars (the
+# values are inlined into the client bundle and shipped to every browser), so they
+# are NON-secret and COMMITTED. Secrets never go here (server secrets → .dev.vars
+# / `wrangler secret`). Local overrides (.env.local, .env.*.local) stay ignored.
 .env
 .env.*
 !.env.example
 !.env.template
+!.env.development
+!.env.production
 
 # === Logs ===
 *.log

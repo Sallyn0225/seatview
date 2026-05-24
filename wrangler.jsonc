@@ -85,13 +85,16 @@
     }
   ],
 
-  // Public (build-time + runtime) vars. The only secret is TURNSTILE_SECRET_KEY
+  // RUNTIME copy of the PUBLIC_* vars (available to the Worker via
+  // `Astro.locals.runtime.env`). The only secret is TURNSTILE_SECRET_KEY
   // (.dev.vars locally, `wrangler secret put` in production). Uploads write to
   // the bound R2 BUCKET directly, so no R2 S3 credentials are needed.
   //
-  // PUBLIC_TURNSTILE_SITE_KEY uses Cloudflare's documented ALWAYS-PASS test site
-  // key for local/dev so the upload Turnstile step works offline. Swap to the
-  // real site key from the Turnstile dashboard before production deploy.
+  // ⚠️ These do NOT reach the client bundle. Islands read PUBLIC_* via
+  // `import.meta.env.PUBLIC_*`, which Vite inlines at BUILD time from `.env*`
+  // files — NOT from this `vars` block. The committed `.env.development` /
+  // `.env.production` hold the build-time copies (test site key for dev, real
+  // site key for prod); keep this block in sync with `.env.production`.
   //
   // ── Maintainer admin (R7 / ADR-11) ────────────────────────────────────────
   // The `/<lang>/admin` page + `/api/admin/*` endpoints are protected by a

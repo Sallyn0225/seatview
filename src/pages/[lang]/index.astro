@@ -10,16 +10,17 @@
 // (Folio Title Rule): the hero wordmark + subtitle. Everything else is Sans.
 // Zero image resources (decision 3) — only inline → / ↗ glyphs.
 //
-// The Worker ALWAYS SSRs this explainer (it cannot read localStorage). The
-// last-visited-venue redirect (R10.2) runs client-side via the HomeRedirect
-// island after hydration; the CTA + example links are plain <a href> so the page
-// works with JS disabled (§7 fallback). Example venues are HARDCODED to
-// k-arena-yokohama + tokyo-garden-theater (display choice, not D1-driven, §9).
+// This explainer is ALWAYS shown at `/<lang>/`; there is no auto-redirect to a
+// last-visited venue. (The original R10.2 / shape §8 last-venue redirect was
+// removed: it hijacked the logo + footer about/privacy/terms links — which all
+// point here — so returning visitors could never reach the explainer again.)
+// The CTA + example links are plain <a href> so the page works with JS disabled
+// (§7 fallback). Example venues are HARDCODED to k-arena-yokohama +
+// tokyo-garden-theater (display choice, not D1-driven, §9).
 import Layout from "@/layouts/Layout.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SectionHeading from "@/components/SectionHeading.astro";
-import HomeRedirect from "@/islands/HomeRedirect.tsx";
 import { asLocale } from "@/i18n/config";
 import { getMessages, venueName } from "@/i18n";
 import { getVenue } from "@/data/venues";
@@ -42,8 +43,7 @@ const examples = EXAMPLE_IDS.map((id, i) => {
     note: i === 0 ? t.home.venue1Note : t.home.venue2Note,
   };
 });
-// The hero CTA enters the first example venue (K Arena) when there is no
-// last-visited venue (the island intercepts that case before paint matters).
+// The hero CTA enters the first example venue (K Arena).
 const ctaHref = `/${locale}/v/${EXAMPLE_IDS[0]}`;
 
 const steps = [
@@ -57,8 +57,6 @@ const rule3Parts = t.home.rule3.split("{license}");
 ---
 
 <Layout locale={locale}>
-  <HomeRedirect locale={locale} client:load />
-
   <div class="flex min-h-screen flex-col">
     <SiteHeader locale={locale} />
 

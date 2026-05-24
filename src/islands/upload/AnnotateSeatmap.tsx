@@ -155,13 +155,18 @@ export default function AnnotateSeatmap({
                 type="button"
                 aria-label={t.uploadSheet.step1.markerLabel}
                 onPointerDown={handleDotPointerDown}
-                className="pointer-events-auto absolute grid size-11 -translate-x-1/2 -translate-y-1/2 cursor-grab place-items-center rounded-full focus-visible:outline-none active:cursor-grabbing"
+                className="pointer-events-auto absolute grid size-11 cursor-grab place-items-center rounded-full focus-visible:outline-none active:cursor-grabbing"
                 style={{
                   left: `${point.x * 100}%`,
                   top: `${point.y * 100}%`,
-                  // Counter-scale so the dot stays a constant on-screen size as
-                  // the user zooms (same technique as the main seatmap).
+                  // Center on the anchor + counter-scale so the dot stays a
+                  // constant on-screen size as the user zooms (same technique as
+                  // the main seatmap). Centering MUST live only in this inline
+                  // `transform`: Tailwind v4's `-translate-*` utilities emit the
+                  // separate CSS `translate` property, which would STACK on top of
+                  // this and double the offset (dot lands 50% off the click).
                   transform: `translate(-50%, -50%) scale(${1 / scale})`,
+                  transformOrigin: "center",
                 }}
               >
                 {/* selected-pin visual: vermilion solid + ink hairline (mirrors

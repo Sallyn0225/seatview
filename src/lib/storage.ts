@@ -5,7 +5,8 @@
 // (shape-venue-page.md §11). All reads are SSR-safe (guarded on `window`).
 
 export const STORAGE_KEYS = {
-  /** Last-visited venue id (R10.2) — home redirect reads this. */
+  /** Last-visited venue id — the error-page "back to last venue" link reads this
+   *  (LastVenueLink). The home page no longer auto-redirects on it. */
   lastVenue: "seatview:last-venue",
   /** Theme tri-state: 'light' | 'dark' | 'system' (R12.3). */
   theme: "theme",
@@ -35,7 +36,9 @@ export function writeStorage(key: string, value: string): void {
   }
 }
 
-/** Record the last-visited venue so the home page can jump straight in (R10.2). */
+/** Record the last-visited venue. The value is consumed by the error pages'
+ *  "back to last venue" link (LastVenueLink); the home page no longer redirects
+ *  on it. (The venue page currently writes the key via an inline script.) */
 export function rememberLastVenue(venueId: string): void {
   writeStorage(STORAGE_KEYS.lastVenue, venueId);
 }

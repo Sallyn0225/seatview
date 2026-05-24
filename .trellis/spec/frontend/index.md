@@ -52,6 +52,19 @@ decision — each diverged for a verified reason.
   `react-photo-album` the stored `width`/`height` from D1 and uses
   `object-contain`. Never derive a fake aspect ratio (the old `derivePhotoAspect`
   was removed).
+- **Client islands read public config via `import.meta.env.PUBLIC_*`, inlined at
+  BUILD time from `.env*` — NOT from `wrangler.jsonc` `vars`.** Vite statically
+  replaces `import.meta.env.PUBLIC_FOO` at build using `.env`, `.env.development`
+  (dev), `.env.production` (build). `wrangler.jsonc` `vars` only reach the Worker
+  at RUNTIME (`Astro.locals.runtime.env`) and never enter the client bundle. Any
+  value an island needs (`PUBLIC_TURNSTILE_SITE_KEY`, `PUBLIC_R2_BASE_URL`,
+  `PUBLIC_SITE_URL`) MUST live in `.env.development` + `.env.production` (both
+  committed — these are non-secret, they ship to the browser); keep the
+  `wrangler.jsonc` `vars` copy in sync for runtime parity. Forget this and the
+  value inlines as `undefined` (`f=void 0` in the bundle) and the feature breaks
+  silently (the Turnstile widget rendered nothing because the site key was
+  `undefined`). Secrets (`TURNSTILE_SECRET_KEY`) stay in `.dev.vars` /
+  `wrangler secret` and never go in `.env*`.
 
 ---
 

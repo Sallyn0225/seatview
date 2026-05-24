@@ -152,13 +152,15 @@ npm run db:migrate:prod        # wrangler d1 migrations apply seatmap-real --rem
 
 # 4. 配置 Turnstile 生产 key
 #    - 在 Cloudflare 控制台创建 Turnstile widget，绑定生产域名
-#    - 把 site key 填进 wrangler.jsonc vars.PUBLIC_TURNSTILE_SITE_KEY
+#    - 把 site key 填进 .env.production 的 PUBLIC_TURNSTILE_SITE_KEY（构建期内联进
+#      客户端 bundle 的就是这里；并同步 wrangler.jsonc vars 的运行时副本）
 #    - 把 secret key 作为密钥下发（不要写进仓库）：
 wrangler secret put TURNSTILE_SECRET_KEY
 
 # 5. 配置 R2 公共读基址（上传图片的可访问 URL）
 #    给 BUCKET 开 r2.dev 公共访问或绑定自定义域名，把基址填进
-#    wrangler.jsonc vars.PUBLIC_R2_BASE_URL（image_key 会拼在它后面，见 src/lib/photos.ts）
+#    .env.production 的 PUBLIC_R2_BASE_URL（image_key 会拼在它后面，见 src/lib/photos.ts；
+#    同步 wrangler.jsonc vars 运行时副本）
 
 # 6. 用 Cloudflare Access (Zero Trust) 保护 admin（ADR-11，R7.1）
 #    在控制台 Zero Trust → Access → Applications：
@@ -188,9 +190,9 @@ npm run deploy                 # astro build && wrangler deploy -c dist/server/w
 | `RATE_LIMIT` | KV 绑定 | IP 限频计数 + 30s 冷却（带 TTL） | `wrangler.jsonc` + 本地 miniflare 自动 | `wrangler.jsonc` 填真实 KV id |
 | `SESSION` | KV 绑定 | Astro CF 适配器 session API 要求的绑定（SeatView 不实际写 session） | `wrangler.jsonc` + 本地自动 | `wrangler.jsonc` 填真实 KV id |
 | `TURNSTILE_SECRET_KEY` | 密钥 | 后端 siteverify（上传 / 暂存） | `.dev.vars`（测试 secret） | `wrangler secret put` |
-| `PUBLIC_TURNSTILE_SITE_KEY` | 公共 var | 前端 Turnstile widget | `wrangler.jsonc`（测试 site key） | `wrangler.jsonc` 真实 site key |
-| `PUBLIC_R2_BASE_URL` | 公共 var | 拼接上传图片可访问 URL；空 → 同源 `/r2/<key>` 兜底（本地无 R2 公共读时） | `wrangler.jsonc`（空） | `wrangler.jsonc`（r2.dev / 自定义域名基址） |
-| `PUBLIC_SITE_URL` | 公共 var | 站点基址 | `wrangler.jsonc`（`http://localhost:4321`） | `wrangler.jsonc`（生产域名） |
+| `PUBLIC_TURNSTILE_SITE_KEY` | 公共 var（构建期内联） | 前端 Turnstile widget | `.env.development`（测试 site key） | `.env.production` 真实 site key（+ `wrangler.jsonc` vars 运行时副本） |
+| `PUBLIC_R2_BASE_URL` | 公共 var（构建期内联） | 拼接上传图片可访问 URL；空 → 同源 `/r2/<key>` 兜底（本地无 R2 公共读时） | `.env.development`（空） | `.env.production`（r2.dev / 自定义域名基址） |
+| `PUBLIC_SITE_URL` | 公共 var（构建期内联） | 站点基址 | `.env.development`（`http://localhost:4321`） | `.env.production`（生产域名） |
 | `DEV_ADMIN_EMAIL` | 仅本地 | mock 维护者身份（无 Access 边缘时） | `.dev.vars`（任意邮箱） | **绝不设置**（用 Cloudflare Access） |
 
 > R2 上传**不需要** S3 presigned URL 凭证（`R2_ACCESS_KEY_ID` 等）。Worker 通过 `BUCKET` 绑定直写 R2，见下「上传流程」。`.dev.vars.example` 里那几行只是为将来可能重新引入 presigned 路径留的占位，默认留空。
