@@ -72,3 +72,36 @@
 ### Next Steps
 
 - None - task complete
+
+
+## Session 3: 修复首页误跳转 / Turnstile 未渲染 / 打点偏移（含生产部署）
+
+**Date**: 2026-05-24
+**Task**: 修复首页误跳转 / Turnstile 未渲染 / 打点偏移（含生产部署）
+**Branch**: `main`
+
+### Summary
+
+三处线上缺陷修复并部署 seat.genchi.top：(1) 删除 HomeRedirect island，/<lang>/ 不再自动跳转上次场馆（有意推翻 R10.2/§8，因 logo+页脚链接都指向首页导致回访者永远看不到说明页）；(2) PUBLIC_* 客户端变量改由构建期 .env.development/.env.production 注入——原先只在 wrangler.jsonc vars（运行时），import.meta.env 内联为 undefined 致 Turnstile site key 缺失、widget 静默不渲染；(3) 移除 AnnotateSeatmap 标点的 Tailwind -translate-* 类（v4 输出独立 CSS translate 属性与 inline transform 叠加成 -100%），居中统一交给 inline transform，偏移 22px→0。另查明用户报告的'上传按钮没反应'是生产旧缓存/失效 chunk，重部署后解决。沉淀两条非显然约定到 spec/frontend。生产实测四项全部通过。
+
+### Main Changes
+
+(Add details)
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f7894dc` | (see git log) |
+
+### Testing
+
+- [OK] (Add test results)
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- None - task complete
