@@ -47,6 +47,9 @@ coverage/
 .nyc_output/
 *.lcov
 
+# === Playwright MCP (browser-driver output: snapshots / traces / screenshots) ===
+.playwright-mcp/
+
 # === Editor / IDE ===
 .vscode/*
 !.vscode/extensions.json
