@@ -2,6 +2,12 @@
 
 [![Website](https://img.shields.io/badge/Website-seat.genchi.top-brightgreen)](https://seat.genchi.top) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE) [![CI](https://github.com/Sallyn0225/seatview/actions/workflows/ci.yml/badge.svg)](https://github.com/Sallyn0225/seatview/actions/workflows/ci.yml)
 
+<!-- README-I18N:START -->
+
+**简体中文** | [English](./README.en.md) | [日本語](./README.ja.md)
+
+<!-- README-I18N:END -->
+
 > 抢票选座前，先看看那个座位到底能看到什么。
 > リアル座席ビュー · 真实视角图集 —— 内部代号 `seatmap-real`
 
