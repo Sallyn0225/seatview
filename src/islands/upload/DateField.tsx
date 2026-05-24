@@ -46,6 +46,9 @@ function formatDisplay(iso: string | null): string {
 const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"];
 const WEEKDAYS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
 
+/** Popover drill-down level: pick a day, or jump by month / year first. */
+type View = "days" | "months" | "years";
+
 export default function DateField({
   locale,
   value,
@@ -55,6 +58,7 @@ export default function DateField({
   clearLabel,
 }: DateFieldProps) {
   const [open, setOpen] = useState(false);
+  const [view, setView] = useState<View>("days");
   const selected = parseIso(value);
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(
@@ -104,13 +108,66 @@ export default function DateField({
     selected.getMonth() === month &&
     selected.getDate() === day;
 
+  // ── Months / years view helpers ────────────────────────────────────────────
+  const isSelectedMonth = (m: number) =>
+    selected != null && selected.getFullYear() === year && selected.getMonth() === m;
+  const isTodayMonth = (m: number) =>
+    today.getFullYear() === year && today.getMonth() === m;
+  const isSelectedYear = (y: number) =>
+    selected != null && selected.getFullYear() === y;
+  const isTodayYear = (y: number) => today.getFullYear() === y;
+
+  // Year view paginates in fixed blocks of 12 (e.g. 2016–2027).
+  const yearPageStart = year - (year % 12);
+
+  // Header label (center) opens the next drill-up level.
+  const headerLabel =
+    view === "days"
+      ? locale === "ja"
+        ? "月を選択"
+        : "选择月份"
+      : locale === "ja"
+        ? "年を選択"
+        : "选择年份";
+
+  // Prev/next arrows step by month (days view), year (months), or 12 years.
+  const stepMonths = view === "days" ? 1 : 0;
+  const stepYears = view === "months" ? 1 : view === "years" ? 12 : 0;
+  const navPrevLabel =
+    view === "days"
+      ? locale === "ja"
+        ? "前の月"
+        : "上个月"
+      : view === "months"
+        ? locale === "ja"
+          ? "前の年"
+          : "上一年"
+        : locale === "ja"
+          ? "前の12年"
+          : "前 12 年";
+  const navNextLabel =
+    view === "days"
+      ? locale === "ja"
+        ? "次の月"
+        : "下个月"
+      : view === "months"
+        ? locale === "ja"
+          ? "次の年"
+          : "下一年"
+        : locale === "ja"
+          ? "次の12年"
+          : "后 12 年";
+
   return (
     <div ref={rootRef} className="relative">
       <span className="text-muted-foreground mb-1 block text-xs">{label}</span>
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            setView("days");
+            setOpen((v) => !v);
+          }}
           aria-haspopup="dialog"
           aria-expanded={open}
           className={cn(
@@ -143,57 +200,123 @@ export default function DateField({
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
-              onClick={() => setViewMonth(new Date(year, month - 1, 1))}
-              aria-label={locale === "ja" ? "前の月" : "上个月"}
+              onClick={() => setViewMonth(new Date(year - stepYears, month - stepMonths, 1))}
+              aria-label={navPrevLabel}
               className="hover:bg-secondary focus-visible:ring-ring grid size-8 place-items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               <ChevronLeft className="size-4" aria-hidden="true" />
             </button>
-            <span className="text-foreground text-sm font-medium [font-variant-numeric:tabular-nums]">
-              {year}年{month + 1}月
-            </span>
+            {view === "years" ? (
+              <span className="text-foreground text-sm font-medium [font-variant-numeric:tabular-nums]">
+                {yearPageStart}–{yearPageStart + 11}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setView(view === "days" ? "months" : "years")}
+                aria-label={headerLabel}
+                className="text-foreground hover:bg-secondary focus-visible:ring-ring rounded px-2 py-1 text-sm font-medium [font-variant-numeric:tabular-nums] focus-visible:ring-2 focus-visible:outline-none"
+              >
+                {view === "days" ? `${year}年${month + 1}月` : `${year}年`}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => setViewMonth(new Date(year, month + 1, 1))}
-              aria-label={locale === "ja" ? "次の月" : "下个月"}
+              onClick={() => setViewMonth(new Date(year + stepYears, month + stepMonths, 1))}
+              aria-label={navNextLabel}
               className="hover:bg-secondary focus-visible:ring-ring grid size-8 place-items-center rounded focus-visible:ring-2 focus-visible:outline-none"
             >
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <div className="text-muted-foreground grid grid-cols-7 gap-0.5 text-center text-xs">
-            {weekdays.map((w) => (
-              <span key={w} className="py-1">
-                {w}
-              </span>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5">
-            {cells.map((day, i) =>
-              day === null ? (
-                <span key={`e${i}`} />
-              ) : (
+
+          {view === "days" && (
+            <>
+              <div className="text-muted-foreground grid grid-cols-7 gap-0.5 text-center text-xs">
+                {weekdays.map((w) => (
+                  <span key={w} className="py-1">
+                    {w}
+                  </span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-0.5">
+                {cells.map((day, i) =>
+                  day === null ? (
+                    <span key={`e${i}`} />
+                  ) : (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => {
+                        onChange(toIso(new Date(year, month, day)));
+                        setOpen(false);
+                      }}
+                      className={cn(
+                        "grid size-8 place-items-center rounded text-sm [font-variant-numeric:tabular-nums]",
+                        "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                        isSelected(day)
+                          ? "bg-foreground text-background"
+                          : "hover:bg-secondary text-foreground",
+                        !isSelected(day) && isToday(day) && "ring-border ring-1",
+                      )}
+                    >
+                      {day}
+                    </button>
+                  ),
+                )}
+              </div>
+            </>
+          )}
+
+          {view === "months" && (
+            <div className="grid grid-cols-3 gap-1">
+              {Array.from({ length: 12 }, (_, m) => (
                 <button
-                  key={day}
+                  key={m}
                   type="button"
                   onClick={() => {
-                    onChange(toIso(new Date(year, month, day)));
-                    setOpen(false);
+                    setViewMonth(new Date(year, m, 1));
+                    setView("days");
                   }}
                   className={cn(
-                    "grid size-8 place-items-center rounded text-sm [font-variant-numeric:tabular-nums]",
+                    "h-9 rounded text-sm [font-variant-numeric:tabular-nums]",
                     "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                    isSelected(day)
+                    isSelectedMonth(m)
                       ? "bg-foreground text-background"
                       : "hover:bg-secondary text-foreground",
-                    !isSelected(day) && isToday(day) && "ring-border ring-1",
+                    !isSelectedMonth(m) && isTodayMonth(m) && "ring-border ring-1",
                   )}
                 >
-                  {day}
+                  {m + 1}月
                 </button>
-              ),
-            )}
-          </div>
+              ))}
+            </div>
+          )}
+
+          {view === "years" && (
+            <div className="grid grid-cols-3 gap-1">
+              {Array.from({ length: 12 }, (_, i) => yearPageStart + i).map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => {
+                    setViewMonth(new Date(y, month, 1));
+                    setView("months");
+                  }}
+                  className={cn(
+                    "h-9 rounded text-sm [font-variant-numeric:tabular-nums]",
+                    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                    isSelectedYear(y)
+                      ? "bg-foreground text-background"
+                      : "hover:bg-secondary text-foreground",
+                    !isSelectedYear(y) && isTodayYear(y) && "ring-border ring-1",
+                  )}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
