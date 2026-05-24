@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "核对未引入 shadcn/radix/react-day-picker、无新依赖、保持 Flat-Folio tokens 与手写组件约定"}
+{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/shape-upload-sheet.md", "reason": "核对移动端选图行为符合「唤起本地选图（也支持直拍）」，日期字段交互无回归"}

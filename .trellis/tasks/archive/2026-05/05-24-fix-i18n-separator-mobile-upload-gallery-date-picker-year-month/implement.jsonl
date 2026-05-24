@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/frontend/index.md", "reason": "Stack & Accepted Conventions: UI 全手写、禁用 shadcn/radix、Date Picker 手建、Flat-Folio CSS-variable tokens、不引新依赖 —— 直接约束这两处改动（去掉 capture + 增强手写日历）"}
+{"file": ".trellis/spec/frontend/component-guidelines.md", "reason": "样式规范：cn() helper、Tailwind v4 token、overlay transform 注意事项 —— 增强 DateField 时复用现有样式约定"}
+{"file": ".trellis/tasks/archive/2026-05/05-23-seatmap-real-mvp/research/shape-upload-sheet.md", "reason": "上传 Sheet 形状规格：Step2「移动端点 dropzone 唤起本地选图（也支持直拍）」证明去掉 capture 对齐 spec；Step3 日期字段意图"}
