@@ -15,20 +15,35 @@
 // load 50 at a time via an IntersectionObserver sentinel (no "load more" button,
 // no spinner). A whole-batch failure surfaces the shared <LoadFailure> (§11).
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Fuse, { type Expression } from "fuse.js";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
+import { venues as collectedVenues } from "@/data/venues";
+import { venueName } from "@/i18n";
+import type { Venue } from "@/types";
 import { relativeTime, absoluteDate } from "@/lib/format";
-import { STAGING_NAME_MAX, type StagingVenueDto } from "@/lib/staging";
 import {
+  STAGING_NAME_MAX,
+  type StagingNameDto,
+  type StagingVenueDto,
+} from "@/lib/staging";
+import {
+  fetchStagingNames,
   fetchStagingPage,
   plusOneStaging,
   StagingError,
   submitStaging,
 } from "@/lib/staging-client";
 import { cn } from "@/lib/utils";
+import { VENUE_FUSE_OPTIONS, venueExtendedQuery } from "@/lib/venue-fuse";
 import LoadFailure from "@/components/LoadFailure";
 import TurnstileWidget from "@/islands/upload/TurnstileWidget";
+
+/** Max venue / staged matches shown per section in the dedup hint (issue #3). */
+const MATCH_RESULTS = 3;
+/** Min input length before the dedup hint runs (1 char is too noisy). */
+const MATCH_MIN_LEN = 2;
 
 /** Continuation page size (text-only rows are light, shape §11). */
 const LIST_BATCH = 50;
@@ -87,6 +102,90 @@ export default function StagingForm({
   const [plusOneBlocked, setPlusOneBlocked] = useState(false);
   /** One inline +1 message (limit reached / transient failure), null when clear. */
   const [plusOneMsg, setPlusOneMsg] = useState<string | null>(null);
+
+  // ── Dedup match (issue #3) ──────────────────────────────────────────────────
+  /** Public match corpus (id+name+voteCount), lazily fetched ONCE when the table
+   *  exceeds the SSR batch; stays [] otherwise (the loaded list is then already
+   *  the whole table, so no request is made). */
+  const [namesCorpus, setNamesCorpus] = useState<StagingNameDto[]>([]);
+  const namesFetchedRef = useRef(false);
+  /** Optimistic +1 overlay for venues matched in the hint but NOT in the loaded
+   *  list, so their button can flip to ✓ without a reload. The resolver below
+   *  always prefers the loaded list, so an item in both is never double-counted. */
+  const [voteOverlay, setVoteOverlay] = useState<
+    Record<string, { votedByMe: boolean; voteCount: number }>
+  >({});
+
+  // Collected (real) venues: one Fuse over the bundled set — zero network.
+  const venueFuse = useMemo(
+    () => new Fuse(collectedVenues, VENUE_FUSE_OPTIONS),
+    [],
+  );
+  // Staged corpus = lazily-fetched names with the loaded list layered on top
+  // (the list wins on id collision: freshest optimistic counts + it makes the
+  // just-submitted row matchable immediately, no reload).
+  const matchCorpus = useMemo<StagingNameDto[]>(() => {
+    const byId = new Map<string, StagingNameDto>();
+    for (const n of namesCorpus)
+      byId.set(n.id, { id: n.id, name: n.name, voteCount: n.voteCount });
+    for (const v of venues)
+      byId.set(v.id, { id: v.id, name: v.name, voteCount: v.voteCount });
+    return [...byId.values()];
+  }, [namesCorpus, venues]);
+  const stagingFuse = useMemo(
+    () =>
+      new Fuse(matchCorpus, {
+        keys: ["name"],
+        ignoreLocation: true,
+        threshold: 0.4,
+        useExtendedSearch: true,
+      }),
+    [matchCorpus],
+  );
+
+  const matchQuery = name.trim();
+  const venueMatches = useMemo<Venue[]>(() => {
+    if (matchQuery.length < MATCH_MIN_LEN) return [];
+    return venueFuse
+      .search(venueExtendedQuery(matchQuery))
+      .slice(0, MATCH_RESULTS)
+      .map((r) => r.item);
+  }, [venueFuse, matchQuery]);
+  const stagedMatches = useMemo<StagingNameDto[]>(() => {
+    if (matchQuery.length < MATCH_MIN_LEN) return [];
+    // Per-token include-match over the single `name` field (mirrors
+    // venueExtendedQuery), so multi-keyword input is order-independent.
+    const query: Expression = {
+      $and: matchQuery.split(/\s+/).map((tok) => ({ name: `'${tok}` })),
+    };
+    return stagingFuse
+      .search(query)
+      .slice(0, MATCH_RESULTS)
+      .map((r) => r.item);
+  }, [stagingFuse, matchQuery]);
+
+  // Fetch the match corpus once, lazily, on the FIRST keystroke — and ONLY when
+  // the table is bigger than the SSR batch (otherwise the loaded list already is
+  // the whole table). Edge-cached + one request/session, never per-keystroke.
+  const maybeFetchNames = useCallback(() => {
+    if (namesFetchedRef.current || !initialHasMore) return;
+    namesFetchedRef.current = true;
+    fetchStagingNames().then(setNamesCorpus);
+  }, [initialHasMore]);
+
+  /** Resolve a staged match's display state: prefer the loaded list, then the
+   *  optimistic +1 overlay, then the corpus baseline (not yet voted). */
+  const stagedView = (item: StagingNameDto) => {
+    const inList = venues.find((v) => v.id === item.id);
+    if (inList)
+      return { voteCount: inList.voteCount, votedByMe: inList.votedByMe };
+    return (
+      voteOverlay[item.id] ?? { voteCount: item.voteCount, votedByMe: false }
+    );
+  };
+
+  const showMatches =
+    hasName && (venueMatches.length > 0 || stagedMatches.length > 0);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || !hasMore) return;
@@ -187,10 +286,24 @@ export default function StagingForm({
   const onPlusOne = useCallback(
     async (venueId: string) => {
       if (plusOneBlocked) return;
-      const target = venues.find((v) => v.id === venueId);
-      if (!target || target.votedByMe) return;
+      // The target may be a visible list row OR a dedup-hint match not yet in the
+      // loaded list — resolve from both. The list, when present, is authoritative.
+      const inList = venues.find((v) => v.id === venueId);
+      const overlay = voteOverlay[venueId];
+      const alreadyVoted = inList
+        ? inList.votedByMe
+        : (overlay?.votedByMe ?? false);
+      if (alreadyVoted) return;
+      const baseCount = inList
+        ? inList.voteCount
+        : (overlay?.voteCount ??
+          matchCorpus.find((m) => m.id === venueId)?.voteCount ??
+          0);
 
       setPlusOneMsg(null);
+      // Optimistic: bump the visible list (if present) AND the overlay (covers a
+      // hint match not in the list). The stagedView resolver prefers the list, so
+      // an item in both is never double-counted.
       setVenues((prev) =>
         prev.map((v) =>
           v.id === venueId
@@ -198,6 +311,10 @@ export default function StagingForm({
             : v,
         ),
       );
+      setVoteOverlay((prev) => ({
+        ...prev,
+        [venueId]: { votedByMe: true, voteCount: baseCount + 1 },
+      }));
 
       try {
         const { voteCount } = await plusOneStaging(venueId);
@@ -206,9 +323,13 @@ export default function StagingForm({
             v.id === venueId ? { ...v, votedByMe: true, voteCount } : v,
           ),
         );
+        setVoteOverlay((prev) => ({
+          ...prev,
+          [venueId]: { votedByMe: true, voteCount },
+        }));
       } catch (err) {
         const code = err instanceof StagingError ? err.code : "server_error";
-        // Revert the optimistic +1.
+        // Revert the optimistic +1 in both stores.
         setVenues((prev) =>
           prev.map((v) =>
             v.id === venueId
@@ -220,6 +341,11 @@ export default function StagingForm({
               : v,
           ),
         );
+        setVoteOverlay((prev) => {
+          const next = { ...prev };
+          delete next[venueId];
+          return next;
+        });
         if (code === "rate_limited_plusone") {
           setPlusOneBlocked(true);
           setPlusOneMsg(t.staging.plusOneLimit);
@@ -228,7 +354,7 @@ export default function StagingForm({
         }
       }
     },
-    [venues, plusOneBlocked, t],
+    [venues, voteOverlay, matchCorpus, plusOneBlocked, t],
   );
 
   return (
@@ -268,6 +394,8 @@ export default function StagingForm({
               disabled={dailyBlocked}
               onChange={(e) => {
                 setName(e.target.value);
+                // First keystroke lazily loads the dedup-match corpus (once).
+                maybeFetchNames();
                 // Typing clears a stale success/error so the form feels live.
                 if (submit.kind !== "idle" && submit.kind !== "submitting") {
                   setSubmit({ kind: "idle" });
@@ -300,6 +428,108 @@ export default function StagingForm({
               : t.staging.submit}
           </button>
         </form>
+
+        {/* Dedup hint (issue #3): soft, non-blocking. Surfaces venues already in
+            the atlas (link out, new tab — don't lose the typed input) and venues
+            already requested in the staging list (+1 instead of re-submitting).
+            Hidden when there are no matches. */}
+        {showMatches && (
+          <div
+            role="region"
+            aria-label={t.staging.matchRegionLabel}
+            className="border-border bg-card mt-3 rounded-md border p-3"
+          >
+            {venueMatches.length > 0 && (
+              <div>
+                <p className="text-muted-foreground text-xs font-medium">
+                  {t.staging.matchCollectedTitle}
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {venueMatches.map((v) => (
+                    <li
+                      key={v.id}
+                      className="flex items-baseline justify-between gap-3"
+                    >
+                      <span className="text-foreground truncate text-sm">
+                        {venueName(v, locale)}
+                      </span>
+                      <a
+                        href={`/${locale}/v/${v.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring shrink-0 rounded-sm text-xs underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:outline-none"
+                      >
+                        {t.staging.matchView} ↗
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {stagedMatches.length > 0 && (
+              <div
+                className={
+                  venueMatches.length > 0
+                    ? "border-border mt-3 border-t pt-3"
+                    : ""
+                }
+              >
+                <p className="text-muted-foreground text-xs font-medium">
+                  {t.staging.matchStagedTitle}
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {stagedMatches.map((m) => {
+                    const view = stagedView(m);
+                    const votesText = t.staging.votes.replace(
+                      "{count}",
+                      String(view.voteCount),
+                    );
+                    return (
+                      <li
+                        key={m.id}
+                        className="flex items-center justify-between gap-3"
+                      >
+                        <span className="text-foreground truncate text-sm">
+                          {m.name}
+                        </span>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
+                            {votesText}
+                          </span>
+                          {view.votedByMe ? (
+                            <span className="text-foreground inline-flex items-center gap-1 text-xs">
+                              <span aria-hidden="true">✓</span>
+                              {t.staging.plusOneDone}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onPlusOne(m.id)}
+                              disabled={plusOneBlocked}
+                              aria-label={t.staging.plusOneLabel.replace(
+                                "{name}",
+                                m.name,
+                              )}
+                              className={cn(
+                                "border-border text-muted-foreground inline-flex h-7 shrink-0 items-center rounded-md border px-2.5 text-xs font-medium",
+                                "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
+                                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                                "disabled:cursor-not-allowed disabled:opacity-50",
+                              )}
+                            >
+                              {t.staging.plusOne}
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Transparent "why only a name" copy (信任靠透明). */}
         <p className="text-muted-foreground mt-3 text-sm leading-relaxed">

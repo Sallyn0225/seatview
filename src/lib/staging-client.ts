@@ -11,6 +11,8 @@ import type {
   StagingCreateResponse,
   StagingErrorCode,
   StagingListResponse,
+  StagingNameDto,
+  StagingNamesResponse,
   StagingRequest,
   StagingVoteResponse,
 } from "@/lib/staging";
@@ -86,6 +88,25 @@ export async function plusOneStaging(
     throw new StagingError(await parseErrorCode(res), res.status);
   }
   return (await res.json()) as StagingVoteResponse;
+}
+
+/**
+ * Fetch the public, edge-cached dedup-match corpus ({id,name,voteCount},
+ * most-seconded-first, capped — issue #3). Resolves with [] on ANY failure: the
+ * staging form's "may already exist" hint is a soft enhancement, never blocking,
+ * so a missing corpus simply means no staged-side matches are shown.
+ */
+export async function fetchStagingNames(
+  signal?: AbortSignal,
+): Promise<StagingNameDto[]> {
+  try {
+    const res = await fetch("/api/staging/names", { signal });
+    if (!res.ok) return [];
+    const data = (await res.json()) as StagingNamesResponse;
+    return data.venues ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /**

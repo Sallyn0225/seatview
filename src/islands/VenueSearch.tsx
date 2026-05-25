@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import Fuse, { type FuseResult, type IFuseOptions } from "fuse.js";
+import Fuse, { type FuseResult } from "fuse.js";
 import { Search, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
@@ -14,25 +14,11 @@ import { venues } from "@/data/venues";
 import { venueName } from "@/i18n";
 import type { Venue } from "@/types";
 import { cn } from "@/lib/utils";
+import { VENUE_FUSE_OPTIONS, venueExtendedQuery } from "@/lib/venue-fuse";
 
 interface VenueSearchProps {
   locale: Locale;
 }
-
-/**
- * Fuse options per R2.3/R2.4:
- *   • multi-field across name_zh / name_jp / name_romaji / prefecture / city /
- *     aliases[]
- *   • ignoreLocation → word order irrelevant
- *   • threshold ~0.4 → fuzzy but not noisy
- *   • useExtendedSearch → enables the per-token AND query we build below
- */
-const fuseOptions: IFuseOptions<Venue> = {
-  keys: ["name_zh", "name_jp", "name_romaji", "prefecture", "city", "aliases"],
-  ignoreLocation: true,
-  threshold: 0.4,
-  useExtendedSearch: true,
-};
 
 const MAX_RESULTS = 8;
 
@@ -54,19 +40,13 @@ export default function VenueSearch({ locale }: VenueSearchProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
 
-  const fuse = useMemo(() => new Fuse(venues, fuseOptions), []);
+  const fuse = useMemo(() => new Fuse(venues, VENUE_FUSE_OPTIONS), []);
 
   const results: FuseResult<Venue>[] = useMemo(() => {
     const trimmed = query.trim();
     if (!trimmed) return [];
     // Each whitespace-separated token must match (extended-search AND).
-    const tokens = trimmed.split(/\s+/);
-    const extended = tokens.map((token) => ({
-      $or: fuseOptions.keys!.map((key) => ({
-        [typeof key === "string" ? key : String(key)]: `'${token}`,
-      })),
-    }));
-    return fuse.search({ $and: extended }).slice(0, MAX_RESULTS);
+    return fuse.search(venueExtendedQuery(trimmed)).slice(0, MAX_RESULTS);
   }, [fuse, query]);
 
   // Reset the active descendant whenever the candidate list changes.

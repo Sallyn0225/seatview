@@ -235,6 +235,14 @@ export interface Messages {
     turnstileNote: string;
     /** Always-on daily-limit copy. */
     limitNote: string;
+    /** Dedup hint (issue #3): a11y label for the live match-suggestion region. */
+    matchRegionLabel: string;
+    /** Dedup hint: heading over venues already collected in the atlas. */
+    matchCollectedTitle: string;
+    /** Dedup hint: CTA link to an already-collected venue (opens in new tab). */
+    matchView: string;
+    /** Dedup hint: heading over venues already requested in the staging list. */
+    matchStagedTitle: string;
     /** List section header (zh side of bilingual pair). */
     listTitle: string;
     listTitleAlt: string;
@@ -517,6 +525,10 @@ const zh: Messages = {
       "只要告诉我们场馆名就够了。坐席图和资料由维护者通过 GitHub 整理后加入。",
     turnstileNote: "这一步是为了防止机器人批量提交。",
     limitNote: "每人每天最多提交 5 个，避免重复刷屏。",
+    matchRegionLabel: "相似场馆提示",
+    matchCollectedTitle: "这些场馆可能已经收录了",
+    matchView: "去看看",
+    matchStagedTitle: "已经有人想看了",
     listTitle: "大家想看的",
     listTitleAlt: "みんなのリクエスト",
     processed: "已收录",
