@@ -21,10 +21,15 @@
   /* radius */
   --radius: 0.5rem;
 
-  /* fonts (Noto same-family CN↔JP per The Two Tongues Rule) */
-  --font-serif: "Noto Serif SC", "Noto Serif JP", ui-serif, Georgia, serif;
+  /* fonts. Noto same-family CN↔JP per The Two Tongues Rule (zh↔ja only).
+     Korean (en/ko accessibility layer) falls back to system Hangul fonts after
+     the Noto JP entry — no webfont, so 한글 glyphs render without extra edge
+     traffic. CN/JP characters still resolve to Noto SC/JP first. */
+  --font-serif:
+    "Noto Serif SC", "Noto Serif JP", "Noto Serif KR", ui-serif, Georgia, serif;
   --font-sans:
-    "Noto Sans SC", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+    "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", "Apple SD Gothic Neo",
+    "Malgun Gothic", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
 }
 

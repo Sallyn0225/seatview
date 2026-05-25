@@ -6,6 +6,8 @@ import {
 } from "react-zoom-pan-pinch";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import type { Locale } from "@/i18n/config";
+import { getMessages, subMapLabel } from "@/i18n";
+import { fillTemplate } from "@/lib/format";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { setSelectedPhoto } from "@/lib/selected-photo";
@@ -346,8 +348,9 @@ function ChartImage({
   locale: Locale;
   dimmed?: boolean;
 }) {
-  const alt =
-    locale === "ja" ? `座席図 ${subMap.label_jp}` : `坐席图 ${subMap.label_zh}`;
+  const alt = fillTemplate(getMessages(locale).seatmap.chartAlt, {
+    label: subMapLabel(subMap, locale),
+  });
   return (
     <img
       src={subMap.imageUrl}

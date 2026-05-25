@@ -4,7 +4,7 @@
 
 <!-- README-I18N:START -->
 
-[简体中文](./README.md) | **English** | [日本語](./README.ja.md)
+[简体中文](./README.md) | **English** | [日本語](./README.ja.md) | [한국어](./README.ko.md)
 
 <!-- README-I18N:END -->
 
@@ -25,7 +25,7 @@ Live site 👉 **[seat.genchi.top](https://seat.genchi.top)**
 - **Seating-chart markers** — view seat markers placed by other users on the venue's official seating chart (supports multi-layer / multi-zone tag switching); adjacent markers auto-cluster and show a count.
 - **Real-view Lightbox** — click a marker to see that seat's actual photo + seat number / text description; the masonry feed below shows every submission for that venue.
 - **Registration-free uploads** — mark → pick image → compress to WebP client-side (EXIF stripped) → two-stage HMAC-ticket submission, with IP rate limiting + Turnstile guarding the whole flow.
-- **Bilingual i18n** — `/zh` and `/ja` dual-prefix routing; the bare root `/` auto-redirects by `Accept-Language`.
+- **Multilingual i18n** — `/zh` `/ja` `/en` `/ko` four-prefix routing; the bare root `/` auto-redirects by `Accept-Language` (zh / ja are equal tracks, while en / ko are an accessibility translation layer).
 - **Venue crowdsourcing** — +1 on the in-site "venues you want to see" staging area, or submit venue JSON directly via a GitHub PR.
 - **Maintainer admin** — `/admin` is edge-authenticated by Cloudflare Access and supports soft-deleting submissions.
 
@@ -48,7 +48,7 @@ Live site 👉 **[seat.genchi.top](https://seat.genchi.top)**
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | Masonry | `react-photo-album` (masonry) | |
 | Seating-chart zoom | **`react-zoom-pan-pinch` v3.7** | programmatic zoom via `setTransform` / `resetTransform` |
-| i18n | **Astro built-in i18n routing** | `/zh` and `/ja` dual prefixes, bare root 302 |
+| i18n | **Astro built-in i18n routing** | `/zh` `/ja` `/en` `/ko` four prefixes, bare root 302 |
 | ULID | **self-implemented** (`src/server/id.ts`) | not the `ulid` package (its `detectPrng()` throws on import under workerd) |
 
 > [!NOTE]

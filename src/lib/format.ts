@@ -8,11 +8,41 @@
 
 import type { Locale } from "@/i18n/config";
 
+const EN_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/**
+ * Locale-appropriate absolute date. zh/ja render 年月日 literals
+ * (shape-lightbox.md §8); en/ko (accessibility layer) use their own forms.
+ */
+function formatYMD(y: number, m: number, d: number, locale: Locale): string {
+  switch (locale) {
+    case "en":
+      return `${EN_MONTHS[m - 1]} ${d}, ${y}`;
+    case "ko":
+      return `${y}년 ${m}월 ${d}일`;
+    default:
+      return `${y}年${m}月${d}日`; // zh + ja
+  }
+}
+
 /**
  * Relative "time ago" for the upload timestamp, shown only inside the Lightbox
  * detail sheet (shape-lightbox.md §8: "相对时间, 不显示精确时间戳").
- *   zh: 刚刚 / N 分钟前 / N 小时前 / N 天前 / N 个月前 / N 年前
- *   ja: たった今 / N分前 / N時間前 / N日前 / Nか月前 / N年前
+ *   zh: 刚刚 / N 分钟前 / …       ja: たった今 / N分前 / …
+ *   en: just now / N minutes ago  ko: 방금 / N분 전 / …
  * `now` is injectable for deterministic tests.
  */
 export function relativeTime(
@@ -35,6 +65,24 @@ export function relativeTime(
     if (year < 1) return `${month}か月前`;
     return `${year}年前`;
   }
+  if (locale === "en") {
+    const plural = (n: number, unit: string) =>
+      `${n} ${unit}${n === 1 ? "" : "s"} ago`;
+    if (diffSec < 60) return "just now";
+    if (hour < 1) return plural(min, "minute");
+    if (day < 1) return plural(hour, "hour");
+    if (month < 1) return plural(day, "day");
+    if (year < 1) return plural(month, "month");
+    return plural(year, "year");
+  }
+  if (locale === "ko") {
+    if (diffSec < 60) return "방금";
+    if (hour < 1) return `${min}분 전`;
+    if (day < 1) return `${hour}시간 전`;
+    if (month < 1) return `${day}일 전`;
+    if (year < 1) return `${month}개월 전`;
+    return `${year}년 전`;
+  }
   if (diffSec < 60) return "刚刚";
   if (hour < 1) return `${min} 分钟前`;
   if (day < 1) return `${hour} 小时前`;
@@ -45,24 +93,17 @@ export function relativeTime(
 
 /**
  * Absolute upload timestamp for the `<time>` title / SR text (machine-readable
- * fallback alongside the relative string). Both locales use 年月日 literals
- * (shape-lightbox.md §8).
+ * fallback alongside the relative string).
  */
 export function absoluteDate(epochMs: number, locale: Locale): string {
   const d = new Date(epochMs);
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
-  // zh and ja both render 年月日 (the shape brief specifies identical literals).
-  void locale;
-  return `${y}年${m}月${day}日`;
+  return formatYMD(d.getFullYear(), d.getMonth() + 1, d.getDate(), locale);
 }
 
 /**
  * Localize an ISO performance date (`YYYY-MM-DD`) for display in the footer
- * strip + detail sheet. Both locales render 年月日 (shape-lightbox.md §8).
- * Returns `null` when the input is empty/unparsable so callers can drop the row
- * entirely (no "—" placeholder, shape-lightbox.md "empty optional fields").
+ * strip + detail sheet. Returns `null` when the input is empty/unparsable so
+ * callers can drop the row entirely (no "—" placeholder).
  */
 export function performanceDate(
   iso: string | null,
@@ -72,8 +113,7 @@ export function performanceDate(
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   if (!match) return null;
   const [, y, m, d] = match;
-  void locale;
-  return `${y}年${Number(m)}月${Number(d)}日`;
+  return formatYMD(Number(y), Number(m), Number(d), locale);
 }
 
 /**

@@ -15,6 +15,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n";
+import { fillTemplate, performanceDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 interface DateFieldProps {
@@ -41,15 +43,6 @@ function parseIso(iso: string | null): Date | null {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
-function formatDisplay(iso: string | null): string {
-  const d = parseIso(iso);
-  if (!d) return "";
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
-const WEEKDAYS_JA = ["日", "月", "火", "水", "木", "金", "土"];
-const WEEKDAYS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
-
 /** Popover drill-down level: pick a day, or jump by month / year first. */
 type View = "days" | "months" | "years";
 
@@ -69,6 +62,7 @@ export default function DateField({
     () => selected ?? new Date(today.getFullYear(), today.getMonth(), 1),
   );
   const rootRef = useRef<HTMLDivElement>(null);
+  const t = getMessages(locale);
 
   // Close on outside click / Esc (no modal — inline popover).
   useEffect(() => {
@@ -92,7 +86,7 @@ export default function DateField({
     };
   }, [open]);
 
-  const weekdays = locale === "ja" ? WEEKDAYS_JA : WEEKDAYS_ZH;
+  const weekdays = t.datePicker.weekdays;
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -128,41 +122,23 @@ export default function DateField({
 
   // Header label (center) opens the next drill-up level.
   const headerLabel =
-    view === "days"
-      ? locale === "ja"
-        ? "月を選択"
-        : "选择月份"
-      : locale === "ja"
-        ? "年を選択"
-        : "选择年份";
+    view === "days" ? t.datePicker.selectMonth : t.datePicker.selectYear;
 
   // Prev/next arrows step by month (days view), year (months), or 12 years.
   const stepMonths = view === "days" ? 1 : 0;
   const stepYears = view === "months" ? 1 : view === "years" ? 12 : 0;
   const navPrevLabel =
     view === "days"
-      ? locale === "ja"
-        ? "前の月"
-        : "上个月"
+      ? t.datePicker.prevMonth
       : view === "months"
-        ? locale === "ja"
-          ? "前の年"
-          : "上一年"
-        : locale === "ja"
-          ? "前の12年"
-          : "前 12 年";
+        ? t.datePicker.prevYear
+        : t.datePicker.prev12Years;
   const navNextLabel =
     view === "days"
-      ? locale === "ja"
-        ? "次の月"
-        : "下个月"
+      ? t.datePicker.nextMonth
       : view === "months"
-        ? locale === "ja"
-          ? "次の年"
-          : "下一年"
-        : locale === "ja"
-          ? "次の12年"
-          : "后 12 年";
+        ? t.datePicker.nextYear
+        : t.datePicker.next12Years;
 
   return (
     <div ref={rootRef} className="relative">
@@ -184,7 +160,7 @@ export default function DateField({
         >
           <CalendarIcon className="size-4 shrink-0" aria-hidden="true" />
           <span className="[font-variant-numeric:tabular-nums]">
-            {value ? formatDisplay(value) : placeholder}
+            {performanceDate(value, locale) ?? placeholder}
           </span>
         </button>
         {value && (
@@ -225,7 +201,14 @@ export default function DateField({
                 aria-label={headerLabel}
                 className="text-foreground hover:bg-secondary focus-visible:ring-ring rounded px-2 py-1 text-sm font-medium [font-variant-numeric:tabular-nums] focus-visible:ring-2 focus-visible:outline-none"
               >
-                {view === "days" ? `${year}年${month + 1}月` : `${year}年`}
+                {view === "days"
+                  ? fillTemplate(t.datePicker.headerMonth, {
+                      year: String(year),
+                      month: t.datePicker.months[month] ?? "",
+                    })
+                  : fillTemplate(t.datePicker.headerYear, {
+                      year: String(year),
+                    })}
               </button>
             )}
             <button
@@ -301,7 +284,7 @@ export default function DateField({
                       "ring-border ring-1",
                   )}
                 >
-                  {m + 1}月
+                  {t.datePicker.months[m]}
                 </button>
               ))}
             </div>

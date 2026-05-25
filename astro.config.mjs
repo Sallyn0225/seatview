@@ -11,9 +11,11 @@ import tailwindcss from "@tailwindcss/vite";
 //   Workers (static assets are served by the same Worker).
 // - Tailwind v4 is wired through the official Vite plugin, NOT the deprecated
 //   `@astrojs/tailwind` integration.
-// - i18n routing is built in (no third-party package). Both locales are
-//   prefixed (`/zh/...`, `/ja/...`); the bare root `/` performs an
-//   Accept-Language 302 redirect in `src/pages/index.astro`.
+// - i18n routing is built in (no third-party package). Every locale is
+//   prefixed (`/zh/...`, `/ja/...`, `/en/...`, `/ko/...`); the bare root `/`
+//   performs an Accept-Language 302 redirect in `src/middleware.ts`.
+// - zh/ja are equal tracks (Two Tongues Rule); en/ko are an accessibility
+//   translation layer. Keep `locales` in sync with `src/i18n/config.ts`.
 export default defineConfig({
   output: "server",
   adapter: cloudflare({
@@ -26,9 +28,9 @@ export default defineConfig({
   integrations: [react()],
   i18n: {
     defaultLocale: "zh",
-    locales: ["zh", "ja"],
+    locales: ["zh", "ja", "en", "ko"],
     routing: {
-      // Both locales carry an explicit prefix so URLs are unambiguous and
+      // Every locale carries an explicit prefix so URLs are unambiguous and
       // SEO-friendly; the bare `/` is handled by a manual redirect.
       prefixDefaultLocale: true,
       redirectToDefaultLocale: false,

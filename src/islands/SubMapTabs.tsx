@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
-import { subMapLabel } from "@/i18n";
+import { getMessages, subMapLabel } from "@/i18n";
 import type { SubMap } from "@/types";
 import {
   resolveInitialSubMapId,
@@ -34,6 +34,7 @@ export default function SubMapTabs({
     resolveInitialSubMapId(subMaps, initialSubMapId),
   );
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const t = getMessages(locale);
 
   // Reconcile with the URL after mount in case the page was reached without an
   // explicit prop (defensive; keeps the underline matching the query).
@@ -57,7 +58,7 @@ export default function SubMapTabs({
     <div
       ref={scrollerRef}
       role="tablist"
-      aria-label={locale === "ja" ? "座席図を切り替え" : "切换坐席图"}
+      aria-label={t.venue.subMapTabsLabel}
       className="-mx-1 flex items-center overflow-x-auto px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {subMaps.map((subMap, index) => {

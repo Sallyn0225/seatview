@@ -46,8 +46,9 @@ declare namespace Cloudflare {
 
 declare namespace App {
   interface Locals {
-    /** Active locale resolved by middleware. */
-    locale: "zh" | "ja";
+    /** Active locale resolved by middleware. Sourced from i18n/config so new
+     * locales stay in sync (inline import keeps this file ambient). */
+    locale: import("./i18n/config").Locale;
   }
 }
 

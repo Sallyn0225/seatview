@@ -4,7 +4,7 @@
 
 <!-- README-I18N:START -->
 
-**简体中文** | [English](./README.en.md) | [日本語](./README.ja.md)
+**简体中文** | [English](./README.en.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md)
 
 <!-- README-I18N:END -->
 
@@ -25,7 +25,7 @@
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
 - **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；下方瀑布流展示该场馆的全部投稿。
 - **免注册上传** —— 标点 → 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交，全程 IP 限频 + Turnstile 防滥用。
-- **双语 i18n** —— `/zh` 与 `/ja` 双前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向。
+- **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
 - **场馆众包** —— 站内「想看的场馆」暂存区可 +1，或通过 GitHub PR 直接提交场馆 JSON。
 - **维护者后台** —— `/admin` 由 Cloudflare Access 边缘鉴权，支持软删除投稿。
 
@@ -48,7 +48,7 @@
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | 瀑布流 | `react-photo-album`（masonry） | |
 | 坐席图缩放 | **`react-zoom-pan-pinch` v3.7** | 用 `setTransform` / `resetTransform` 程序化缩放 |
-| i18n | **Astro 内置 i18n 路由** | `/zh` 与 `/ja` 双前缀，裸根 302 |
+| i18n | **Astro 内置 i18n 路由** | `/zh` `/ja` `/en` `/ko` 四前缀，裸根 302 |
 | ULID | **自实现**（`src/server/id.ts`） | 不用 `ulid` 包（它 import 时 `detectPrng()` 在 workerd 抛错） |
 
 > [!NOTE]

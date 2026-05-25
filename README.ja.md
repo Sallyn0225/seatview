@@ -4,7 +4,7 @@
 
 <!-- README-I18N:START -->
 
-[简体中文](./README.md) | [English](./README.en.md) | **日本語**
+[简体中文](./README.md) | [English](./README.en.md) | **日本語** | [한국어](./README.ko.md)
 
 <!-- README-I18N:END -->
 
@@ -25,7 +25,7 @@
 - **座席表マーキング** —— 会場公式の座席表（複数レイヤー / 複数エリアの tag 切り替え対応）上で、他ユーザーがマークした座席ポイントを表示。隣接するポイントは自動で集約し件数を表示します。
 - **リアルビュー Lightbox** —— マーカーをクリックすると、その席の実写 + 座席番号 / テキスト説明を表示。下部のウォーターフォールでその会場の全投稿を表示します。
 - **登録不要の投稿** —— マーク → 画像選択 → クライアント側で WebP に圧縮（EXIF 除去）→ HMAC ticket の二段階コミット。全工程で IP レート制限 + Turnstile による不正対策。
-- **バイリンガル i18n** —— `/zh` と `/ja` の二重プレフィックスルーティング、ルート直下 `/` は `Accept-Language` で自動リダイレクト。
+- **多言語 i18n** —— `/zh` `/ja` `/en` `/ko` の 4 プレフィックスルーティング、ルート直下 `/` は `Accept-Language` で自動リダイレクト（`zh` / `ja` は対等な二軸、`en` / `ko` はアクセシビリティのための翻訳レイヤー）。
 - **会場のクラウドソーシング** —— サイト内「見たい会場」一時置き場で +1、または GitHub PR で会場 JSON を直接投稿。
 - **メンテナー管理画面** —— `/admin` は Cloudflare Access のエッジ認証で保護、投稿のソフト削除に対応。
 
@@ -48,7 +48,7 @@
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | ウォーターフォール | `react-photo-album`（masonry） | |
 | 座席表のズーム | **`react-zoom-pan-pinch` v3.7** | `setTransform` / `resetTransform` でプログラム的にズーム |
-| i18n | **Astro 組み込み i18n ルーティング** | `/zh` と `/ja` の二重プレフィックス、ルート直下は 302 |
+| i18n | **Astro 組み込み i18n ルーティング** | `/zh` `/ja` `/en` `/ko` の 4 プレフィックス、ルート直下は 302 |
 | ULID | **自前実装**（`src/server/id.ts`） | `ulid` パッケージは不使用（import 時に `detectPrng()` が workerd で例外を投げるため） |
 
 > [!NOTE]

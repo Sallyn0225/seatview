@@ -4,8 +4,10 @@ import type { Venue } from "@/types";
 import { defaultLocale, type Locale } from "./config";
 import zh, { type Messages } from "./locales/zh";
 import ja from "./locales/ja";
+import en from "./locales/en";
+import ko from "./locales/ko";
 
-const messages: Record<Locale, Messages> = { zh, ja };
+const messages: Record<Locale, Messages> = { zh, ja, en, ko };
 
 /** Get the full message bundle for a locale. */
 export function getMessages(locale: Locale): Messages {
@@ -13,21 +15,33 @@ export function getMessages(locale: Locale): Messages {
 }
 
 /**
- * Render the locale-appropriate venue display name.
- * zh → name_zh, ja → name_jp (R9.4). User-authored content is never translated.
+ * Render the locale-appropriate venue display name (R9.4).
+ * zh → name_zh, ja → name_jp, en → name_romaji, ko → name_jp.
+ * en/ko are an accessibility layer with no dedicated name field, so they fall
+ * back to the romaji (en) / Japanese (ko) proper noun. User-authored content
+ * (seat label / event / description) is never translated (R9.5).
  */
 export function venueName(venue: Venue, locale: Locale): string {
-  return locale === "ja" ? venue.name_jp : venue.name_zh;
+  switch (locale) {
+    case "ja":
+    case "ko":
+      return venue.name_jp;
+    case "en":
+      return venue.name_romaji;
+    default:
+      return venue.name_zh;
+  }
 }
 
 /**
- * Render the locale-appropriate sub-map tab label.
+ * Render the locale-appropriate sub-map tab label. Sub-maps carry no romaji
+ * field, so every non-zh locale falls back to the Japanese label.
  */
 export function subMapLabel(
   subMap: Pick<Venue["subMaps"][number], "label_zh" | "label_jp">,
   locale: Locale,
 ): string {
-  return locale === "ja" ? subMap.label_jp : subMap.label_zh;
+  return locale === "zh" ? subMap.label_zh : subMap.label_jp;
 }
 
 export { defaultLocale, type Locale } from "./config";

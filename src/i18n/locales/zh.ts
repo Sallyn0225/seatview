@@ -12,7 +12,13 @@
  */
 export interface Messages {
   meta: { title: string; tagline: string };
-  nav: { home: string; staging: string; contribute: string };
+  nav: {
+    home: string;
+    staging: string;
+    contribute: string;
+    /** Language switcher group/trigger aria-label. */
+    language: string;
+  };
   theme: { label: string; light: string; dark: string; system: string };
   search: {
     placeholder: string;
@@ -24,12 +30,16 @@ export interface Messages {
     title: string;
     open: string;
     close: string;
+    /** Venue-tree `<nav>` aria-label. */
+    navLabel: string;
     /** Footer entry into the staging area (cross-brief contract). */
     stagingPrompt: string;
   };
   venue: {
     /** Breadcrumb root, e.g. "日本". */
     country: string;
+    /** Breadcrumb `<nav>` aria-label. */
+    breadcrumbLabel: string;
     subMapTabsLabel: string;
     notFoundTitle: string;
     notFoundBody: string;
@@ -51,11 +61,35 @@ export interface Messages {
      *  aria-labels — never machine-translate the embedded seat label (R9.5). */
     pinLabel: string;
     clusterLabel: string;
+    /** Seating-chart `<img>` alt. `{label}` → sub-map label. */
+    chartAlt: string;
   };
   upload: {
     cta: string;
     /** Rate-limited (10/day reached). */
     disabled: string;
+  };
+  /** Performance-date picker (upload Sheet step 3 — DateField.tsx). */
+  datePicker: {
+    /** Weekday column headers, Sun-first (length 7). */
+    weekdays: string[];
+    /** Month labels for the month grid + day-view header (length 12). */
+    months: string[];
+    /** Header aria when the day view can drill up to month selection. */
+    selectMonth: string;
+    /** Header aria when the month view can drill up to year selection. */
+    selectYear: string;
+    /** Prev/next arrow aria-labels per drill level. */
+    prevMonth: string;
+    nextMonth: string;
+    prevYear: string;
+    nextYear: string;
+    prev12Years: string;
+    next12Years: string;
+    /** Day-view header template: `{year}` + `{month}` (a `months` entry). */
+    headerMonth: string;
+    /** Month/year-view header template: `{year}`. */
+    headerYear: string;
   };
   /** Upload Sheet (shape-upload-sheet.md) — 6-step accumulative flow. */
   uploadSheet: {
@@ -182,6 +216,8 @@ export interface Messages {
     privacy: string;
     terms: string;
     copyright: string;
+    /** Footer `<nav>` aria-label. */
+    navLabel: string;
   };
   /** Standalone legal pages — privacy + terms (issue #6, distinct from home). */
   legal: {
@@ -375,6 +411,7 @@ const zh: Messages = {
     home: "首页",
     staging: "想看的场馆",
     contribute: "想贡献新场馆？",
+    language: "语言",
   },
   theme: {
     label: "主题",
@@ -392,10 +429,12 @@ const zh: Messages = {
     title: "场馆",
     open: "打开场馆树",
     close: "关闭场馆树",
+    navLabel: "场馆树",
     stagingPrompt: "想看的场馆没有？写下来",
   },
   venue: {
     country: "日本",
+    breadcrumbLabel: "面包屑",
     subMapTabsLabel: "切换坐席图",
     notFoundTitle: "这个场馆我们还没收录。",
     notFoundBody: "要不去首页看看其他场馆？",
@@ -411,10 +450,38 @@ const zh: Messages = {
     reset: "复位",
     pinLabel: "座位 {label} 的视角",
     clusterLabel: "{count} 个标注点，点击放大查看",
+    chartAlt: "坐席图 {label}",
   },
   upload: {
     cta: "上传我的视角",
     disabled: "你今天已经上传 10 张了。明天再来。",
+  },
+  datePicker: {
+    weekdays: ["日", "一", "二", "三", "四", "五", "六"],
+    months: [
+      "1月",
+      "2月",
+      "3月",
+      "4月",
+      "5月",
+      "6月",
+      "7月",
+      "8月",
+      "9月",
+      "10月",
+      "11月",
+      "12月",
+    ],
+    selectMonth: "选择月份",
+    selectYear: "选择年份",
+    prevMonth: "上个月",
+    nextMonth: "下个月",
+    prevYear: "上一年",
+    nextYear: "下一年",
+    prev12Years: "前 12 年",
+    next12Years: "后 12 年",
+    headerMonth: "{year}年{month}",
+    headerYear: "{year}年",
   },
   uploadSheet: {
     title: "＋ 上传我的视角",
@@ -509,6 +576,7 @@ const zh: Messages = {
     privacy: "隐私政策",
     terms: "服务条款",
     copyright: "© SeatView · 真实视角图集",
+    navLabel: "页脚",
   },
   legal: {
     privacyTitle: "隐私政策",

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import type { Locale } from "@/i18n/config";
-import { venueName } from "@/i18n";
+import { getMessages, venueName } from "@/i18n";
 import { buildVenueTree, type RegionNode } from "@/data/venues";
 import { prefectureName, regionName } from "@/data/prefectures";
 import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/storage";
@@ -80,8 +80,9 @@ export default function VenueTree({
     });
   }, []);
 
+  const t = getMessages(locale);
   return (
-    <nav aria-label={locale === "ja" ? "会場ツリー" : "场馆树"}>
+    <nav aria-label={t.tree.navLabel}>
       <ul className="space-y-0.5">
         {tree.map((regionNode) => {
           const regionSlug = regionNode.region.slug;

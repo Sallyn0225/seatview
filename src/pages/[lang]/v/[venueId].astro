@@ -103,7 +103,7 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
               </div>
 
               <nav
-                aria-label={locale === "ja" ? "パンくず" : "面包屑"}
+                aria-label={t.venue.breadcrumbLabel}
                 class="text-muted-foreground text-xs"
               >
                 <span>{t.venue.country}</span>

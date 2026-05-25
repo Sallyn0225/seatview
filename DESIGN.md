@@ -15,6 +15,8 @@ SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场
 
 中日双语是 SeatView 的两条核心轨道，不是"主语言 + 翻译"。整本图鉴可以从任意一种语言读起；切换语言不是切换"翻译版本"，而是切换"另一种地道的本子"。中文与日文使用同源字体家族（Noto Serif SC ↔ JP；Noto Sans SC ↔ JP），整本书的呼吸节奏保持一致。
 
+英语 / 韩语（2026-05 增补）是一层**可达性翻译层**，不属于上述双语等价模型：`zh↔ja` 维持等价双轨与 Noto 同源字体；`en/ko` 面向海外浏览者，提供地道翻译但**单标题不并排副标题**。韩文（한글）使用**系统字体栈兜底**（Noto KR → Apple SD Gothic Neo / Malgun Gothic，不引 webfont、零额外边缘流量），拉丁文沿用现有 serif/sans。下文 The Two Tongues Rule 仅约束 `zh↔ja`。
+
 这本图鉴明确拒绝三类气质：日本票务 / Live 资讯站的 90 年代 BBS 拥挤排版（eventernote、livefans.jp、ticket.pia、e-plus）；标准 SaaS 模板的紫蓝渐变 + hero metric 卡片网格；以及"极简到冷漠"的纯白 + 纯黑 + 无温度 chrome。克制 ≠ 没人住过 —— "缝隙时刻"（空状态、上传成功、第一次访问说明）允许一句温柔的文案、一个克制的图形点缀。
 
 **Key Characteristics:**
@@ -69,7 +71,7 @@ SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场
 
 ### Named Rules
 
-**The Two Tongues Rule.** 中文与日文必须使用 Noto 同一字体家族的同源版本（Noto Serif SC ↔ Noto Serif JP；Noto Sans SC ↔ Noto Sans JP）。绝对禁止"中文一种字体、日文另一种" —— 切换语言时排版气质必须保持一致，整本图鉴像同一只手装订。
+**The Two Tongues Rule.** 中文与日文必须使用 Noto 同一字体家族的同源版本（Noto Serif SC ↔ Noto Serif JP；Noto Sans SC ↔ Noto Sans JP）。绝对禁止"中文一种字体、日文另一种" —— 切换语言时排版气质必须保持一致，整本图鉴像同一只手装订。**本规则仅约束 `zh↔ja`**；en/ko 辅助层的韩文/拉丁字体策略见 Overview（系统字体栈兜底）。
 
 **The Folio Title Rule.** Serif 仅在以下场景出现：场馆名（一级标题）、演出名（章节标题）、第一次访问说明页的 hero 文案。其他一律 Sans。Serif 是图鉴书名页的雅气，不是日常 UI 的装饰。
 

@@ -366,12 +366,16 @@ export default function StagingForm({
           className="text-foreground text-2xl font-bold leading-snug"
         >
           {t.staging.promptTitle}
-          <span aria-hidden="true" className="text-muted-foreground mx-2">
-            ＼/
-          </span>
-          <span className="text-muted-foreground">
-            {t.staging.promptTitleAlt}
-          </span>
+          {t.staging.promptTitleAlt && (
+            <>
+              <span aria-hidden="true" className="text-muted-foreground mx-2">
+                ＼/
+              </span>
+              <span className="text-muted-foreground">
+                {t.staging.promptTitleAlt}
+              </span>
+            </>
+          )}
         </h2>
 
         <form
@@ -574,12 +578,16 @@ export default function StagingForm({
           className="text-foreground text-xl font-bold leading-snug"
         >
           {t.staging.listTitle}
-          <span aria-hidden="true" className="text-muted-foreground mx-2">
-            ＼/
-          </span>
-          <span className="text-muted-foreground">
-            {t.staging.listTitleAlt}
-          </span>
+          {t.staging.listTitleAlt && (
+            <>
+              <span aria-hidden="true" className="text-muted-foreground mx-2">
+                ＼/
+              </span>
+              <span className="text-muted-foreground">
+                {t.staging.listTitleAlt}
+              </span>
+            </>
+          )}
         </h2>
 
         {venues.length === 0 && !listError ? (

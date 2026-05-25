@@ -1,12 +1,14 @@
 ---
 // Bilingual section heading: a zh / ja equal pair joined by the decorative ＼/
 // slash (shape-home-explainer convention §6 — two equal titles standing
-// side-by-side, NOT a translation). Sans-only (Serif stays on the hero). Used by
-// the home explainer's section headers (使用流程 / 推荐 / 上传规则).
+// side-by-side, NOT a translation). The parallel pair is a zh↔ja device; the
+// en/ko accessibility layer passes an empty `alt` and renders a single title.
+// Sans-only (Serif stays on the hero).
 interface Props {
   /** Heading text in the current UI locale. */
   primary: string;
-  /** The same heading in the other locale, shown muted in parallel. */
+  /** The same heading in the other locale, shown muted in parallel. Empty on
+   * the en/ko accessibility layer (no parallel pair). */
   alt: string;
 }
 
@@ -15,6 +17,14 @@ const { primary, alt } = Astro.props;
 
 <h2 class="text-foreground text-2xl font-bold leading-snug lg:text-[1.75rem]">
   {primary}
-  <span aria-hidden="true" class="text-muted-foreground mx-2">＼/</span>
-  <span class="text-muted-foreground">{alt}</span>
+  {
+    alt && (
+      <Fragment>
+        <span aria-hidden="true" class="text-muted-foreground mx-2">
+          ＼/
+        </span>
+        <span class="text-muted-foreground">{alt}</span>
+      </Fragment>
+    )
+  }
 </h2>

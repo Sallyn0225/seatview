@@ -11,7 +11,13 @@ interface Props {
 const locale: Locale = Astro.props.locale ?? Astro.locals.locale ?? "zh";
 const t = getMessages(locale);
 const title = Astro.props.title ?? t.meta.title;
-const htmlLang = locale === "ja" ? "ja" : "zh-Hans";
+const HTML_LANG: Record<Locale, string> = {
+  zh: "zh-Hans",
+  ja: "ja",
+  en: "en",
+  ko: "ko",
+};
+const htmlLang = HTML_LANG[locale];
 ---
 
 <!doctype html>

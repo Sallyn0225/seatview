@@ -3,13 +3,15 @@ import { env } from "cloudflare:workers";
 import {
   defaultLocale,
   isLocale,
+  locales,
   resolveLocaleFromAcceptLanguage,
 } from "@/i18n/config";
 import { isMaintainer } from "@/server/admin-auth";
 
-// Match the admin page (`/zh/admin`, `/ja/admin`) and the admin API namespace
-// (`/api/admin/*`). Both must be protected (R7.1 / ADR-11).
-const ADMIN_PAGE = /^\/(zh|ja)\/admin\/?$/;
+// Match the admin page (`/zh/admin`, `/ja/admin`, …) and the admin API
+// namespace (`/api/admin/*`). Both must be protected (R7.1 / ADR-11).
+// Built from `locales` so new languages stay covered without editing the regex.
+const ADMIN_PAGE = new RegExp(`^/(${locales.join("|")})/admin/?$`);
 const ADMIN_API = /^\/api\/admin(\/|$)/;
 
 function isAdminPath(pathname: string): boolean {

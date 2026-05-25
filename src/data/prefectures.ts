@@ -159,12 +159,43 @@ export function getPrefecture(slug: string): Prefecture | undefined {
   return prefectures.find((p) => p.slug === slug);
 }
 
-/** Locale-appropriate prefecture label (R9.4). */
-export function prefectureName(prefecture: Prefecture, locale: Locale): string {
-  return locale === "ja" ? prefecture.label_jp : prefecture.label_zh;
+/**
+ * Derive a Latin display name from a slug for the accessibility locales.
+ * Slugs are already romaji (`tokyo`, `kanto`, `kyushu-okinawa`), so Title-Case
+ * them: `kyushu-okinawa` → `Kyushu-Okinawa`, `overseas` → `Overseas`.
+ */
+function romajiFromSlug(slug: string): string {
+  return slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("-");
 }
 
-/** Locale-appropriate region label (R9.4). */
+/**
+ * Locale-appropriate prefecture label (R9.4). zh/ja use the authored labels;
+ * en/ko (accessibility layer, no label field) derive Latin names from the slug.
+ */
+export function prefectureName(prefecture: Prefecture, locale: Locale): string {
+  switch (locale) {
+    case "ja":
+      return prefecture.label_jp;
+    case "en":
+    case "ko":
+      return romajiFromSlug(prefecture.slug);
+    default:
+      return prefecture.label_zh;
+  }
+}
+
+/** Locale-appropriate region label (R9.4). See `prefectureName`. */
 export function regionName(region: Region, locale: Locale): string {
-  return locale === "ja" ? region.label_jp : region.label_zh;
+  switch (locale) {
+    case "ja":
+      return region.label_jp;
+    case "en":
+    case "ko":
+      return romajiFromSlug(region.slug);
+    default:
+      return region.label_zh;
+  }
 }

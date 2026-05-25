@@ -1,6 +1,6 @@
 // i18n configuration. Keep `locales` in sync with astro.config.mjs `i18n`.
 
-export const locales = ["zh", "ja"] as const;
+export const locales = ["zh", "ja", "en", "ko"] as const;
 export type Locale = (typeof locales)[number];
 
 export const defaultLocale: Locale = "zh";
@@ -33,6 +33,8 @@ export function resolveLocaleFromAcceptLanguage(header: string | null): Locale {
   for (const { tag } of ranked) {
     if (tag.startsWith("ja")) return "ja";
     if (tag.startsWith("zh")) return "zh";
+    if (tag.startsWith("en")) return "en";
+    if (tag.startsWith("ko")) return "ko";
   }
   return defaultLocale;
 }
