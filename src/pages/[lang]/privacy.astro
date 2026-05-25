@@ -1,0 +1,20 @@
+---
+// Standalone privacy policy page (issue #6) — its own route, no longer the home
+// explainer. Static content; SSR on demand like the rest of /[lang]/.
+import Layout from "@/layouts/Layout.astro";
+import LegalArticle from "@/components/LegalArticle.astro";
+import { asLocale } from "@/i18n/config";
+import { getMessages } from "@/i18n";
+
+const locale = asLocale(Astro.params.lang);
+const t = getMessages(locale);
+---
+
+<Layout locale={locale} title={`${t.legal.privacyTitle} · SeatView`}>
+  <LegalArticle
+    locale={locale}
+    title={t.legal.privacyTitle}
+    intro={t.legal.privacyIntro}
+    sections={t.legal.privacySections}
+  />
+</Layout>

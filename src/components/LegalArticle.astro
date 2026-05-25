@@ -1,0 +1,81 @@
+---
+// Shared shell for the standalone legal pages — privacy + terms (issue #6).
+// One component, only the copy differs (same decision shape as ErrorShell).
+// A quiet 680px reading column: Sans-only (Serif stays a home-hero monopoly,
+// DESIGN §Folio Title Rule), neutral tones only, zero 朱赤 (this is reading,
+// not a contribution). Reuses the shared chrome + footer; renders WITHOUT
+// <Layout> so the page owns the <title> (matches ErrorShell).
+import type { Locale } from "@/i18n/config";
+import { getMessages } from "@/i18n";
+import SiteHeader from "@/components/SiteHeader.astro";
+import SiteFooter from "@/components/SiteFooter.astro";
+
+interface Section {
+  heading: string;
+  body: string;
+}
+
+interface Props {
+  locale: Locale;
+  title: string;
+  intro: string;
+  sections: Section[];
+}
+
+const { locale, title, intro, sections } = Astro.props;
+const t = getMessages(locale);
+
+const GITHUB_REPO = "https://github.com/Sallyn0225/seatview";
+const LAST_UPDATED = "2026-05-25";
+
+const updated = t.legal.updated.replace("{date}", LAST_UPDATED);
+// Split the feedback line around the {github} slot for the inline repo link.
+const feedbackParts = t.legal.feedback.split("{github}");
+---
+
+<div class="flex min-h-screen flex-col">
+  <SiteHeader locale={locale} />
+
+  <main class="flex-1">
+    <article class="mx-auto max-w-[680px] px-6 pt-12 pb-16 lg:pt-16">
+      <h1 class="text-foreground text-3xl font-bold tracking-tight lg:text-4xl">
+        {title}
+      </h1>
+      <p class="text-muted-foreground mt-4 text-base leading-relaxed">
+        {intro}
+      </p>
+
+      <div class="mt-10 space-y-8">
+        {
+          sections.map((section) => (
+            <section>
+              <h2 class="text-foreground text-lg font-bold">
+                {section.heading}
+              </h2>
+              <p class="text-foreground/90 mt-2 text-base leading-relaxed">
+                {section.body}
+              </p>
+            </section>
+          ))
+        }
+      </div>
+
+      <hr class="border-border mt-12 w-20" />
+      <p class="text-muted-foreground mt-6 text-sm">{updated}</p>
+      <p class="text-muted-foreground mt-1 text-sm leading-relaxed">
+        {feedbackParts[0]}
+        <a
+          href={GITHUB_REPO}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-foreground focus-visible:ring-ring rounded-sm underline underline-offset-2 focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {t.legal.feedbackLink} ↗
+        </a>
+        {feedbackParts[1]}
+      </p>
+    </article>
+  </main>
+
+  <SiteFooter locale={locale} />
+</div>

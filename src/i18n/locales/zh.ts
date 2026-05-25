@@ -183,6 +183,27 @@ export interface Messages {
     terms: string;
     copyright: string;
   };
+  /** Standalone legal pages — privacy + terms (issue #6, distinct from home). */
+  legal: {
+    /** Privacy page <h1> + browser title. */
+    privacyTitle: string;
+    /** Privacy lead paragraph. */
+    privacyIntro: string;
+    /** Privacy body sections (heading + paragraph). */
+    privacySections: { heading: string; body: string }[];
+    /** Terms page <h1> + browser title. */
+    termsTitle: string;
+    /** Terms lead paragraph. */
+    termsIntro: string;
+    /** Terms body sections (heading + paragraph). */
+    termsSections: { heading: string; body: string }[];
+    /** "Last updated" line — `{date}` slot. */
+    updated: string;
+    /** Feedback line — `{github}` slot rendered as an inline repo link. */
+    feedback: string;
+    /** Link text for the GitHub repo inside `feedback`. */
+    feedbackLink: string;
+  };
   /** Home / intro page (shape-home-explainer.md). */
   home: {
     /** Serif Display sub-title under the SeatView wordmark. */
@@ -488,6 +509,57 @@ const zh: Messages = {
     privacy: "隐私政策",
     terms: "服务条款",
     copyright: "© SeatView · 真实视角图集",
+  },
+  legal: {
+    privacyTitle: "隐私政策",
+    privacyIntro:
+      "SeatView 是一本由粉丝共建的真实座席视角图鉴。我们尽量少收集数据，下面说明我们如何处理你的信息。",
+    privacySections: [
+      {
+        heading: "投稿与图片",
+        body: "你上传的座席视角照片会公开展示，并以 CC-BY-NC 4.0 授权他人非商业转载。请勿上传含人脸、票面二维码、身份信息等可识别个人的画面。",
+      },
+      {
+        heading: "我们收集的数据",
+        body: "浏览本站无需账号。我们不使用第三方分析或广告追踪，也不构建用户画像。",
+      },
+      {
+        heading: "IP 与防滥用",
+        body: "为限流与投票去重，我们会对你的 IP 地址加盐哈希后短期保存，不保存明文 IP，也无法据此还原你的身份。",
+      },
+      {
+        heading: "人机校验",
+        body: "投稿与附议时使用 Cloudflare Turnstile 进行人机校验，这一环节受 Cloudflare 隐私政策约束。",
+      },
+      {
+        heading: "本地存储",
+        body: "我们仅在你的浏览器本地保存少量偏好（深浅色主题、上次浏览的场馆、目录展开状态）。这些数据只留在你的设备上，不会发送给我们。",
+      },
+    ],
+    termsTitle: "服务条款",
+    termsIntro:
+      "使用 SeatView 即表示你同意以下条款。我们尽量把规则写得简单直白。",
+    termsSections: [
+      {
+        heading: "内容性质",
+        body: "站内座席视角均为投稿者的个人记录，实际视野因座位、设备、场次与身高而异。内容仅供参考，我们不保证其准确、完整或适用于你的观演判断。",
+      },
+      {
+        heading: "投稿规则",
+        body: "请只上传你本人拍摄、且有权公开分享的照片，不得包含侵权、违法或侵犯他人隐私的内容。投稿即表示你同意以 CC-BY-NC 4.0（署名·非商业）授权公开。",
+      },
+      {
+        heading: "内容治理",
+        body: "我们可在不事先通知的情况下，移除不当、违规或涉及投诉的投稿。",
+      },
+      {
+        heading: "免责声明",
+        body: "本服务按「现状」提供，不保证持续可用或无错误。因使用或无法使用本站而产生的任何损失，我们不承担责任。",
+      },
+    ],
+    updated: "最后更新：{date}",
+    feedback: "如有疑问或更正请求，欢迎通过 {github} 反馈。",
+    feedbackLink: "GitHub 仓库",
   },
   home: {
     subtitle: "真实视角图集",
