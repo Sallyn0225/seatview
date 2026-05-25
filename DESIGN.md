@@ -107,7 +107,7 @@ SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场
 - **Don't** 复制日本票务与 Live 资讯站的拥挤老旧排版（eventernote、livefans.jp、ticket.pia、e-plus）：90 年代 BBS 排版、滚动公告条、广告位与内容混排、密集小字堆叠。
 - **Don't** 走标准 SaaS 渐变模板：紫蓝渐变 hero、big-number + small-label 卡片网格、icon + heading + 三行说明的卡片重复、彩色渐变 CTA。SeatView 是一个图鉴工具，不是 SaaS 产品演示页。
 - **Don't** 滑向极简冷漠：纯白底 + 纯黑字 + 无任何温度的 chrome。克制 ≠ 没人住过。
-- **Don't** 使用社交平台式喧闹的元素：点赞数、follow 按钮、彩色徽章、推送红点。SeatView 无注册系统、不做评论评分，UI 不能假装有这些功能。
+- **Don't** 使用社交平台式喧闹的元素：follow 按钮、彩色徽章、推送红点。SeatView 无注册系统、不做评论评分，UI 不能假装有这些功能。**唯一刻意例外**：暂存区「+1 附议」是维护者的需求信号而非社交点赞 —— 克制呈现（muted "N 人想看" + Sumi「✓ 已附议」，绝不用朱赤或彩色徽章；朱赤仍只留给提交 / 投稿 CTA）。见 task 05-25-1。
 - **Don't** 把 modal 当作第一反应。除了 Lightbox（图片预览天然需要全屏聚焦），其他能 inline 就 inline。
 - **Don't** 使用 `#000` 或 `#fff`。
 - **Don't** 使用大于 1px 的 `border-left` / `border-right` 作为彩色装饰条。

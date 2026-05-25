@@ -15,6 +15,13 @@
       "when": 1779620493300,
       "tag": "0001_icy_mister_fear",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1779713163628,
+      "tag": "0002_exotic_salo",
+      "breakpoints": true
     }
   ]
 }

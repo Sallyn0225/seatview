@@ -22,6 +22,7 @@ import { relativeTime, absoluteDate } from "@/lib/format";
 import { STAGING_NAME_MAX, type StagingVenueDto } from "@/lib/staging";
 import {
   fetchStagingPage,
+  plusOneStaging,
   StagingError,
   submitStaging,
 } from "@/lib/staging-client";
@@ -80,6 +81,12 @@ export default function StagingForm({
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const offsetRef = useRef<number>(initialVenues.length);
   const loadingRef = useRef(false);
+
+  // ── +1 (附议) state ─────────────────────────────────────────────────────────
+  /** Disable ALL +1 buttons for the session once the 5-venues/day cap is hit. */
+  const [plusOneBlocked, setPlusOneBlocked] = useState(false);
+  /** One inline +1 message (limit reached / transient failure), null when clear. */
+  const [plusOneMsg, setPlusOneMsg] = useState<string | null>(null);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || !hasMore) return;
@@ -169,6 +176,60 @@ export default function StagingForm({
       setSubmit({ kind: "error", message: errorMessage(code) });
     }
   }, [name, turnstileToken, errorMessage, t]);
+
+  // ── +1 ──────────────────────────────────────────────────────────────────────
+  // Optimistic: mark voted + bump the count IN PLACE (no live re-sort — re-rank
+  // by votes happens on the next load, so rows never jump under the cursor). The
+  // optimistic `votedByMe` doubles as the in-flight guard (button disables). On
+  // success we reconcile to the server's authoritative count (also covers an
+  // idempotent duplicate); on failure we revert, and a 5/day cap also disables
+  // every +1 for the session.
+  const onPlusOne = useCallback(
+    async (venueId: string) => {
+      if (plusOneBlocked) return;
+      const target = venues.find((v) => v.id === venueId);
+      if (!target || target.votedByMe) return;
+
+      setPlusOneMsg(null);
+      setVenues((prev) =>
+        prev.map((v) =>
+          v.id === venueId
+            ? { ...v, votedByMe: true, voteCount: v.voteCount + 1 }
+            : v,
+        ),
+      );
+
+      try {
+        const { voteCount } = await plusOneStaging(venueId);
+        setVenues((prev) =>
+          prev.map((v) =>
+            v.id === venueId ? { ...v, votedByMe: true, voteCount } : v,
+          ),
+        );
+      } catch (err) {
+        const code = err instanceof StagingError ? err.code : "server_error";
+        // Revert the optimistic +1.
+        setVenues((prev) =>
+          prev.map((v) =>
+            v.id === venueId
+              ? {
+                  ...v,
+                  votedByMe: false,
+                  voteCount: Math.max(0, v.voteCount - 1),
+                }
+              : v,
+          ),
+        );
+        if (code === "rate_limited_plusone") {
+          setPlusOneBlocked(true);
+          setPlusOneMsg(t.staging.plusOneLimit);
+        } else {
+          setPlusOneMsg(t.staging.plusOneError);
+        }
+      }
+    },
+    [venues, plusOneBlocked, t],
+  );
 
   return (
     <div>
@@ -304,10 +365,27 @@ export default function StagingForm({
                 venue={v}
                 locale={locale}
                 processedLabel={t.staging.processed}
+                votesLabel={t.staging.votes}
+                plusOneLabel={t.staging.plusOne}
+                plusOneDoneLabel={t.staging.plusOneDone}
+                plusOneAriaLabel={t.staging.plusOneLabel}
+                plusOneBlocked={plusOneBlocked}
+                onPlusOne={onPlusOne}
                 highlight={v.id === highlightId}
               />
             ))}
           </ul>
+        )}
+
+        {/* Inline +1 feedback (no toast): the 5/day cap notice or a transient
+            failure. Sits just under the list, mirroring the submit feedback. */}
+        {plusOneMsg && (
+          <p
+            className="text-muted-foreground mt-4 text-sm"
+            role={plusOneBlocked ? "status" : "alert"}
+          >
+            {plusOneMsg}
+          </p>
         )}
 
         {/* Continuation: sentinel when more pages remain + the shared LoadFailure
@@ -350,21 +428,40 @@ interface StagingRowProps {
   venue: StagingVenueDto;
   locale: Locale;
   processedLabel: string;
+  /** `{count}` template → "N 人想看" demand tally (need-signal, not a like). */
+  votesLabel: string;
+  /** "+1" button label. */
+  plusOneLabel: string;
+  /** Already-seconded (button replaced by a Sumi ✓ marker). */
+  plusOneDoneLabel: string;
+  /** `{name}` template → button aria-label. */
+  plusOneAriaLabel: string;
+  /** Session-wide: the 5-venues/day +1 cap was hit → disable the button. */
+  plusOneBlocked: boolean;
+  onPlusOne: (venueId: string) => void;
   /** Just-submitted row → one-shot Folio Cream highlight that fades out (§7). */
   highlight?: boolean;
 }
 
 /**
- * One wishlist entry: venue name (user verbatim) + relative submit date, and a
- * Sumi "✓ 已收录" marker when processed. The row is NOT a link (these venues do
- * not exist yet — no /v/[id] to jump to, §4) so it carries no hover/focus/click
- * affordance and stays out of the Tab order. A freshly-submitted row briefly
- * lights with Folio Cream then fades (reduced-motion → instant via global CSS).
+ * One wishlist entry. Top line: venue name (user verbatim) + relative submit
+ * date. Bottom line: the demand tally ("N 人想看" — a need signal for
+ * maintainers, deliberately NOT styled as a social like) and a restrained "+1"
+ * (附议) button — Sumi/neutral, never the vermilion reserved for the submit/
+ * contribution actions. Once seconded the button becomes a Sumi "✓ 已附议"
+ * marker (matches the "✓ 已收录" style). A freshly-submitted row briefly lights
+ * with Folio Cream then fades (reduced-motion → instant via global CSS).
  */
 function StagingRow({
   venue,
   locale,
   processedLabel,
+  votesLabel,
+  plusOneLabel,
+  plusOneDoneLabel,
+  plusOneAriaLabel,
+  plusOneBlocked,
+  onPlusOne,
   highlight = false,
 }: StagingRowProps) {
   const rowRef = useRef<HTMLLIElement | null>(null);
@@ -382,29 +479,62 @@ function StagingRow({
 
   const relative = relativeTime(venue.createdAt, locale);
   const absolute = absoluteDate(venue.createdAt, locale);
+  const votesText = votesLabel.replace("{count}", String(venue.voteCount));
 
   return (
     <li
       ref={rowRef}
-      className="border-border flex flex-col gap-1 border-b py-4 last:border-b-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+      className="border-border flex flex-col gap-2 border-b py-4 last:border-b-0"
     >
-      <span className="text-foreground text-sm break-words">{venue.name}</span>
-      <span className="flex shrink-0 items-baseline gap-3">
+      <div className="flex items-baseline justify-between gap-4">
+        <span className="text-foreground text-sm break-words">
+          {venue.name}
+        </span>
         <time
           dateTime={new Date(venue.createdAt).toISOString()}
           title={absolute}
-          className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]"
+          className="text-muted-foreground shrink-0 text-xs [font-variant-numeric:tabular-nums]"
         >
           {relative}
         </time>
-        {venue.processed && (
-          // Sumi ink ✓ — never vermilion, never green (decision 2 派生).
-          <span className="text-foreground inline-flex items-center gap-1 text-xs">
-            <span aria-hidden="true">✓</span>
-            {processedLabel}
-          </span>
-        )}
-      </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        {/* Demand tally — quiet, tabular, muted. NOT a vermilion/colored badge. */}
+        <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
+          {votesText}
+        </span>
+        <div className="flex shrink-0 items-center gap-3">
+          {venue.processed && (
+            // Sumi ink ✓ — never vermilion, never green (decision 2 派生).
+            <span className="text-foreground inline-flex items-center gap-1 text-xs">
+              <span aria-hidden="true">✓</span>
+              {processedLabel}
+            </span>
+          )}
+          {venue.votedByMe ? (
+            <span className="text-foreground inline-flex items-center gap-1 text-xs">
+              <span aria-hidden="true">✓</span>
+              {plusOneDoneLabel}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onPlusOne(venue.id)}
+              disabled={plusOneBlocked}
+              aria-label={plusOneAriaLabel.replace("{name}", venue.name)}
+              className={cn(
+                "border-border text-muted-foreground inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium",
+                "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
+                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {plusOneLabel}
+            </button>
+          )}
+        </div>
+      </div>
     </li>
   );
 }

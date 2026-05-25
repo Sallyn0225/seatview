@@ -23,6 +23,7 @@ import { getMessages } from "@/i18n";
 import { env } from "cloudflare:workers";
 import { getDb } from "@/server/db";
 import { listStagingVenues, STAGING_BATCH } from "@/server/staging";
+import { clientIp, hashIp } from "@/server/ip";
 import type { StagingVenueDto } from "@/lib/staging";
 
 export const prerender = false;
@@ -31,12 +32,18 @@ const locale = asLocale(Astro.params.lang);
 const t = getMessages(locale);
 
 // SSR-query the first list batch (over-fetch one as a hasMore probe). Fail-soft.
+// Pass the viewer's salted IP hash so each row's `votedByMe` paints correctly on
+// first load (the +1 button is disabled for venues this viewer already seconded).
 let initialVenues: StagingVenueDto[] = [];
 let initialHasMore = false;
 if (env.DB) {
   try {
+    const viewerIpHash = env.TURNSTILE_SECRET_KEY
+      ? await hashIp(clientIp(Astro.request), env.TURNSTILE_SECRET_KEY)
+      : undefined;
     const rows = await listStagingVenues(getDb(env.DB), {
       limit: STAGING_BATCH + 1,
+      viewerIpHash,
     });
     initialHasMore = rows.length > STAGING_BATCH;
     initialVenues = initialHasMore ? rows.slice(0, STAGING_BATCH) : rows;

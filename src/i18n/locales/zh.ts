@@ -240,6 +240,18 @@ export interface Messages {
     listTitleAlt: string;
     /** Processed marker (Sumi ✓, never vermilion). */
     processed: string;
+    /** Demand tally, framed as 需求信号 not a 点赞数. `{count}` slot. */
+    votes: string;
+    /** "+1" (附议) button label. */
+    plusOne: string;
+    /** Already-seconded state (button disabled, Sumi ✓). */
+    plusOneDone: string;
+    /** SR/aria label for the +1 button. `{name}` slot → venue name (verbatim). */
+    plusOneLabel: string;
+    /** Hit the 5-different-venues/day +1 cap (inline, disables further +1). */
+    plusOneLimit: string;
+    /** Generic +1 failure (inline). */
+    plusOneError: string;
     /** Empty list (gentle 缝隙时刻). */
     emptyBody: string;
     /** Inline submit success. */
@@ -508,6 +520,12 @@ const zh: Messages = {
     listTitle: "大家想看的",
     listTitleAlt: "みんなのリクエスト",
     processed: "已收录",
+    votes: "{count} 人想看",
+    plusOne: "我也想看",
+    plusOneDone: "已附议",
+    plusOneLabel: "我也想看「{name}」",
+    plusOneLimit: "你今天已经为 5 个场馆 +1 了。明天再来。",
+    plusOneError: "+1 没成功，再试一次？",
     emptyBody: "还没有人写下想看的场馆。第一个，由你来。",
     success: "收到了。已经记在名录最前面。",
     emptyName: "写下场馆名再提交。",

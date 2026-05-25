@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "66a35741-4e79-4a7a-b560-2cf3f9821d5f",
-  "prevId": "66fed647-8748-498d-85c3-a3dc46ee3d38",
+  "id": "73359ef9-954d-47c2-aabd-16c53a466ac5",
+  "prevId": "66a35741-4e79-4a7a-b560-2cf3f9821d5f",
   "tables": {
     "photos": {
       "name": "photos",
@@ -166,9 +166,72 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "vote_count": {
+          "name": "vote_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "staging_votes": {
+      "name": "staging_votes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "venue_id": {
+          "name": "venue_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_staging_votes_unique": {
+          "name": "idx_staging_votes_unique",
+          "columns": [
+            "venue_id",
+            "ip_hash"
+          ],
+          "isUnique": true
+        },
+        "idx_staging_votes_ip": {
+          "name": "idx_staging_votes_ip",
+          "columns": [
+            "ip_hash",
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

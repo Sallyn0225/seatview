@@ -1,9 +1,10 @@
 // /api/admin/staging — maintainer staging-area triage (R7.2). ALL methods sit
 // behind the Cloudflare Access edge gate (ADR-11) + the middleware admin guard.
 //
-// GET     list staging suggestions newest-first, paged (reuses the SAME
-//         listStagingVenues read as the public page; it already exposes the
-//         `processed` flag).
+// GET     list staging suggestions most-seconded-first (vote_count desc, paged;
+//         reuses the SAME listStagingVenues read as the public page — handy for
+//         triage: the most-demanded venues to promote surface at the top). It
+//         already exposes the `processed` flag (and now the `voteCount`).
 // PATCH   mark a suggestion processed / unprocessed (R7.2 "标记已处理"). The
 //         actual "转正式" promotion is a GitHub PR, NOT a backend action (R7.3).
 // DELETE  remove a suggestion outright (R7.2 "删除已处理的提交"). Staging rows

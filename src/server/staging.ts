@@ -1,15 +1,22 @@
-// D1 queries for the staging-area venue suggestions (R6).
+// D1 queries for the staging-area venue suggestions (R6) + the "+1" (附议) flow.
 //
-// Mirrors src/server/photos.ts in shape: a read query (newest-first list, for
-// SSR + the GET continuation) and a write helper (insert one suggestion). The
-// row's `ip_hash` (abuse tracking) is never sent to the client — the list DTO
-// only carries the public columns (R6.4 倒序展示). Read-only listing has no auth
-// (already-public content); the write path carries Turnstile + KV limits in the
-// /api/staging endpoint.
+// Mirrors src/server/photos.ts in shape: a read query (most-seconded-first list,
+// `vote_count DESC`, for SSR + the GET continuation), a write helper (insert one
+// suggestion, with the submitter auto-counting as its first +1) and the +1
+// helpers (addVote / countDistinctVotesToday). The row's `ip_hash` (abuse
+// tracking) is never sent to the client — the list DTO only carries the public
+// columns. Read-only listing has no auth (already-public content); the submit
+// path carries Turnstile + KV limits in /api/staging, while +1 is bounded purely
+// in D1 (permanent per-venue dedup + a 5-different-venues/day cap).
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
-import { stagingVenues, type NewStagingVenueRow } from "@/server/db/schema";
+import { newId } from "@/server/id";
+import {
+  stagingVenues,
+  stagingVotes,
+  type NewStagingVenueRow,
+} from "@/server/db/schema";
 
 /** Public staging-suggestion shape sent to the client (no `ip_hash`). */
 export interface StagingVenueDto {
@@ -20,6 +27,10 @@ export interface StagingVenueDto {
   createdAt: number;
   /** Whether a maintainer has marked it processed (R6 收录标记). */
   processed: boolean;
+  /** "+1" tally (附议数). Always ≥1 — the submitter auto-counts as the first. */
+  voteCount: number;
+  /** Whether THIS viewer (by ip_hash) has already +1'd this venue → disable button. */
+  votedByMe: boolean;
 }
 
 export interface ListStagingOptions {
@@ -27,15 +38,23 @@ export interface ListStagingOptions {
   offset?: number;
   /** Cap returned rows. */
   limit?: number;
+  /**
+   * Viewer's salted IP hash. When given, each returned row's `votedByMe` reflects
+   * whether this viewer already +1'd it (one extra query over the page). Omit
+   * (e.g. unknown IP) → all `votedByMe` are false.
+   */
+  viewerIpHash?: string;
 }
 
 /** Default page size for the staging list (text-only rows are light, §11). */
 export const STAGING_BATCH = 50;
 
 /**
- * List staging-area suggestions newest-first (R6.4). Strips `ip_hash` and maps
- * `processed_at` → a boolean `processed` flag (the exact timestamp is a
- * maintainer detail the client does not need).
+ * List staging-area suggestions, **most-seconded first** (`vote_count DESC`,
+ * then `created_at DESC` as tiebreak — demand-strength signal for maintainers).
+ * Strips `ip_hash` and maps `processed_at` → a boolean `processed` flag. When
+ * `viewerIpHash` is given, marks each row's `votedByMe` so the client can disable
+ * the +1 button on venues this viewer already seconded.
  */
 export async function listStagingVenues(
   db: Db,
@@ -44,34 +63,172 @@ export async function listStagingVenues(
   const rows = await db
     .select()
     .from(stagingVenues)
-    .orderBy(desc(stagingVenues.createdAt))
+    .orderBy(desc(stagingVenues.voteCount), desc(stagingVenues.createdAt))
     .limit(options.limit ?? STAGING_BATCH)
     .offset(options.offset ?? 0);
+
+  // One query marks which of THIS page's venues the viewer already +1'd.
+  let votedSet = new Set<string>();
+  if (options.viewerIpHash && rows.length > 0) {
+    const voted = await db
+      .select({ venueId: stagingVotes.venueId })
+      .from(stagingVotes)
+      .where(
+        and(
+          eq(stagingVotes.ipHash, options.viewerIpHash),
+          inArray(
+            stagingVotes.venueId,
+            rows.map((r) => r.id),
+          ),
+        ),
+      );
+    votedSet = new Set(voted.map((v) => v.venueId));
+  }
 
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
     createdAt: row.createdAt,
     processed: row.processedAt != null,
+    voteCount: row.voteCount,
+    votedByMe: votedSet.has(row.id),
   }));
 }
 
 /**
  * Insert one staging suggestion (R6 write path). Called by /api/staging AFTER
- * Turnstile + the 5/day KV limit pass. Returns the inserted row's client DTO so
- * the form can optimistically prepend it to the list (R6.4, newest first).
+ * Turnstile + the 5/day KV limit pass. The submitter auto-counts as the first
+ * +1 (PRD 提交即首票): the venue starts at `vote_count = 1` and a matching
+ * `staging_votes` row is written in the SAME D1 batch (atomic — tally never
+ * drifts from its rows, and the submitter can't +1 their own suggestion again).
+ * Returns the client DTO so the form can optimistically prepend it.
  */
 export async function insertStagingVenue(
   db: Db,
   row: NewStagingVenueRow,
 ): Promise<StagingVenueDto> {
-  await db.insert(stagingVenues).values(row);
+  await db.batch([
+    db.insert(stagingVenues).values({ ...row, voteCount: 1 }),
+    db.insert(stagingVotes).values({
+      id: newId(),
+      venueId: row.id,
+      ipHash: row.ipHash,
+      createdAt: row.createdAt,
+    }),
+  ]);
   return {
     id: row.id,
     name: row.name,
     createdAt: row.createdAt,
     processed: row.processedAt != null,
+    voteCount: 1,
+    votedByMe: true,
   };
+}
+
+/** Outcome of an {@link addVote} attempt — mapped to HTTP by the endpoint. */
+export type VoteOutcome =
+  | { status: "ok"; voteCount: number }
+  | { status: "duplicate"; voteCount: number }
+  | { status: "rate_limited" }
+  | { status: "not_found" };
+
+/** Start of the UTC day containing `now`, as epoch ms (daily-limit window). */
+function startOfUtcDay(now: number): number {
+  const d = new Date(now);
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/**
+ * Count how many DIFFERENT venues this ip_hash has +1'd today (UTC). Backs the
+ * "5 different venues/day" cap. A repeat +1 on the same venue can't inflate this
+ * (COUNT DISTINCT), and the submitter's auto-vote is a row too, so submitting
+ * also consumes a distinct-venue slot (uniform rule, PRD decision).
+ */
+export async function countDistinctVotesToday(
+  db: Db,
+  ipHash: string,
+  now: number = Date.now(),
+): Promise<number> {
+  const rows = await db
+    .select({ n: sql<number>`count(distinct ${stagingVotes.venueId})` })
+    .from(stagingVotes)
+    .where(
+      and(
+        eq(stagingVotes.ipHash, ipHash),
+        gte(stagingVotes.createdAt, startOfUtcDay(now)),
+      ),
+    );
+  return rows[0]?.n ?? 0;
+}
+
+/**
+ * Record a "+1" (附议) on a staging suggestion. Enforces, in order:
+ *   1. venue exists                          → `not_found`
+ *   2. this ip already +1'd it (permanent)   → `duplicate` (idempotent, no quota)
+ *   3. ip already +1'd `dailyLimit` distinct venues today → `rate_limited`
+ *   4. otherwise insert the vote + bump `vote_count` atomically → `ok`
+ * The `UNIQUE(venue_id, ip_hash)` index is the race backstop: a concurrent
+ * duplicate that slips past step 2 fails the batch (rolled back) and is reported
+ * as `duplicate`. No Turnstile — abuse is bounded by dedup + the daily cap.
+ */
+export async function addVote(
+  db: Db,
+  venueId: string,
+  ipHash: string,
+  dailyLimit: number,
+  now: number = Date.now(),
+): Promise<VoteOutcome> {
+  const venue = (
+    await db
+      .select({ voteCount: stagingVenues.voteCount })
+      .from(stagingVenues)
+      .where(eq(stagingVenues.id, venueId))
+      .limit(1)
+  )[0];
+  if (!venue) return { status: "not_found" };
+
+  const existing = await db
+    .select({ id: stagingVotes.id })
+    .from(stagingVotes)
+    .where(
+      and(eq(stagingVotes.venueId, venueId), eq(stagingVotes.ipHash, ipHash)),
+    )
+    .limit(1);
+  if (existing[0]) return { status: "duplicate", voteCount: venue.voteCount };
+
+  if ((await countDistinctVotesToday(db, ipHash, now)) >= dailyLimit) {
+    return { status: "rate_limited" };
+  }
+
+  try {
+    await db.batch([
+      db
+        .insert(stagingVotes)
+        .values({ id: newId(), venueId, ipHash, createdAt: now }),
+      db
+        .update(stagingVenues)
+        .set({ voteCount: sql`${stagingVenues.voteCount} + 1` })
+        .where(eq(stagingVenues.id, venueId)),
+    ]);
+  } catch (err) {
+    // Only a UNIQUE collision (concurrent duplicate) is idempotent; re-throw any
+    // real D1 failure so the endpoint surfaces it as a 5xx rather than a fake +1.
+    if (!String(err).includes("UNIQUE")) throw err;
+    const fresh = (
+      await db
+        .select({ voteCount: stagingVenues.voteCount })
+        .from(stagingVenues)
+        .where(eq(stagingVenues.id, venueId))
+        .limit(1)
+    )[0];
+    return {
+      status: "duplicate",
+      voteCount: fresh?.voteCount ?? venue.voteCount,
+    };
+  }
+
+  return { status: "ok", voteCount: venue.voteCount + 1 };
 }
 
 // ── Maintainer admin (R7.2) ─────────────────────────────────────────────────

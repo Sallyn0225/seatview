@@ -145,7 +145,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request, url }) => {
   if (!env.DB) {
     // Surface as a server error so the client shows its LoadFailure state
     // rather than crashing.
@@ -157,9 +157,19 @@ export const GET: APIRoute = async ({ url }) => {
 
   try {
     const db = getDb(env.DB);
+    // Mark `votedByMe` for continuation rows too, so the +1 button paints
+    // disabled for venues this viewer already seconded in a past visit. The
+    // secret doubles as the IP-hash salt; absent it we just skip the marking.
+    const viewerIpHash = env.TURNSTILE_SECRET_KEY
+      ? await hashIp(clientIp(request), env.TURNSTILE_SECRET_KEY)
+      : undefined;
     // Over-fetch one row as a hasMore probe (same trick as the photo grid), then
     // trim so `venues` is exactly `limit` long.
-    const rows = await listStagingVenues(db, { offset, limit: limit + 1 });
+    const rows = await listStagingVenues(db, {
+      offset,
+      limit: limit + 1,
+      viewerIpHash,
+    });
     const hasMore = rows.length > limit;
     const payload: StagingListResponse = {
       venues: hasMore ? rows.slice(0, limit) : rows,
@@ -169,8 +179,10 @@ export const GET: APIRoute = async ({ url }) => {
       status: 200,
       headers: {
         "content-type": "application/json",
-        // Short edge cache: list changes only on new submissions.
-        "cache-control": "public, max-age=15",
+        // PRIVATE (not public): the per-viewer `votedByMe` flag must never be
+        // shared across users at the edge. Short browser cache is still fine —
+        // the list only shifts on new submissions / +1s.
+        "cache-control": "private, max-age=15",
       },
     });
   } catch (err) {

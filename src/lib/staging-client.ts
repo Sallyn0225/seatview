@@ -12,6 +12,7 @@ import type {
   StagingErrorCode,
   StagingListResponse,
   StagingRequest,
+  StagingVoteResponse,
 } from "@/lib/staging";
 
 /** A typed transport failure the form maps to localized inline copy. */
@@ -61,7 +62,34 @@ export async function submitStaging(
 }
 
 /**
- * Fetch one page of staging suggestions (newest-first, R6.4). Throws on a
+ * Record a "+1" (附议) on a staging suggestion. Not retried (a 4xx is a real
+ * rejection: 5-venues/day cap or a vanished venue). Resolves with the venue's
+ * authoritative tally — for a fresh vote AND an idempotent repeat — so the form
+ * can reconcile its optimistic count.
+ */
+export async function plusOneStaging(
+  venueId: string,
+  signal?: AbortSignal,
+): Promise<StagingVoteResponse> {
+  let res: Response;
+  try {
+    res = await fetch("/api/staging/vote", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ venueId }),
+      signal,
+    });
+  } catch {
+    throw new StagingError("network");
+  }
+  if (!res.ok) {
+    throw new StagingError(await parseErrorCode(res), res.status);
+  }
+  return (await res.json()) as StagingVoteResponse;
+}
+
+/**
+ * Fetch one page of staging suggestions (most-seconded-first). Throws on a
  * non-OK response so the caller can show its LoadFailure state.
  */
 export async function fetchStagingPage(
