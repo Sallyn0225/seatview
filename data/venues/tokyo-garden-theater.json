@@ -17,9 +17,9 @@
       "id": "default",
       "label_zh": "全场",
       "label_jp": "全体",
-      "imageUrl": "/seatmaps/tokyo-garden-theater/default.svg",
-      "width": 1200,
-      "height": 800
+      "imageUrl": "/seatmaps/tokyo-garden-theater/default.webp",
+      "width": 1580,
+      "height": 2048
     }
   ]
 }

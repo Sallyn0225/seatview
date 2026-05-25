@@ -17,9 +17,9 @@
       "id": "default",
       "label_zh": "全场",
       "label_jp": "全体",
-      "imageUrl": "/seatmaps/saitama-super-arena/default.svg",
-      "width": 1200,
-      "height": 800
+      "imageUrl": "/seatmaps/saitama-super-arena/default.webp",
+      "width": 1911,
+      "height": 2048
     }
   ]
 }
