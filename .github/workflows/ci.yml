@@ -1,11 +1,16 @@
 name: CI
 
-# Typecheck + build only. Deployment is done manually by the maintainer
-# (`npm run deploy` → Cloudflare), so there is intentionally no CD here.
+# Typecheck + build on every push/PR. On push to main (or a manual
+# workflow_dispatch on main), additionally deploy to Cloudflare. The deploy
+# step reuses the just-built artifact and runs ONLY after all checks pass.
+# D1 migrations are intentionally NOT run here — apply them manually with
+# `npm run db:migrate:prod` (see README "部署到 Cloudflare").
+# Requires repo secret CLOUDFLARE_API_TOKEN.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 # Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
 concurrency:
@@ -36,3 +41,11 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # Deploy only on push to main (or manual dispatch on main); never on PRs.
+      # Reuses the dist/ from the Build step above, so no second `astro build`.
+      - name: Deploy to Cloudflare
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        run: npx wrangler deploy -c dist/server/wrangler.json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

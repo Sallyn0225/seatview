@@ -131,6 +131,13 @@ wrangler secret put TURNSTILE_SECRET_KEY
 npm run deploy
 ```
 
+> [!NOTE]
+> **Auto-deploy (CD)**: once configured, pushing to `main` triggers GitHub Actions to build and deploy to Cloudflare automatically (`.github/workflows/ci.yml`; deploy runs only after all checks pass, and you can also trigger it manually via "Run workflow" in the Actions tab). The `npm run deploy` above is for the first-time / local manual deploy.
+>
+> **One-time setup**: in the Cloudflare dashboard, create an API token with the "Edit Cloudflare Workers" template (Account = your account, Zone = `genchi.top`; if the custom domain fails on permissions, also add Zone → DNS: Edit), then add it as the repo secret `CLOUDFLARE_API_TOKEN` under GitHub repo → Settings → Secrets and variables → Actions.
+>
+> CD does **not** run D1 migrations; after a schema change you still run `npm run db:migrate:prod` manually.
+
 > [!IMPORTANT]
 > The **maintainer admin** (`/admin` + `/api/admin/*`) is protected at the edge by **Cloudflare Access (Zero Trust)**: in the dashboard, Zero Trust → Access → Applications, create a self-hosted app covering `/*/admin` and `/api/admin/*`, and add an Allow → maintainer-email policy. After Access authenticates, it injects `Cf-Access-Authenticated-User-Email`, and the Worker trusts that header (`src/server/admin-auth.ts`); anonymous traffic never reaches the Worker. Production needs **no** admin env vars; **never** set `DEV_ADMIN_EMAIL` in production — that would bypass the SSO gateway.
 

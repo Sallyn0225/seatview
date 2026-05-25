@@ -131,6 +131,13 @@ wrangler secret put TURNSTILE_SECRET_KEY
 npm run deploy
 ```
 
+> [!NOTE]
+> **自动部署 (CD)**：配置完成后，push 到 `main` 会由 GitHub Actions 自动构建并部署到 Cloudflare（`.github/workflows/ci.yml`，检查全绿后才部署；也可在 Actions 页 “Run workflow” 手动触发）。上面的 `npm run deploy` 用于首次 / 本机手动部署。
+>
+> **一次性配置**：在 Cloudflare 控制台用 “Edit Cloudflare Workers” 模板创建 API Token（Account 选本账号、Zone 选 `genchi.top`；若 custom domain 报权限不足再补 Zone → DNS: Edit），然后到 GitHub repo → Settings → Secrets and variables → Actions 添加 secret `CLOUDFLARE_API_TOKEN`。
+>
+> CD **不**自动跑 D1 迁移；改了 schema 仍需手动 `npm run db:migrate:prod`。
+
 > [!IMPORTANT]
 > **维护者后台**（`/admin` + `/api/admin/*`）由 **Cloudflare Access (Zero Trust)** 在边缘保护：在控制台 Zero Trust → Access → Applications 新建 self-hosted 应用覆盖 `/*/admin` 与 `/api/admin/*`，加一条 Allow → 维护者邮箱的 policy。Access 鉴权后注入 `Cf-Access-Authenticated-User-Email`，Worker 信任该头（`src/server/admin-auth.ts`），匿名流量到不了 Worker。生产**无需**任何 admin 环境变量；**切勿**在生产设 `DEV_ADMIN_EMAIL`——那会绕过 SSO 网关。
 

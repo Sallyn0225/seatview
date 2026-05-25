@@ -131,6 +131,13 @@ wrangler secret put TURNSTILE_SECRET_KEY
 npm run deploy
 ```
 
+> [!NOTE]
+> **自動デプロイ (CD)**：設定が完了すると、`main` への push で GitHub Actions が自動的にビルドして Cloudflare にデプロイします（`.github/workflows/ci.yml`。すべてのチェックが通った後にのみデプロイ。Actions タブの「Run workflow」から手動トリガーも可能）。上記の `npm run deploy` は初回 / ローカルでの手動デプロイ用です。
+>
+> **一度きりの設定**：Cloudflare ダッシュボードで「Edit Cloudflare Workers」テンプレートを使って API トークンを作成し（Account = 自分のアカウント、Zone = `genchi.top`。custom domain で権限不足になる場合は Zone → DNS: Edit も追加）、GitHub repo → Settings → Secrets and variables → Actions でリポジトリシークレット `CLOUDFLARE_API_TOKEN` として追加します。
+>
+> CD は D1 マイグレーションを実行**しません**。schema を変更した場合は引き続き手動で `npm run db:migrate:prod` を実行してください。
+
 > [!IMPORTANT]
 > **メンテナー管理画面**（`/admin` + `/api/admin/*`）は **Cloudflare Access (Zero Trust)** によりエッジで保護されます：ダッシュボードの Zero Trust → Access → Applications で `/*/admin` と `/api/admin/*` をカバーする self-hosted アプリを新規作成し、Allow → メンテナーのメールアドレスの policy を 1 つ追加します。Access が認証後に `Cf-Access-Authenticated-User-Email` を注入し、Worker はそのヘッダーを信頼します（`src/server/admin-auth.ts`）。匿名トラフィックは Worker に到達しません。本番では admin の環境変数は**不要**です。本番で `DEV_ADMIN_EMAIL` を**絶対に設定しないでください**——SSO ゲートウェイを迂回してしまいます。
 
