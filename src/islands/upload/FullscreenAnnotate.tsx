@@ -115,32 +115,22 @@ export default function FullscreenAnnotate({
             </button>
           </div>
 
-          {/* Surface: the large shared marking surface on warm paper. The inner
-              box MUST keep the SAME 3:2 frame as the inline AnnotateSeatmap box
-              and the main Seatmap (SeatmapFrame): x_percent/y_percent are
-              normalized within a 3:2 render box, so letting the surface fill a
-              non-3:2 flex-1 region skewed MarkSurface.toNormalized — fullscreen
-              marks looked right on screen but landed offset on the chart (issue
-              #16). We contain a 3:2 box in the available space via container-
-              query units: width = min(container width, 1.5×container height), so
-              it maxes out without overflowing either axis (warm-paper letterbox
-              fills the rest). */}
-          <div
-            className="bg-card relative flex min-h-0 flex-1 items-center justify-center p-2"
-            style={{ containerType: "size" }}
-          >
-            <div
-              className="relative aspect-[3/2]"
-              style={{ width: "min(100cqw, 150cqh)" }}
-            >
-              <MarkSurface
-                locale={locale}
-                subMap={subMap}
-                point={point}
-                onChange={onChange}
-                large
-              />
-            </div>
+          {/* Surface: the large shared marking surface fills the whole flex-1
+              region (TRUE fullscreen). x_percent/y_percent are now normalized
+              against the chart's real object-contain content rect (not a render
+              frame), so MarkSurface stays correct in any aspect ratio — no need
+              to box it into a 3:2 frame. This removes the issue #16 workaround:
+              the chart object-contains within the region, letterbox slack is
+              excluded from the coordinate base, and screen real estate is no
+              longer wasted on a forced 3:2 letterbox. */}
+          <div className="bg-card relative flex min-h-0 flex-1 p-2">
+            <MarkSurface
+              locale={locale}
+              subMap={subMap}
+              point={point}
+              onChange={onChange}
+              large
+            />
           </div>
 
           {/* Footer: 撤销 + 确认（确认 = 完成 Step 1）. */}

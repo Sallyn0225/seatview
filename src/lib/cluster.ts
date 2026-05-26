@@ -28,12 +28,13 @@ export const CLUSTER_TUNING = {
   MIN_THRESHOLD_PX: 2,
 } as const;
 
-/** A point laid out on the (unscaled) image surface, in pixels. */
+/** A point laid out on the (unscaled) image surface, in real chart pixels. */
 export interface LaidOutPoint {
   photo: PhotoDto;
-  /** Pixel x on the image surface (xPercent * imageWidth). */
+  /** Real pixel x on the chart image (xPercent * imageWidth — xPercent is now
+   *  image-content-relative, so this is a true pixel position). */
   x: number;
-  /** Pixel y on the image surface (yPercent * imageHeight). */
+  /** Real pixel y on the chart image (yPercent * imageHeight). */
   y: number;
 }
 

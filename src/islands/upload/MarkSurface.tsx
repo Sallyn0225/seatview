@@ -2,13 +2,16 @@
 // Step-1 box (AnnotateSeatmap) and the fullscreen overlay (FullscreenAnnotate).
 //
 // It carries ONLY the marking technique: a react-zoom-pan-pinch zoom/pan
-// container + the surface-pixel ↔ normalized {x,y} conversion + counter-scaling
-// so the vermilion dot keeps a constant on-screen size as you zoom, plus the
-// ⊕ ⊖ ⟲ zoom controls and the top-left helper line. It fills its parent (the
-// parent owns framing: the inline box's aspect-[3/2]+border, or the overlay's
-// flex-1 region). Place/drag emits a normalized {x,y} in 0..1 (photos.x_percent
-// space) via onChange; undo/confirm live in the parent so the two surfaces stay
-// in sync off ONE shared point.
+// container + the click ↔ normalized {x,y} conversion + counter-scaling so the
+// vermilion dot keeps a constant on-screen size as you zoom, plus the ⊕ ⊖ ⟲
+// zoom controls and the top-left helper line. It fills its parent (the parent
+// owns framing: the inline box's aspect-[3/2]+border, or the overlay's flex-1
+// region) and the chart object-contains within it. Coordinates are normalized
+// against the chart's REAL content rect (image-rect.ts), not the frame, so the
+// surface works in ANY aspect ratio — a tap in the letterbox slack is rejected.
+// Place/drag emits {x,y} in 0..1 (photos.x_percent space) via onChange;
+// undo/confirm live in the parent so the two surfaces stay in sync off ONE
+// shared point.
 
 import { useCallback, useRef, useState } from "react";
 import {
@@ -20,6 +23,8 @@ import { Minus, Plus, RotateCcw } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useElementSize } from "@/hooks/useElementSize";
+import { imageContentRect } from "@/lib/image-rect";
 import type { SubMap } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -58,24 +63,48 @@ export default function MarkSurface({
 
   const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  // Unscaled outer box (NOT the transformed content) → the object-contain image
+  // content rect for positioning the dot. Re-measured on resize / fullscreen.
+  const outerRef = useRef<HTMLDivElement>(null);
+  const outerSize = useElementSize(outerRef);
   const [scale, setScale] = useState(MIN_SCALE);
   const draggingRef = useRef(false);
 
-  // Convert a client (pointer) position into a normalized 0..1 surface coord,
-  // accounting for the current pan/zoom transform of the content box.
+  // The object-contain image rectangle inside the unscaled outer box (the dot
+  // anchors to THIS, not the whole frame): x_percent/y_percent are normalized
+  // against the image's real content, so the letterbox slack must be excluded.
+  const contentRect = imageContentRect(
+    outerSize.width,
+    outerSize.height,
+    subMap.width,
+    subMap.height,
+  );
+
+  // Convert a client (pointer) position into a normalized 0..1 coord relative to
+  // the IMAGE CONTENT rectangle (u,v → a real pixel u·width, v·height on the
+  // chart), not the render frame. surfaceRef wraps the already scaled+panned
+  // content, so its rect is the rendered image box; object-contain geometry is
+  // proportional, so the content rect within that scaled rect is found with the
+  // same imageContentRect math. A tap in the letterbox slack (u/v outside 0..1)
+  // is rejected.
   const toNormalized = useCallback(
     (clientX: number, clientY: number): AnnotationPoint | null => {
       const surface = surfaceRef.current;
       if (!surface) return null;
       const rect = surface.getBoundingClientRect();
-      // surfaceRef wraps the (already transformed) content, so its rect IS the
-      // rendered, scaled+panned image box. Normalize within it.
-      const x = (clientX - rect.left) / rect.width;
-      const y = (clientY - rect.top) / rect.height;
-      if (x < 0 || x > 1 || y < 0 || y > 1) return null;
-      return { x: clamp01(x), y: clamp01(y) };
+      const cr = imageContentRect(
+        rect.width,
+        rect.height,
+        subMap.width,
+        subMap.height,
+      );
+      if (cr.width <= 0 || cr.height <= 0) return null;
+      const u = (clientX - rect.left - cr.offsetX) / cr.width;
+      const v = (clientY - rect.top - cr.offsetY) / cr.height;
+      if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+      return { x: clamp01(u), y: clamp01(v) };
     },
-    [],
+    [subMap.width, subMap.height],
   );
 
   // Click/tap to place. Skipped while a drag just happened (the drag handler
@@ -119,8 +148,24 @@ export default function MarkSurface({
     [toNormalized, onChange],
   );
 
+  // Convert the image-relative (u,v) point into a percentage of the UNSCALED
+  // content box (= outerSize, the layer the dot lives on inside TransformComponent),
+  // folding the letterbox offset back in so the dot lands on the real pixel.
+  const dotLeftPct =
+    outerSize.width > 0
+      ? ((contentRect.offsetX + (point?.x ?? 0) * contentRect.width) /
+          outerSize.width) *
+        100
+      : (point?.x ?? 0) * 100;
+  const dotTopPct =
+    outerSize.height > 0
+      ? ((contentRect.offsetY + (point?.y ?? 0) * contentRect.height) /
+          outerSize.height) *
+        100
+      : (point?.y ?? 0) * 100;
+
   return (
-    <div className="relative size-full overflow-hidden">
+    <div ref={outerRef} className="relative size-full overflow-hidden">
       <TransformWrapper
         ref={transformRef}
         minScale={MIN_SCALE}
@@ -156,8 +201,8 @@ export default function MarkSurface({
                 onPointerDown={handleDotPointerDown}
                 className="group pointer-events-auto absolute grid size-11 cursor-grab place-items-center rounded-full focus-visible:outline-none active:cursor-grabbing"
                 style={{
-                  left: `${point.x * 100}%`,
-                  top: `${point.y * 100}%`,
+                  left: `${dotLeftPct}%`,
+                  top: `${dotTopPct}%`,
                   // Center on the anchor + counter-scale so the dot stays a
                   // constant on-screen size as the user zooms (same technique as
                   // the main seatmap). Centering MUST live only in this inline
