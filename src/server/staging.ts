@@ -11,6 +11,7 @@
 
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
+import type { StagingNameDto } from "@/lib/staging";
 import { newId } from "@/server/id";
 import {
   stagingVenues,
@@ -97,24 +98,33 @@ export async function listStagingVenues(
 
 /**
  * Lightweight list for the staging-area dedup-match corpus (issue #3). Returns
- * ONLY the public {id, name, voteCount}, most-seconded first, capped at `limit`.
- * Deliberately has NO per-viewer `votedByMe` query (so GET /api/staging/names is
- * public-cacheable at the edge) and NO `ip_hash`. Backs the staging form's
+ * ONLY the public {id, name, voteCount, processed}, most-seconded first, capped
+ * at `limit`. Deliberately has NO per-viewer `votedByMe` query (so GET
+ * /api/staging/names is public-cacheable at the edge) and NO `ip_hash`;
+ * `processed` is viewer-independent so it stays public (issue #15 — the form
+ * hides the +1 on an already-collected hint match). Backs the staging form's
  * "this venue may already exist / already be requested" hint.
  */
 export async function listStagingNames(
   db: Db,
   limit: number,
-): Promise<{ id: string; name: string; voteCount: number }[]> {
-  return db
+): Promise<StagingNameDto[]> {
+  const rows = await db
     .select({
       id: stagingVenues.id,
       name: stagingVenues.name,
       voteCount: stagingVenues.voteCount,
+      processedAt: stagingVenues.processedAt,
     })
     .from(stagingVenues)
     .orderBy(desc(stagingVenues.voteCount), desc(stagingVenues.createdAt))
     .limit(limit);
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    voteCount: row.voteCount,
+    processed: row.processedAt != null,
+  }));
 }
 
 /**

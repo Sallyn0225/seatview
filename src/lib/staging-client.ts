@@ -91,8 +91,9 @@ export async function plusOneStaging(
 }
 
 /**
- * Fetch the public, edge-cached dedup-match corpus ({id,name,voteCount},
- * most-seconded-first, capped — issue #3). Resolves with [] on ANY failure: the
+ * Fetch the public, edge-cached dedup-match corpus ({id,name,voteCount,
+ * processed}, most-seconded-first, capped — issue #3). Resolves with [] on ANY
+ * failure: the
  * staging form's "may already exist" hint is a soft enhancement, never blocking,
  * so a missing corpus simply means no staged-side matches are shown.
  */

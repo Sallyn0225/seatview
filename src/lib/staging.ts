@@ -46,13 +46,17 @@ export interface StagingListResponse {
 
 /**
  * Lightweight staging row for the dedup-match corpus (issue #3). Carries ONLY
- * the public, viewer-independent columns — no `votedByMe`, no `ip_hash`, no
- * `processed` — so GET /api/staging/names can be cached publicly at the edge.
+ * public, viewer-independent columns — no `votedByMe`, no `ip_hash` — so GET
+ * /api/staging/names can be cached publicly at the edge. `processed` is itself
+ * viewer-independent and public, so it rides along (issue #15): the form hides
+ * the +1 on an already-collected suggestion surfaced in the dedup hint.
  */
 export interface StagingNameDto {
   id: string;
   name: string;
   voteCount: number;
+  /** Maintainer marked it 已收录 (`processed_at != null`) → +1 hidden (issue #15). */
+  processed: boolean;
 }
 
 /** GET /api/staging/names body: the capped, public-cacheable match corpus. */
