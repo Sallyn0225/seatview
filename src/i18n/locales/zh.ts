@@ -105,6 +105,10 @@ export interface Messages {
       markerLabel: string;
       undo: string;
       confirm: string;
+      /** ⤢ open-fullscreen button label / title. */
+      fullscreen: string;
+      /** ✕ exit-fullscreen aria-label. */
+      exitFullscreen: string;
       /** Folded summary, `{label}` → sub-map, `{x}`/`{y}` → percent ints. */
       summary: string;
     };
@@ -493,6 +497,8 @@ const zh: Messages = {
       markerLabel: "你的座位标注点，拖动可调整",
       undo: "撤销",
       confirm: "确认位置 →",
+      fullscreen: "全屏标点",
+      exitFullscreen: "退出全屏",
       summary: "{label} · {x}% / {y}%",
     },
     step2: {

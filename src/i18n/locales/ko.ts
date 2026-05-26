@@ -99,6 +99,8 @@ const ko: Messages = {
       markerLabel: "좌석 마커, 드래그해서 조정할 수 있어요",
       undo: "되돌리기",
       confirm: "위치 확정 →",
+      fullscreen: "전체화면 지정",
+      exitFullscreen: "전체화면 종료",
       summary: "{label} · {x}% / {y}%",
     },
     step2: {

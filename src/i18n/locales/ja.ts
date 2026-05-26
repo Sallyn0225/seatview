@@ -94,6 +94,8 @@ const ja: Messages = {
       markerLabel: "座席のマーカー、ドラッグで調整できます",
       undo: "取り消す",
       confirm: "位置を確定 →",
+      fullscreen: "全画面で指定",
+      exitFullscreen: "全画面を終了",
       summary: "{label} · {x}% / {y}%",
     },
     step2: {
