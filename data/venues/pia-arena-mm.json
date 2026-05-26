@@ -1,0 +1,26 @@
+{
+  "id": "pia-arena-mm",
+  "name_zh": "PIA Arena MM",
+  "name_jp": "ぴあアリーナMM",
+  "name_romaji": "PIA Arena MM",
+  "prefecture": "kanagawa",
+  "city": "横浜市西区",
+  "aliases": [
+    "ぴあアリーナMM",
+    "PIA Arena MM",
+    "ぴあアリーナ",
+    "PIA Arena",
+    "PIA竞技馆MM",
+    "ぴあアリーナみなとみらい"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/pia-arena-mm/default.webp",
+      "width": 1643,
+      "height": 2048
+    }
+  ]
+}

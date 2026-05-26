@@ -1,0 +1,26 @@
+{
+  "id": "vantelin-dome-nagoya",
+  "name_zh": "Vantelin Dome 名古屋",
+  "name_jp": "バンテリンドーム ナゴヤ",
+  "name_romaji": "Vantelin Dome Nagoya",
+  "prefecture": "aichi",
+  "city": "名古屋市東区",
+  "aliases": [
+    "バンテリンドーム ナゴヤ",
+    "Vantelin Dome Nagoya",
+    "ナゴヤドーム",
+    "Nagoya Dome",
+    "名古屋巨蛋",
+    "バンテリンドーム"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/vantelin-dome-nagoya/default.webp",
+      "width": 1911,
+      "height": 2048
+    }
+  ]
+}
