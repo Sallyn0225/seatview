@@ -5,7 +5,7 @@ import Lightbox, {
 } from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -349,19 +349,27 @@ function FooterStrip({
         onClick={onOpenDetails}
         aria-label={openDetailsLabel}
         className={cn(
-          "pointer-events-auto max-w-[80%] truncate rounded px-2 py-1 text-left",
-          "bg-[oklch(0.13_0.008_75_/_0.55)] text-[oklch(0.93_0.006_88)]",
-          "text-sm [font-variant-numeric:tabular-nums]",
+          "pointer-events-auto inline-flex max-w-[80%] items-center gap-1.5 rounded-full py-1 pl-2.5 pr-3 text-left",
+          "border border-[oklch(0.8_0.006_86_/_0.25)] bg-[oklch(0.13_0.008_75_/_0.6)] text-[oklch(0.93_0.006_88)]",
+          "text-sm [font-variant-numeric:tabular-nums] transition-colors",
+          "hover:border-[oklch(0.8_0.006_86_/_0.45)] hover:bg-[oklch(0.16_0.008_75_/_0.72)]",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)] focus:outline-none",
         )}
       >
-        <span className="font-medium">{dto.seatLabel}</span>
-        {date && (
-          <span className="opacity-70">
-            {" · "}
-            {date}
-          </span>
-        )}
+        <ChevronUp
+          className="size-3.5 shrink-0 opacity-80"
+          aria-hidden="true"
+          strokeWidth={1.5}
+        />
+        <span className="min-w-0 truncate">
+          <span className="font-medium">{dto.seatLabel}</span>
+          {date && (
+            <span className="opacity-70">
+              {" · "}
+              {date}
+            </span>
+          )}
+        </span>
       </button>
       {isSequence && position && (
         <span
