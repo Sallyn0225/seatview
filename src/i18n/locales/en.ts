@@ -100,6 +100,8 @@ const en: Messages = {
       markerLabel: "Your seat marker, drag to adjust",
       undo: "Undo",
       confirm: "Confirm location →",
+      fullscreen: "Mark fullscreen",
+      exitFullscreen: "Exit fullscreen",
       summary: "{label} · {x}% / {y}%",
     },
     step2: {

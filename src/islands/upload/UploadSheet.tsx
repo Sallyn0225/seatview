@@ -33,6 +33,7 @@ import { signUpload, commitUpload, UploadError } from "@/lib/upload-client";
 import { DESCRIPTION_MAX, SEAT_LABEL_MAX } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import AnnotateSeatmap, { type AnnotationPoint } from "./AnnotateSeatmap";
+import FullscreenAnnotate from "./FullscreenAnnotate";
 import DateField from "./DateField";
 import TurnstileWidget from "./TurnstileWidget";
 import SuccessBookmark from "./SuccessBookmark";
@@ -75,6 +76,8 @@ export default function UploadSheet({
   // ── Step data ─────────────────────────────────────────────────────────────
   const [point, setPoint] = useState<AnnotationPoint | null>(null);
   const [pointConfirmed, setPointConfirmed] = useState(false);
+  // Fullscreen marking overlay (Step 1). Shares `point` with the inline box.
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageBytes, setImageBytes] = useState<number>(0);
@@ -180,9 +183,13 @@ export default function UploadSheet({
   }, [succeeded, anyProgress, onClose]);
 
   // Esc → same close logic. Focus trap is provided by the sheet container.
+  // While the fullscreen marking overlay is open, it owns Escape (collapses
+  // itself first), so the Sheet skips its own close handler — same priority
+  // technique as the Lightbox detail sheet.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        if (fullscreenOpen) return;
         e.stopPropagation();
         e.preventDefault();
         requestClose();
@@ -190,7 +197,7 @@ export default function UploadSheet({
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [requestClose]);
+  }, [requestClose, fullscreenOpen]);
 
   // ── Step 1: annotate ────────────────────────────────────────────────────────
   const confirmPoint = useCallback(() => {
@@ -474,6 +481,7 @@ export default function UploadSheet({
                     subMap={subMap}
                     point={point}
                     onChange={setPoint}
+                    onRequestFullscreen={() => setFullscreenOpen(true)}
                   />
                   <div className="flex items-center gap-4 text-sm">
                     <button
@@ -701,6 +709,23 @@ export default function UploadSheet({
           </>
         )}
       </div>
+
+      {/* Fullscreen marking overlay (Step 1). Paints above the panel (z-[60]);
+          shares `point` so place/drag here syncs the inline box. Confirm reuses
+          confirmPoint() → closes overlay + completes Step 1 + scrolls to Step 2. */}
+      <FullscreenAnnotate
+        open={fullscreenOpen}
+        locale={locale}
+        subMap={subMap}
+        point={point}
+        onChange={setPoint}
+        onUndo={undoPoint}
+        onConfirm={() => {
+          confirmPoint();
+          setFullscreenOpen(false);
+        }}
+        onClose={() => setFullscreenOpen(false)}
+      />
     </div>
   );
 }
