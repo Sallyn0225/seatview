@@ -168,11 +168,22 @@ export default function StagingForm({
     const query: Expression = {
       $and: matchQuery.split(/\s+/).map((tok) => ({ name: `'${tok}` })),
     };
-    return stagingFuse
-      .search(query)
-      .slice(0, MATCH_RESULTS)
-      .map((r) => r.item);
-  }, [stagingFuse, matchQuery]);
+    // issue #14: a venue that is BOTH collected and still has a staging request
+    // must surface ONLY the 已收录 hint, never twice. Drop any staged match whose
+    // name resolves (via the shared venueFuse) to a collected venue already shown
+    // in venueMatches — there is no id link between the two, so dedup by name.
+    // Filter before capping, so duplicates in the top ranks do not hide later
+    // valid staged matches.
+    const matched = stagingFuse.search(query).map((r) => r.item);
+    if (venueMatches.length === 0) return matched.slice(0, MATCH_RESULTS);
+    const collectedIds = new Set(venueMatches.map((v) => v.id));
+    return matched
+      .filter((m) => {
+        const hit = venueFuse.search(venueExtendedQuery(m.name))[0]?.item;
+        return !(hit && collectedIds.has(hit.id));
+      })
+      .slice(0, MATCH_RESULTS);
+  }, [stagingFuse, matchQuery, venueMatches, venueFuse]);
 
   // Fetch the match corpus once, lazily, on the FIRST keystroke — and ONLY when
   // the table is bigger than the SSR batch (otherwise the loaded list already is
