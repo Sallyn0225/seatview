@@ -1,0 +1,25 @@
+{
+  "id": "ariake-arena",
+  "name_zh": "有明竞技馆",
+  "name_jp": "有明アリーナ",
+  "name_romaji": "Ariake Arena",
+  "prefecture": "tokyo",
+  "city": "江東区",
+  "aliases": [
+    "有明アリーナ",
+    "有明竞技馆",
+    "Ariake Arena",
+    "有明アリ",
+    "有アリ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/ariake-arena/default.webp",
+      "width": 1755,
+      "height": 2048
+    }
+  ]
+}

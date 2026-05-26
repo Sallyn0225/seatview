@@ -1,0 +1,26 @@
+{
+  "id": "marine-messe-fukuoka",
+  "name_zh": "Marine Messe 福冈",
+  "name_jp": "マリンメッセ福岡A館",
+  "name_romaji": "Marine Messe Fukuoka",
+  "prefecture": "fukuoka",
+  "city": "福岡市博多区",
+  "aliases": [
+    "マリンメッセ福岡A館",
+    "マリンメッセ福岡",
+    "Marine Messe Fukuoka",
+    "海洋展览馆福冈",
+    "マリンメッセ",
+    "Marine Messe Fukuoka Hall A"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/marine-messe-fukuoka/default.webp",
+      "width": 1653,
+      "height": 2048
+    }
+  ]
+}

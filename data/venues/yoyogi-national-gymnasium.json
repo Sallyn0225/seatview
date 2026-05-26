@@ -1,0 +1,26 @@
+{
+  "id": "yoyogi-national-gymnasium",
+  "name_zh": "国立代代木竞技场",
+  "name_jp": "国立代々木競技場 第一体育館",
+  "name_romaji": "Yoyogi National Gymnasium",
+  "prefecture": "tokyo",
+  "city": "渋谷区",
+  "aliases": [
+    "国立代々木競技場第一体育館",
+    "国立代代木竞技场",
+    "Yoyogi National Gymnasium",
+    "代々木第一体育館",
+    "代々木競技場",
+    "Yoyogi National Stadium"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/yoyogi-national-gymnasium/default.webp",
+      "width": 2003,
+      "height": 2048
+    }
+  ]
+}

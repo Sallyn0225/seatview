@@ -1,0 +1,26 @@
+{
+  "id": "nippon-budokan",
+  "name_zh": "日本武道馆",
+  "name_jp": "日本武道館",
+  "name_romaji": "Nippon Budokan",
+  "prefecture": "tokyo",
+  "city": "千代田区",
+  "aliases": [
+    "日本武道館",
+    "日本武道馆",
+    "Nippon Budokan",
+    "武道館",
+    "武道馆",
+    "Budokan"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/nippon-budokan/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}

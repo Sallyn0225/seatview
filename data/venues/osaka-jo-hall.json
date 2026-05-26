@@ -1,0 +1,26 @@
+{
+  "id": "osaka-jo-hall",
+  "name_zh": "大阪城馆",
+  "name_jp": "大阪城ホール",
+  "name_romaji": "Osaka-jo Hall",
+  "prefecture": "osaka",
+  "city": "大阪市中央区",
+  "aliases": [
+    "大阪城ホール",
+    "大阪城馆",
+    "Osaka-jo Hall",
+    "城ホール",
+    "Osaka Castle Hall",
+    "大阪城会馆"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/osaka-jo-hall/default.webp",
+      "width": 2048,
+      "height": 1845
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "makuhari-messe-event-hall",
+  "name_zh": "幕张展览馆 活动大厅",
+  "name_jp": "幕張メッセ イベントホール",
+  "name_romaji": "Makuhari Messe Event Hall",
+  "prefecture": "chiba",
+  "city": "千葉市美浜区",
+  "aliases": [
+    "幕張メッセ イベントホール",
+    "幕张展览馆活动大厅",
+    "Makuhari Messe Event Hall",
+    "幕張メッセ",
+    "Makuhari Messe",
+    "幕张国际展览中心"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/makuhari-messe-event-hall/default.webp",
+      "width": 1920,
+      "height": 2048
+    }
+  ]
+}

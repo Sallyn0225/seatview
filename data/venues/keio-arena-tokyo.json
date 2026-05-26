@@ -1,0 +1,25 @@
+{
+  "id": "keio-arena-tokyo",
+  "name_zh": "京王 Arena Tokyo",
+  "name_jp": "京王アリーナTOKYO（武蔵野の森総合スポーツプラザ）",
+  "name_romaji": "Keio Arena Tokyo",
+  "prefecture": "tokyo",
+  "city": "調布市",
+  "aliases": [
+    "京王アリーナTOKYO",
+    "Keio Arena Tokyo",
+    "武蔵野の森総合スポーツプラザ",
+    "Musashino Forest Sport Plaza",
+    "武藏野之森综合体育广场"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/keio-arena-tokyo/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
