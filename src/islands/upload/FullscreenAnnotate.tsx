@@ -115,15 +115,32 @@ export default function FullscreenAnnotate({
             </button>
           </div>
 
-          {/* Surface: the large shared marking surface on warm paper. */}
-          <div className="bg-card relative min-h-0 flex-1">
-            <MarkSurface
-              locale={locale}
-              subMap={subMap}
-              point={point}
-              onChange={onChange}
-              large
-            />
+          {/* Surface: the large shared marking surface on warm paper. The inner
+              box MUST keep the SAME 3:2 frame as the inline AnnotateSeatmap box
+              and the main Seatmap (SeatmapFrame): x_percent/y_percent are
+              normalized within a 3:2 render box, so letting the surface fill a
+              non-3:2 flex-1 region skewed MarkSurface.toNormalized — fullscreen
+              marks looked right on screen but landed offset on the chart (issue
+              #16). We contain a 3:2 box in the available space via container-
+              query units: width = min(container width, 1.5×container height), so
+              it maxes out without overflowing either axis (warm-paper letterbox
+              fills the rest). */}
+          <div
+            className="bg-card relative flex min-h-0 flex-1 items-center justify-center p-2"
+            style={{ containerType: "size" }}
+          >
+            <div
+              className="relative aspect-[3/2]"
+              style={{ width: "min(100cqw, 150cqh)" }}
+            >
+              <MarkSurface
+                locale={locale}
+                subMap={subMap}
+                point={point}
+                onChange={onChange}
+                large
+              />
+            </div>
           </div>
 
           {/* Footer: 撤销 + 确认（确认 = 完成 Step 1）. */}
