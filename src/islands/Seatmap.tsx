@@ -372,19 +372,24 @@ interface PinProps {
 }
 
 /**
- * Single annotation pin. Four states (shape §5.2):
- *   default  → vermilion faint hairline + rice-paper fill, "sunk into paper"
+ * Single annotation pin. Vermilion is the marker identity (issue #7): the quiet
+ * "sunk into paper" default vanished on the colored venue maps, so every pin now
+ * carries a solid 朱赤 core + a paper halo ring (border, not shadow) that keeps
+ * it legible over any map color (blue seats / white aisles / ink frame).
+ *   default  → vermilion core + paper ring, ~14px
  *   hover    → ~1.2x + faint vermilion halo (ring, not shadow)
  *   focus    → 2px vermilion focus ring (≥3:1)
- *   selected → vermilion solid fill + ink hairline (only while Lightbox open)
- * Color is not the only channel: selected pins also grow + carry an ink ring,
- * so the state reads without relying on hue (DESIGN.md non-color-only rule).
+ *   selected → larger + ink ring + faint vermilion micro-halo (only while
+ *              Lightbox open)
+ * Color is not the only channel: selected pins also grow + swap the paper ring
+ * for an ink one, so the state reads without relying on hue (DESIGN.md
+ * non-color-only rule).
  */
 function Pin({ photo, label, selected, onActivate }: PinProps) {
   return (
     <button
       type="button"
-      // 44x44 touch target (transparent), centered on the visible ~10px dot.
+      // 44x44 touch target (transparent), centered on the visible ~14px marker.
       className={cn(
         "group pointer-events-auto grid size-11 place-items-center rounded-full",
         "focus-visible:outline-none",
@@ -397,11 +402,13 @@ function Pin({ photo, label, selected, onActivate }: PinProps) {
       <span
         className={cn(
           "block rounded-full transition-[transform,background-color,border-color] duration-150",
+          // Vermilion core for every pin; the ring (border) provides the halo.
+          "bg-accent",
           selected
-            ? // selected: vermilion solid + ink hairline + slightly larger.
-              "bg-accent border-foreground size-3 scale-110 border"
-            : // default: vermilion faint hairline + rice-paper fill.
-              "bg-background border-accent/45 size-2.5 border-[1.5px]",
+            ? // selected: larger + ink ring + tight vermilion micro-halo.
+              "border-foreground size-4 scale-105 border-2 ring-2 ring-accent/45"
+            : // default: paper halo ring keeps the core legible on any map color.
+              "border-background size-3.5 border-2",
           // hover (desktop): 1.2x + faint vermilion halo ring (not a shadow).
           "group-hover:ring-accent/25 group-hover:scale-[1.2] group-hover:ring-4",
           // focus (keyboard): 2px vermilion ring (≥3:1), offset on paper.
@@ -419,8 +426,11 @@ interface ClusterBubbleProps {
 }
 
 /**
- * Aggregate count bubble (shape §5.3): warm-white fill + faint vermilion
- * hairline + ink tabular-nums text. No gradient, no display font, no shadow.
+ * Aggregate count bubble (shape §5.3): warm-white fill + ink tabular-nums text.
+ * Stays neutral (no vermilion) so the hierarchy reads — vermilion = a single
+ * annotation point, neutral = an aggregate count. The ink-toned contrast ring
+ * (border, not shadow) keeps it legible on any map color (issue #7). No
+ * gradient, no display font, no shadow.
  */
 function ClusterBubble({ count, label, onActivate }: ClusterBubbleProps) {
   return (
@@ -435,7 +445,9 @@ function ClusterBubble({ count, label, onActivate }: ClusterBubbleProps) {
     >
       <span
         className={cn(
-          "bg-card border-accent/35 text-foreground grid size-8 place-items-center rounded-full border",
+          "bg-card text-foreground grid size-8 place-items-center rounded-full",
+          // Ink-toned contrast ring so the bubble reads on any map color.
+          "border-[1.5px] border-foreground/40",
           "text-xs font-bold [font-variant-numeric:tabular-nums]",
           "transition-[transform] duration-150 group-hover:scale-110",
           "ring-offset-card group-focus-visible:ring-accent group-focus-visible:ring-2 group-focus-visible:ring-offset-2",
