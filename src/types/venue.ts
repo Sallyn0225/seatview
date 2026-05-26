@@ -50,9 +50,13 @@ export interface Photo {
   id: string;
   venueId: string;
   subMapId: string;
-  /** Normalized annotation coordinate, 0.0 ~ 1.0. */
+  /**
+   * Normalized annotation coordinate 0..1, relative to the chart image's REAL
+   * content rectangle (u·subMap.width = a true pixel on the chart), NOT the
+   * render frame. Decoupled from the display container's aspect ratio.
+   */
   xPercent: number;
-  /** Normalized annotation coordinate, 0.0 ~ 1.0. */
+  /** Normalized annotation coordinate 0..1, relative to the image content rect. */
   yPercent: number;
   /** R2 object key. */
   imageKey: string;

@@ -10,8 +10,10 @@ import { getMessages, subMapLabel } from "@/i18n";
 import { fillTemplate } from "@/lib/format";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { useElementSize } from "@/hooks/useElementSize";
 import { setSelectedPhoto } from "@/lib/selected-photo";
 import { clusterPoints, layOutPoints, type Cluster } from "@/lib/cluster";
+import { imageContentRect } from "@/lib/image-rect";
 import type { PhotoDto } from "@/lib/photos";
 import type { SubMap } from "@/types";
 import { cn } from "@/lib/utils";
@@ -75,6 +77,9 @@ export default function Seatmap({
 
   const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // Unscaled frame box (NOT the zoom/pan-transformed layer) → the object-contain
+  // chart-image content rect that pins anchor to. Re-measured on resize.
+  const wrapperSize = useElementSize(wrapperRef);
 
   // Live transform state, driven by onTransformed. Drives clustering threshold,
   // counter-scaling, and the scale indicator.
@@ -134,12 +139,17 @@ export default function Seatmap({
 
       const targetScale = Math.min(scale * CLUSTER_ZOOM_FACTOR, MAX_SCALE);
       const rect = wrapper.getBoundingClientRect();
-      // Surface coordinate of the centroid relative to the rendered image. The
-      // image is object-contain inside the wrapper; clusters are positioned in
-      // image-surface px (width/height), and the TransformComponent content box
-      // matches the wrapper size, so normalize centroid to the wrapper extent.
-      const surfaceX = (cluster.x / subMap.width) * rect.width;
-      const surfaceY = (cluster.y / subMap.height) * rect.height;
+      // The chart is object-contain inside the wrapper, so clusters (in image
+      // pixels) map to the IMAGE CONTENT rect, not the whole wrapper — the
+      // letterbox offset must be added or the centroid lands in the slack.
+      const cr = imageContentRect(
+        rect.width,
+        rect.height,
+        subMap.width,
+        subMap.height,
+      );
+      const surfaceX = cr.offsetX + (cluster.x / subMap.width) * cr.width;
+      const surfaceY = cr.offsetY + (cluster.y / subMap.height) * cr.height;
       const positionX = rect.width / 2 - surfaceX * targetScale;
       const positionY = rect.height / 2 - surfaceY * targetScale;
 
@@ -226,10 +236,13 @@ export default function Seatmap({
             <div className="relative size-full" onPointerDown={wakeControls}>
               <ChartImage subMap={subMap} locale={locale} />
 
-              {/* Annotation overlay: pins + cluster bubbles. */}
+              {/* Annotation overlay: pins + cluster bubbles. Positioned against
+                  the object-contain image content rect (image-relative coords),
+                  not the raw frame, so pins land on real chart pixels on any
+                  aspect ratio. */}
               {clusters.map((cluster) => {
-                const leftPct = (cluster.x / subMap.width) * 100;
-                const topPct = (cluster.y / subMap.height) * 100;
+                const leftPct = clusterPctX(cluster, subMap, wrapperSize);
+                const topPct = clusterPctY(cluster, subMap, wrapperSize);
                 const isCluster = cluster.members.length > 1;
                 return (
                   <div
@@ -316,6 +329,47 @@ export default function Seatmap({
         }}
       />
     </SeatmapFrame>
+  );
+}
+
+/* ── Overlay positioning helpers ───────────────────────────────────────────
+ * A cluster lives at image pixel (cluster.x, cluster.y). The overlay layer fills
+ * the UNSCALED frame (wrapperSize), but the chart is object-contain within it, so
+ * a pin's percent position is (contentOffset + imageFraction·contentSize) over
+ * the frame extent. Before the frame is measured we fall back to the raw image
+ * fraction (correct for a 3:2 frame on a 3:2 chart, harmless for one frame). */
+function clusterPctX(
+  cluster: Cluster,
+  subMap: SubMap,
+  frame: { width: number; height: number },
+): number {
+  if (frame.width <= 0) return (cluster.x / subMap.width) * 100;
+  const cr = imageContentRect(
+    frame.width,
+    frame.height,
+    subMap.width,
+    subMap.height,
+  );
+  return (
+    ((cr.offsetX + (cluster.x / subMap.width) * cr.width) / frame.width) * 100
+  );
+}
+
+function clusterPctY(
+  cluster: Cluster,
+  subMap: SubMap,
+  frame: { width: number; height: number },
+): number {
+  if (frame.height <= 0) return (cluster.y / subMap.height) * 100;
+  const cr = imageContentRect(
+    frame.width,
+    frame.height,
+    subMap.width,
+    subMap.height,
+  );
+  return (
+    ((cr.offsetY + (cluster.y / subMap.height) * cr.height) / frame.height) *
+    100
   );
 }
 
