@@ -127,9 +127,19 @@ export default function StagingForm({
   const matchCorpus = useMemo<StagingNameDto[]>(() => {
     const byId = new Map<string, StagingNameDto>();
     for (const n of namesCorpus)
-      byId.set(n.id, { id: n.id, name: n.name, voteCount: n.voteCount });
+      byId.set(n.id, {
+        id: n.id,
+        name: n.name,
+        voteCount: n.voteCount,
+        processed: n.processed,
+      });
     for (const v of venues)
-      byId.set(v.id, { id: v.id, name: v.name, voteCount: v.voteCount });
+      byId.set(v.id, {
+        id: v.id,
+        name: v.name,
+        voteCount: v.voteCount,
+        processed: v.processed,
+      });
     return [...byId.values()];
   }, [namesCorpus, venues]);
   const stagingFuse = useMemo(
@@ -178,10 +188,17 @@ export default function StagingForm({
   const stagedView = (item: StagingNameDto) => {
     const inList = venues.find((v) => v.id === item.id);
     if (inList)
-      return { voteCount: inList.voteCount, votedByMe: inList.votedByMe };
-    return (
-      voteOverlay[item.id] ?? { voteCount: item.voteCount, votedByMe: false }
-    );
+      return {
+        voteCount: inList.voteCount,
+        votedByMe: inList.votedByMe,
+        processed: inList.processed,
+      };
+    const overlay = voteOverlay[item.id];
+    return {
+      voteCount: overlay?.voteCount ?? item.voteCount,
+      votedByMe: overlay?.votedByMe ?? false,
+      processed: item.processed,
+    };
   };
 
   const showMatches =
@@ -501,7 +518,13 @@ export default function StagingForm({
                           <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
                             {votesText}
                           </span>
-                          {view.votedByMe ? (
+                          {view.processed ? (
+                            // 已收录 → no +1 affordance (issue #15). Sumi ✓ marker.
+                            <span className="text-foreground inline-flex items-center gap-1 text-xs">
+                              <span aria-hidden="true">✓</span>
+                              {t.staging.processed}
+                            </span>
+                          ) : view.votedByMe ? (
                             <span className="text-foreground inline-flex items-center gap-1 text-xs">
                               <span aria-hidden="true">✓</span>
                               {t.staging.plusOneDone}
@@ -750,27 +773,31 @@ function StagingRow({
               {processedLabel}
             </span>
           )}
-          {venue.votedByMe ? (
-            <span className="text-foreground inline-flex items-center gap-1 text-xs">
-              <span aria-hidden="true">✓</span>
-              {plusOneDoneLabel}
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => onPlusOne(venue.id)}
-              disabled={plusOneBlocked}
-              aria-label={plusOneAriaLabel.replace("{name}", venue.name)}
-              className={cn(
-                "border-border text-muted-foreground inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium",
-                "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
-                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-            >
-              {plusOneLabel}
-            </button>
-          )}
+          {/* 已收录 → no +1 affordance at all (issue #15); the ✓ 已收录 marker
+              above already states the terminal state. Only un-collected rows
+              carry the +1 / ✓ 已附议 control. */}
+          {!venue.processed &&
+            (venue.votedByMe ? (
+              <span className="text-foreground inline-flex items-center gap-1 text-xs">
+                <span aria-hidden="true">✓</span>
+                {plusOneDoneLabel}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onPlusOne(venue.id)}
+                disabled={plusOneBlocked}
+                aria-label={plusOneAriaLabel.replace("{name}", venue.name)}
+                className={cn(
+                  "border-border text-muted-foreground inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium",
+                  "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
+                  "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                  "disabled:cursor-not-allowed disabled:opacity-50",
+                )}
+              >
+                {plusOneLabel}
+              </button>
+            ))}
         </div>
       </div>
     </li>
