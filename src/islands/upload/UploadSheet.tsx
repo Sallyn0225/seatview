@@ -556,6 +556,7 @@ export default function UploadSheet({
                 <Step3Body
                   t={t}
                   locale={locale}
+                  isActive={activeStep === 3}
                   seatLabel={seatLabel}
                   setSeatLabel={(v) => {
                     setSeatLabel(v);
@@ -924,6 +925,7 @@ function Step2Body({
 function Step3Body({
   t,
   locale,
+  isActive,
   seatLabel,
   setSeatLabel,
   seatError,
@@ -937,6 +939,11 @@ function Step3Body({
 }: {
   t: ReturnType<typeof useLocale>["t"];
   locale: Locale;
+  /** Step 3 is the current step. The seat input focuses only once the user
+   *  REACHES step 3 — not on mount (this body is always rendered in the
+   *  accumulative single page), which would steal focus / pop the mobile
+   *  keyboard the instant the Sheet opens (issue #17). */
+  isActive: boolean;
   seatLabel: string;
   setSeatLabel: (v: string) => void;
   seatError: boolean;
@@ -950,8 +957,8 @@ function Step3Body({
 }) {
   const seatRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    seatRef.current?.focus();
-  }, []);
+    if (isActive) seatRef.current?.focus();
+  }, [isActive]);
 
   return (
     <div className="space-y-4 pt-1">
