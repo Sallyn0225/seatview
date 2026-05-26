@@ -82,6 +82,14 @@ __pycache__/
 skills-lock.json
 AGENTS.md
 
+# === Coordinate-migration artifacts (scripts/migrate-coords-frame-to-image.mjs) ===
+# Timestamped pre-migration backups + generated UPDATE/rollback SQL are
+# operational outputs, not source. Keep the directory tracked (.gitkeep) so the
+# script's mkdir target is documented, but never commit the run artifacts (the
+# prod backup is the rollback safety net — archive it out-of-band).
+scripts/backups/*
+!scripts/backups/.gitkeep
+
 # === Misc temp files ===
 *.tmp
 *.bak
