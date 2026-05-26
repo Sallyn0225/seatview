@@ -306,9 +306,15 @@ async function runForward({ remote, dryRun, force }) {
   );
   console.log(`\nBackup written: ${backupPath} (${rows.length} rows)`);
 
-  // Build one SQL file: per-id UPDATE (coords only — schema is NOT touched) in a
-  // transaction.
-  const sqlLines = ["BEGIN TRANSACTION;"];
+  // Build one SQL file: per-id UPDATE (coords only — schema is NOT touched).
+  // NO explicit `BEGIN TRANSACTION; ... COMMIT;`: real D1 (`--remote`) REJECTS
+  // SQL-level transactions ("To execute a transaction, please use the
+  // state.storage.transaction() ... instead of the SQL BEGIN TRANSACTION"). The
+  // local miniflare/sqlite ALLOWS them, so a local-only test does NOT surface
+  // this — it caused the first prod migration to fail at the BEGIN line.
+  // Atomicity is preserved anyway: `wrangler d1 execute --file` runs all the
+  // file's statements as ONE implicit batch (all-or-nothing).
+  const sqlLines = [];
   for (const u of updates) {
     sqlLines.push(
       `UPDATE photos SET x_percent = ${sqlNum(u.u)}, y_percent = ${sqlNum(
@@ -316,7 +322,6 @@ async function runForward({ remote, dryRun, force }) {
       )} WHERE id = '${u.id}';`,
     );
   }
-  sqlLines.push("COMMIT;");
 
   const sqlPath = join(backupsDir, `coords-migrate-${ts}.sql`);
   await writeFile(sqlPath, sqlLines.join("\n") + "\n", "utf8");
@@ -359,7 +364,9 @@ async function runRollback({ remote, backupFile }) {
   );
 
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
-  const sqlLines = ["BEGIN TRANSACTION;"];
+  // No explicit SQL transaction: D1 `--remote` rejects BEGIN/COMMIT (see the
+  // forward path). `d1 execute --file` runs the file as one atomic batch.
+  const sqlLines = [];
   for (const row of raw.rows) {
     // Restore old coords (schema is untouched — nothing else to reset).
     sqlLines.push(
@@ -368,7 +375,6 @@ async function runRollback({ remote, backupFile }) {
       )} WHERE id = '${row.id}';`,
     );
   }
-  sqlLines.push("COMMIT;");
 
   await mkdir(backupsDir, { recursive: true });
   const sqlPath = join(backupsDir, `coords-rollback-${ts}.sql`);
