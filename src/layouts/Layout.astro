@@ -18,6 +18,15 @@ const HTML_LANG: Record<Locale, string> = {
   ko: "ko",
 };
 const htmlLang = HTML_LANG[locale];
+const OG_LOCALE: Record<Locale, string> = {
+  zh: "zh_Hans",
+  ja: "ja_JP",
+  en: "en_US",
+  ko: "ko_KR",
+};
+const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? Astro.url.origin;
+const ogImage = new URL("/og.jpg", siteUrl).href;
+const canonical = new URL(Astro.url.pathname, siteUrl).href;
 ---
 
 <!doctype html>
@@ -27,6 +36,37 @@ const htmlLang = HTML_LANG[locale];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={t.meta.tagline} />
     <title>{title}</title>
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: light)"
+      content="#f7f6f1"
+    />
+    <meta
+      name="theme-color"
+      media="(prefers-color-scheme: dark)"
+      content="#1a1814"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SeatView" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={t.meta.tagline} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content={OG_LOCALE[locale]} />
+    <meta property="og:url" content={canonical} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={t.meta.tagline} />
+    <meta name="twitter:image" content={ogImage} />
     <!-- Apply persisted theme before paint to avoid flash (R12). -->
     <script is:inline>
       (() => {
