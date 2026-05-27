@@ -44,6 +44,7 @@ if (env.DB) {
     const rows = await listStagingVenues(getDb(env.DB), {
       limit: STAGING_BATCH + 1,
       viewerIpHash,
+      excludeProcessed: true, // hide 已收录 from the public wishlist (issue #41)
     });
     initialHasMore = rows.length > STAGING_BATCH;
     initialVenues = initialHasMore ? rows.slice(0, STAGING_BATCH) : rows;
