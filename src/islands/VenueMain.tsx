@@ -70,6 +70,9 @@ export default function VenueMain({
   // Full annotation set for the active sub-map (the seatmap needs ALL points to
   // cluster). Seeded with the SSR set; re-fetched on sub-map change.
   const [photos, setPhotos] = useState<PhotoDto[]>(initialPhotos);
+  const [photosSubMapId, setPhotosSubMapId] = useState<string | undefined>(
+    initialActiveId,
+  );
   const [photosLoading, setPhotosLoading] = useState(false);
   const [photosError, setPhotosError] = useState(false);
   const photosSubMapRef = useRef<string | undefined>(initialActiveId);
@@ -88,16 +91,20 @@ export default function VenueMain({
   // ref so the retry path can guard against a stale resolution too.
   const loadPoints = useCallback(
     (subMapId: string) => {
+      photosSubMapRef.current = subMapId;
       setPhotosLoading(true);
       setPhotosError(false);
       fetchSubMapPhotos(venue.id, subMapId)
         .then((next) => {
           if (photosSubMapRef.current !== subMapId) return;
           setPhotos(next);
+          setPhotosSubMapId(subMapId);
           setPhotosLoading(false);
         })
         .catch(() => {
           if (photosSubMapRef.current !== subMapId) return;
+          setPhotos([]);
+          setPhotosSubMapId(subMapId);
           setPhotosError(true);
           setPhotosLoading(false);
         });
@@ -109,10 +116,10 @@ export default function VenueMain({
   // the first run for the SSR-seeded sub-map to avoid a double fetch.
   useEffect(() => {
     if (!activeSubMapId) return;
-    if (activeSubMapId === photosSubMapRef.current) return;
-    photosSubMapRef.current = activeSubMapId;
+    if (activeSubMapId === photosSubMapId) return;
+    if (activeSubMapId === photosSubMapRef.current && photosLoading) return;
     loadPoints(activeSubMapId);
-  }, [activeSubMapId, loadPoints]);
+  }, [activeSubMapId, photosLoading, photosSubMapId, loadPoints]);
 
   // Seatmap <LoadFailure> retry → re-run the active sub-map's point fetch.
   const handleRetryPoints = useCallback(() => {
@@ -125,6 +132,9 @@ export default function VenueMain({
 
   const activeSubMap =
     venue.subMaps.find((s) => s.id === activeSubMapId) ?? venue.subMaps[0];
+  const photosMatchActive = activeSubMap?.id === photosSubMapId;
+  const activePhotos = photosMatchActive ? photos : [];
+  const activePhotosLoading = photosLoading || !photosMatchActive;
 
   // ── Lightbox: one instance, two modes ─────────────────────────────────────
   const [lightboxRequest, setLightboxRequest] =
@@ -134,11 +144,11 @@ export default function VenueMain({
   // `photos`; find the clicked one and open with just it (no paging).
   const handleOpenLightbox = useCallback(
     (photoId: string) => {
-      const photo = photos.find((p) => p.id === photoId);
+      const photo = activePhotos.find((p) => p.id === photoId);
       if (!photo) return;
       setLightboxRequest({ mode: "single", photos: [photo], index: 0 });
     },
-    [photos],
+    [activePhotos],
   );
 
   // Grid card → SEQUENCE mode (browse this sub-map). The grid hands over the
@@ -173,6 +183,7 @@ export default function VenueMain({
   // seatmap shows the new pin immediately, and bump the grid key so the grid
   // re-pulls newest-first from the API (also picks up anyone else's uploads).
   const handleUploaded = useCallback((photo: PhotoDto) => {
+    setPhotosSubMapId(photo.subMapId);
     setPhotos((prev) =>
       prev.some((p) => p.id === photo.id) ? prev : [photo, ...prev],
     );
@@ -190,9 +201,9 @@ export default function VenueMain({
         <Seatmap
           locale={locale}
           subMap={activeSubMap}
-          photos={photos}
-          loading={photosLoading}
-          error={photosError}
+          photos={activePhotos}
+          loading={activePhotosLoading}
+          error={photosMatchActive && photosError}
           selectedPhotoId={selectedPhotoId}
           onOpenLightbox={handleOpenLightbox}
           onRetry={handleRetryPoints}

@@ -35,6 +35,8 @@ import LoadFailure from "@/components/LoadFailure";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 6;
+const FRAME_FALLBACK_WIDTH = 1.5;
+const FRAME_FALLBACK_HEIGHT = 1;
 /** Zoom multiplier applied when a cluster is clicked (shape §7: ×2). */
 const CLUSTER_ZOOM_FACTOR = 2;
 /** Programmatic-zoom animation duration (ms). 0 when reduced-motion. */
@@ -76,10 +78,17 @@ export default function Seatmap({
   const reducedMotion = usePrefersReducedMotion();
 
   const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const wrapperNodeRef = useRef<HTMLDivElement | null>(null);
   // Unscaled frame box (NOT the zoom/pan-transformed layer) → the object-contain
   // chart-image content rect that pins anchor to. Re-measured on resize.
-  const wrapperSize = useElementSize(wrapperRef);
+  const [observeWrapper, wrapperSize] = useElementSize<HTMLDivElement>();
+  const setWrapperRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      wrapperNodeRef.current = node;
+      observeWrapper(node);
+    },
+    [observeWrapper],
+  );
 
   // Live transform state, driven by onTransformed. Drives clustering threshold,
   // counter-scaling, and the scale indicator.
@@ -134,7 +143,7 @@ export default function Seatmap({
   const focusCluster = useCallback(
     (cluster: Cluster) => {
       const api = transformRef.current;
-      const wrapper = wrapperRef.current;
+      const wrapper = wrapperNodeRef.current;
       if (!api || !wrapper) return;
 
       const targetScale = Math.min(scale * CLUSTER_ZOOM_FACTOR, MAX_SCALE);
@@ -201,7 +210,7 @@ export default function Seatmap({
 
   return (
     <SeatmapFrame subMapId={subMap.id}>
-      <div ref={wrapperRef} className="absolute inset-0">
+      <div ref={setWrapperRef} className="absolute inset-0">
         <TransformWrapper
           ref={transformRef}
           minScale={MIN_SCALE}
@@ -336,14 +345,16 @@ export default function Seatmap({
  * A cluster lives at image pixel (cluster.x, cluster.y). The overlay layer fills
  * the UNSCALED frame (wrapperSize), but the chart is object-contain within it, so
  * a pin's percent position is (contentOffset + imageFraction·contentSize) over
- * the frame extent. Before the frame is measured we fall back to the raw image
- * fraction (correct for a 3:2 frame on a 3:2 chart, harmless for one frame). */
+ * the frame extent. Before the frame is measured, use SeatmapFrame's known 3:2
+ * ratio so SSR and first client paint use the same coordinate contract. */
 function clusterPctX(
   cluster: Cluster,
   subMap: SubMap,
   frame: { width: number; height: number },
 ): number {
-  if (frame.width <= 0) return (cluster.x / subMap.width) * 100;
+  if (frame.width <= 0 || frame.height <= 0) {
+    return fallbackFramePct(cluster.x / subMap.width, "x", subMap);
+  }
   const cr = imageContentRect(
     frame.width,
     frame.height,
@@ -360,7 +371,9 @@ function clusterPctY(
   subMap: SubMap,
   frame: { width: number; height: number },
 ): number {
-  if (frame.height <= 0) return (cluster.y / subMap.height) * 100;
+  if (frame.width <= 0 || frame.height <= 0) {
+    return fallbackFramePct(cluster.y / subMap.height, "y", subMap);
+  }
   const cr = imageContentRect(
     frame.width,
     frame.height,
@@ -371,6 +384,23 @@ function clusterPctY(
     ((cr.offsetY + (cluster.y / subMap.height) * cr.height) / frame.height) *
     100
   );
+}
+
+function fallbackFramePct(
+  fraction: number,
+  axis: "x" | "y",
+  subMap: SubMap,
+): number {
+  const cr = imageContentRect(
+    FRAME_FALLBACK_WIDTH,
+    FRAME_FALLBACK_HEIGHT,
+    subMap.width,
+    subMap.height,
+  );
+  if (axis === "x") {
+    return ((cr.offsetX + fraction * cr.width) / FRAME_FALLBACK_WIDTH) * 100;
+  }
+  return ((cr.offsetY + fraction * cr.height) / FRAME_FALLBACK_HEIGHT) * 100;
 }
 
 /* ── Subcomponents ──────────────────────────────────────────────────────── */
