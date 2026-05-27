@@ -44,10 +44,18 @@ export async function putImage(
   });
 }
 
-/** Delete an image object (used by maintainer soft-delete, ADR-6). */
+/** Delete an image object (used by maintainer permanent-delete, issue #29). */
 export async function deleteImage(
   bucket: R2Bucket,
   key: string,
 ): Promise<void> {
   await bucket.delete(key);
+}
+
+/** Check whether an image object is still present before exposing its D1 row. */
+export async function imageExists(
+  bucket: R2Bucket,
+  key: string,
+): Promise<boolean> {
+  return (await bucket.head(key)) !== null;
 }

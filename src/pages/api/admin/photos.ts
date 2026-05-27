@@ -11,9 +11,9 @@
 //                                   so the pin + card vanish), R2 object KEPT so
 //                                   the photo can be restored.
 //         `{id, permanent:true}` → 彻底删除: physically remove a recycle-bin row
-//                                   AND purge the R2 object. Irreversible.
+//                                   after purging the R2 object. Irreversible.
 // PATCH   `{id}`                 → restore from the recycle bin (clear
-//                                   `deleted_at`; the R2 object is intact).
+//                                   `deleted_at` after verifying the R2 object).
 //
 // User-facing prose stays in i18n (R9); the API only returns stable error codes.
 import type { APIRoute } from "astro";
@@ -21,12 +21,13 @@ import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
 import {
+  getDeletedPhotoImageKey,
   hardDeletePhoto,
   listAllPhotosForAdmin,
   restorePhoto,
   softDeletePhoto,
 } from "@/server/photos";
-import { deleteImage } from "@/server/r2/images";
+import { deleteImage, imageExists } from "@/server/r2/images";
 import {
   ADMIN_PHOTOS_BATCH,
   type AdminDeletePhotoRequest,
@@ -143,9 +144,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
     let imageKey: string | null;
     try {
-      imageKey = await hardDeletePhoto(db, id);
+      imageKey = await getDeletedPhotoImageKey(db, id);
     } catch (err) {
-      console.error("[admin:photos] hard-delete failed", {
+      console.error("[admin:photos] hard-delete lookup failed", {
         id,
         err: String(err),
       });
@@ -153,24 +154,33 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
     if (imageKey === null) return jsonError("not_found", 404);
 
-    // Best-effort R2 purge: the row is already gone, so a purge failure only
-    // leaves an orphan object the maintainer can sweep later — don't fail the
-    // request for it. Log the permanent deletion as a key moderation event.
-    let objectPurged = true;
+    // Purge R2 before removing the D1 row. If storage fails, the recycle-bin row
+    // keeps its image key so a maintainer can retry the permanent delete.
     try {
       await deleteImage(env.BUCKET, imageKey);
     } catch (err) {
-      objectPurged = false;
-      console.warn("[admin:photos] R2 purge failed (D1 row already removed)", {
+      console.warn("[admin:photos] R2 purge failed; D1 row retained", {
         id,
         key: imageKey,
         err: String(err),
       });
+      return jsonError("storage_unavailable", 502);
+    }
+
+    try {
+      const deletedImageKey = await hardDeletePhoto(db, id);
+      if (deletedImageKey === null) return jsonError("not_found", 404);
+    } catch (err) {
+      console.error("[admin:photos] hard-delete failed after R2 purge", {
+        id,
+        key: imageKey,
+        err: String(err),
+      });
+      return jsonError("database_unavailable", 502);
     }
     console.info("[admin:photos] photo permanently deleted", {
       id,
       by: email,
-      objectPurged,
     });
     return jsonResponse({ id });
   }
@@ -208,10 +218,43 @@ export const PATCH: APIRoute = async ({ request }) => {
   }
   const id = typeof body.id === "string" ? body.id.trim() : "";
   if (id.length === 0) return jsonError("missing_id", 400);
+  if (!env.BUCKET) {
+    console.error("[admin:photos] BUCKET R2 binding missing");
+    return jsonError("storage_unavailable", 503);
+  }
 
+  const db = getDb(env.DB);
   let imageKey: string | null;
   try {
-    imageKey = await restorePhoto(getDb(env.DB), id);
+    imageKey = await getDeletedPhotoImageKey(db, id);
+  } catch (err) {
+    console.error("[admin:photos] restore lookup failed", {
+      id,
+      err: String(err),
+    });
+    return jsonError("database_unavailable", 502);
+  }
+  if (imageKey === null) return jsonError("not_found", 404);
+
+  try {
+    if (!(await imageExists(env.BUCKET, imageKey))) {
+      console.warn("[admin:photos] restore blocked; R2 object missing", {
+        id,
+        key: imageKey,
+      });
+      return jsonError("not_found", 404);
+    }
+  } catch (err) {
+    console.warn("[admin:photos] R2 restore check failed", {
+      id,
+      key: imageKey,
+      err: String(err),
+    });
+    return jsonError("storage_unavailable", 502);
+  }
+
+  try {
+    imageKey = await restorePhoto(db, id);
   } catch (err) {
     console.error("[admin:photos] restore failed", { id, err: String(err) });
     return jsonError("database_unavailable", 502);

@@ -248,6 +248,7 @@ function PhotosPanel({
   const onDeleted = useCallback(
     (id: string, venueId: string) => {
       // Moved to the recycle bin → drop it from the live list.
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
       setPhotos((prev) => prev.filter((p) => p.id !== id));
       // Optimistically drop the venue's live count by one. When a venue hits
       // zero it leaves the dropdown; if it was the current selection, fall back
@@ -527,6 +528,7 @@ function StagingPanel({ locale }: { locale: Locale }) {
     );
   }, []);
   const onDeleted = useCallback((id: string) => {
+    offsetRef.current = Math.max(0, offsetRef.current - 1);
     setVenues((prev) => prev.filter((v) => v.id !== id));
   }, []);
 
@@ -758,6 +760,7 @@ function RecycleBinPanel({
 
   // Both restore and permanent-delete remove the row from the bin.
   const onResolved = useCallback((id: string) => {
+    offsetRef.current = Math.max(0, offsetRef.current - 1);
     setPhotos((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
