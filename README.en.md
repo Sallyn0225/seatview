@@ -8,10 +8,10 @@
 
 <!-- README-I18N:END -->
 
-> Before you scramble for tickets and pick a seat, see what that seat can actually see.
+> Before the lottery, the ticket rush, or the show itself — see what that seat can actually see.
 > リアル座席ビュー · 真实视角图集 —— internal codename `seatmap-real`
 
-**SeatView** aggregates **real seat-view photos** of concert venues in Japan (and some overseas). Users mark their own seat on a venue's official seating chart and upload a photo taken from that spot; others click a marker on the chart to preview that seat's real view in a Lightbox — making smarter decisions before grabbing tickets or choosing a seat.
+**SeatView** aggregates **real seat-view photos** of concert venues in Japan (and some overseas). Users mark their own seat on a venue's official seating chart and upload a photo taken from that spot; others click a marker on the chart to preview that seat's real view in a Lightbox — making smarter decisions during a lottery, a ticket rush, or before the show.
 
 Both browsing and uploading require **no registration**; abuse is prevented with IP rate limiting + Cloudflare Turnstile. The whole stack runs on Cloudflare alone: Workers (SSR + static assets) + D1 + KV + R2.
 

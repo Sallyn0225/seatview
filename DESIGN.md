@@ -11,7 +11,7 @@ description: 日本演唱会场馆真实座位视角图集；克静纸面（The 
 
 **Creative North Star: "The Quiet Folio · 静纸"**
 
-SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场馆的坐席图，点开任一标注点，就能看到由其他粉丝从那个真实座位拍下的视角。Folio（大开本对折装订，是地图集、摄影集、植物图鉴的传统纸本形态）是这个产品的精神原型；"静"对应 PRODUCT.md 反复强调的克制 —— 抢票前 30 秒的零摩擦、chrome 在用户注视照片时褪到背景、严肃 UI 让位于真实图像。
+SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场馆的坐席图，点开任一标注点，就能看到由其他粉丝从那个真实座位拍下的视角。Folio（大开本对折装订，是地图集、摄影集、植物图鉴的传统纸本形态）是这个产品的精神原型；"静"对应 PRODUCT.md 反复强调的克制 —— 决策时刻的零摩擦、chrome 在用户注视照片时褪到背景、严肃 UI 让位于真实图像。
 
 中日双语是 SeatView 的两条核心轨道，不是"主语言 + 翻译"。整本图鉴可以从任意一种语言读起；切换语言不是切换"翻译版本"，而是切换"另一种地道的本子"。中文与日文使用同源字体家族（Noto Serif SC ↔ JP；Noto Sans SC ↔ JP），整本书的呼吸节奏保持一致。
 
@@ -59,7 +59,7 @@ SeatView 是一本被粉丝持续增补的图鉴书 —— 用户翻到任意场
 **Body Font:** Noto Sans JP / Noto Sans SC `[final stack to be confirmed at implementation]`
 **Label / Numeric Font:** `[possibly JetBrains Mono or IBM Plex Mono for 座位号 / 日期 / 上传时间; to be confirmed]`
 
-**Character:** Serif 承担图鉴的"书名页"雅气 —— 场馆名、章节性标题、第一次访问的说明页 hero。Sans 承担正文、列表、表单与所有抢票路径上的可读性。两者必须来自 Noto 同一家族，中日同源；不允许中文用一种字体、日文用另一种字体。
+**Character:** Serif 承担图鉴的"书名页"雅气 —— 场馆名、章节性标题、第一次访问的说明页 hero。Sans 承担正文、列表、表单与所有浏览路径上的可读性。两者必须来自 Noto 同一家族，中日同源；不允许中文用一种字体、日文用另一种字体。
 
 ### Hierarchy
 

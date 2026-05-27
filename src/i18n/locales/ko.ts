@@ -10,8 +10,7 @@ import type { Messages } from "./zh";
 const ko: Messages = {
   meta: {
     title: "SeatView · 실제 좌석 뷰",
-    tagline:
-      "티켓을 잡기 전 30초, 그 좌석에서 실제로 보이는 풍경을 확인하세요.",
+    tagline: "그 자리에 앉기 전에, 거기서 실제로 보이는 풍경을 확인하세요.",
   },
   nav: {
     home: "홈",
@@ -257,8 +256,7 @@ const ko: Messages = {
   },
   home: {
     subtitle: "실제 좌석 뷰",
-    heroLine:
-      "티켓을 잡기 전 마지막 30초, 그 좌석에서 실제로 보이는 풍경을 한 번 확인해요.",
+    heroLine: "실제로 앉기 전에, 그 좌석에서 보이는 풍경을 한 번 확인해요.",
     cta: "도감 열기",
     howTitle: "사용법",
     howTitleAlt: "",
@@ -270,7 +268,7 @@ const ko: Messages = {
     step3Body: "내 좌석에서의 한 장을 찍어 같은 방식으로 좌석도에 올려요.",
     recommendTitle: "먼저 둘러보기",
     recommendTitleAlt: "",
-    venue1Note: "다층 원형, 4개 서브맵에 100장 이상의 시점",
+    venue1Note: "다층 원형의 대형 아레나, 층별로 실제 시야를 수록",
     venue2Note: "8,000석, 최고의 관람 시점을 두고 논쟁이 있는 회장",
     uploadTitle: "업로드 안내",
     uploadTitleAlt: "",

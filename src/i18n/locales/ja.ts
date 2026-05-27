@@ -6,7 +6,7 @@ import type { Messages } from "./zh";
 const ja: Messages = {
   meta: {
     title: "SeatView · リアル座席ビュー",
-    tagline: "チケットを取る前の30秒で、その席から見える景色を確かめる。",
+    tagline: "その席に座る前に、そこから実際に見える景色を確かめる。",
   },
   nav: {
     home: "ホーム",
@@ -251,8 +251,7 @@ const ja: Messages = {
   },
   home: {
     subtitle: "リアル座席ビュー",
-    heroLine:
-      "チケットを取る前の30秒、その席から実際に見える景色を確かめておく。",
+    heroLine: "実際に座る前に、その席から見える景色を一度確かめておく。",
     cta: "図鑑をひらく",
     howTitle: "使い方",
     howTitleAlt: "怎么用",
@@ -264,7 +263,7 @@ const ja: Messages = {
     step3Body: "自分の席からの一枚を撮って、同じ要領で座席図に置く。",
     recommendTitle: "おすすめ",
     recommendTitleAlt: "推荐先看",
-    venue1Note: "多層環状、4つのフロアに100以上の視点投稿",
+    venue1Note: "多層環状の大型アリーナ、フロアごとにリアルな視点を収録",
     venue2Note: "8000席、ベストポジションが議論を呼ぶ会場",
     uploadTitle: "投稿について",
     uploadTitleAlt: "关于上传",

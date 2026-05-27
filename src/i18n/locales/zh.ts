@@ -436,7 +436,7 @@ export interface Messages {
 const zh: Messages = {
   meta: {
     title: "SeatView · 真实视角图集",
-    tagline: "抢票前 30 秒，先看清这个座位真正的视角。",
+    tagline: "坐进那个座位之前，先看清它真正的视角。",
   },
   nav: {
     home: "首页",
@@ -680,7 +680,7 @@ const zh: Messages = {
   },
   home: {
     subtitle: "真实视角图集",
-    heroLine: "抢票前的最后 30 秒，先看一眼那个座位真正能看到的。",
+    heroLine: "在你真正坐下之前，先看一眼那个座位能看到的现场。",
     cta: "打开图鉴",
     howTitle: "怎么用",
     howTitleAlt: "使い方",
@@ -692,7 +692,7 @@ const zh: Messages = {
     step3Body: "拍下你自己的座位视角，照同样的方式标在坐席图上分享。",
     recommendTitle: "推荐先看",
     recommendTitleAlt: "おすすめ",
-    venue1Note: "多层环绕，4 个 sub-map 共 100+ 张视角",
+    venue1Note: "多层环绕的大型馆，逐层收录真实视角",
     venue2Note: "8000 席，最佳观演视角的争议地",
     uploadTitle: "关于上传",
     uploadTitleAlt: "投稿について",
