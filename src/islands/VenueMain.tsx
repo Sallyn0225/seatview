@@ -75,7 +75,13 @@ export default function VenueMain({
   );
   const [photosLoading, setPhotosLoading] = useState(false);
   const [photosError, setPhotosError] = useState(false);
-  const photosSubMapRef = useRef<string | undefined>(initialActiveId);
+  // Tracks the currently intended client fetch. A request id is needed because
+  // retrying the same sub-map can otherwise make an older response look fresh.
+  const photosRequestSeqRef = useRef(0);
+  const photosRequestRef = useRef<{
+    id: number;
+    subMapId: string;
+  } | null>(null);
 
   useEffect(() => {
     function onChange(event: Event) {
@@ -87,25 +93,34 @@ export default function VenueMain({
   }, []);
 
   // Fetch the full point set for a sub-map. Reused by the sub-map-change effect
-  // and the seatmap's <LoadFailure> retry (error-pages §4). `cancelledRef` is a
-  // ref so the retry path can guard against a stale resolution too.
+  // and the seatmap's <LoadFailure> retry (error-pages §4). The request ref
+  // keeps same-sub-map retries loading until the active request settles.
   const loadPoints = useCallback(
     (subMapId: string) => {
-      photosSubMapRef.current = subMapId;
+      const requestId = photosRequestSeqRef.current + 1;
+      photosRequestSeqRef.current = requestId;
+      photosRequestRef.current = { id: requestId, subMapId };
+
+      const isCurrentRequest = () =>
+        photosRequestRef.current?.id === requestId &&
+        photosRequestRef.current.subMapId === subMapId;
+
       setPhotosLoading(true);
       setPhotosError(false);
       fetchSubMapPhotos(venue.id, subMapId)
         .then((next) => {
-          if (photosSubMapRef.current !== subMapId) return;
+          if (!isCurrentRequest()) return;
           setPhotos(next);
           setPhotosSubMapId(subMapId);
+          photosRequestRef.current = null;
           setPhotosLoading(false);
         })
         .catch(() => {
-          if (photosSubMapRef.current !== subMapId) return;
+          if (!isCurrentRequest()) return;
           setPhotos([]);
           setPhotosSubMapId(subMapId);
           setPhotosError(true);
+          photosRequestRef.current = null;
           setPhotosLoading(false);
         });
     },
@@ -117,11 +132,17 @@ export default function VenueMain({
   useEffect(() => {
     if (!activeSubMapId) return;
     if (activeSubMapId === photosSubMapId) {
-      photosSubMapRef.current = activeSubMapId;
+      if (photosRequestRef.current?.subMapId === activeSubMapId) return;
+      photosRequestRef.current = null;
       if (photosLoading) setPhotosLoading(false);
       return;
     }
-    if (activeSubMapId === photosSubMapRef.current && photosLoading) return;
+    if (
+      photosLoading &&
+      photosRequestRef.current?.subMapId === activeSubMapId
+    ) {
+      return;
+    }
     loadPoints(activeSubMapId);
   }, [activeSubMapId, photosLoading, photosSubMapId, loadPoints]);
 
