@@ -1,0 +1,24 @@
+{
+  "id": "ig-arena",
+  "name_zh": "IG Arena",
+  "name_jp": "IGアリーナ",
+  "name_romaji": "IG Arena",
+  "prefecture": "aichi",
+  "city": "名古屋市北区",
+  "aliases": [
+    "愛知国際アリーナ",
+    "Aichi International Arena",
+    "爱知国际竞技馆",
+    "名城公園"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "主竞技馆",
+      "label_jp": "メインアリーナ",
+      "imageUrl": "/seatmaps/ig-arena/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}

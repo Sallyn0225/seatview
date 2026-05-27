@@ -1,0 +1,21 @@
+{
+  "id": "kobe-world-memorial-hall",
+  "name_zh": "神户世界纪念大厅",
+  "name_jp": "神戸ワールド記念ホール",
+  "name_romaji": "Kobe World Memorial Hall",
+  "prefecture": "hyogo",
+  "city": "神戸市中央区",
+  "aliases": [
+    "神戸ポートアイランドホール"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/kobe-world-memorial-hall/default.webp",
+      "width": 2048,
+      "height": 1672
+    }
+  ]
+}

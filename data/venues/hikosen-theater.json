@@ -1,0 +1,26 @@
+{
+  "id": "hikosen-theater",
+  "name_zh": "飞行船剧场",
+  "name_jp": "飛行船シアター",
+  "name_romaji": "Hikosen Theater",
+  "prefecture": "tokyo",
+  "city": "台東区",
+  "aliases": [
+    "Hikosen Theatre",
+    "スタァライト劇場",
+    "スタァライトシアター",
+    "Starlight剧场",
+    "Starlight Theater",
+    "上野学園石橋メモリアルホール"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "剧场",
+      "label_jp": "劇場",
+      "imageUrl": "/seatmaps/hikosen-theater/default.webp",
+      "width": 1514,
+      "height": 2048
+    }
+  ]
+}
