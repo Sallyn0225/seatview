@@ -1,0 +1,26 @@
+{
+  "id": "sgc-hall-ariake",
+  "name_zh": "SGC HALL ARIAKE",
+  "name_jp": "SGCホール有明",
+  "name_romaji": "SGC HALL ARIAKE",
+  "prefecture": "tokyo",
+  "city": "江東区",
+  "aliases": [
+    "SGC HALL ARIAKE",
+    "SGC Hall Ariake",
+    "SGCホール有明",
+    "SGC有明",
+    "東京ドリームパーク",
+    "Tokyo Dream Park"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/sgc-hall-ariake/default.webp",
+      "width": 1453,
+      "height": 2048
+    }
+  ]
+}

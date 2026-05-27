@@ -1,0 +1,25 @@
+{
+  "id": "toyota-arena-tokyo",
+  "name_zh": "TOYOTA ARENA TOKYO",
+  "name_jp": "トヨタアリーナ東京",
+  "name_romaji": "TOYOTA ARENA TOKYO",
+  "prefecture": "tokyo",
+  "city": "江東区",
+  "aliases": [
+    "TOYOTA ARENA TOKYO",
+    "Toyota Arena Tokyo",
+    "トヨタアリーナ東京",
+    "トヨタアリーナ",
+    "丰田东京竞技馆"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "主竞技馆",
+      "label_jp": "メインアリーナ",
+      "imageUrl": "/seatmaps/toyota-arena-tokyo/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
