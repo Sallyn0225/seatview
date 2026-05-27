@@ -39,7 +39,7 @@
     "react-dom": "^19.0.0",
     "react-photo-album": "^3.0.2",
     "react-zoom-pan-pinch": "^3.6.1",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "yet-another-react-lightbox": "^3.21.0"
   },
