@@ -5,14 +5,7 @@
   "name_romaji": "Nippon Budokan",
   "prefecture": "tokyo",
   "city": "千代田区",
-  "aliases": [
-    "日本武道館",
-    "日本武道馆",
-    "Nippon Budokan",
-    "武道館",
-    "武道馆",
-    "Budokan"
-  ],
+  "aliases": [],
   "subMaps": [
     {
       "id": "default",
