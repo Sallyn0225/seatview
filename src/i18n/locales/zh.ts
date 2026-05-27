@@ -419,6 +419,8 @@ export interface Messages {
     restorePhoto: string;
     /** Permanently delete a photo from the recycle bin (+ aria). */
     purgePhoto: string;
+    /** Cleanup-only row left by an interrupted permanent delete. */
+    purgeLockedPhoto: string;
     /** Inline confirm bar before an irreversible permanent delete. */
     confirmPurgePhoto: string;
     /** Confirm / cancel (shared by photo + staging delete confirm bars). */
@@ -777,6 +779,7 @@ const zh: Messages = {
     confirmDeletePhoto: "删除后图片会从所有页面消失，可在回收站恢复。",
     restorePhoto: "恢复",
     purgePhoto: "彻底删除",
+    purgeLockedPhoto: "上次彻底删除中断了，只能继续清理。",
     confirmPurgePhoto: "彻底删除后图片和记录都将永久消失，无法恢复。",
     confirmYes: "确认删除",
     confirmNo: "取消",

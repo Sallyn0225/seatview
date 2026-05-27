@@ -22,9 +22,10 @@ export const ADMIN_STAGING_BATCH = 50;
 /**
  * One photo row as the admin list sees it. The admin UI shows a thumbnail +
  * seat label + venue/sub-map + time. Which surface a row appears on (live
- * moderation vs the recycle bin) is decided by the query (`onlyDeleted`), so the
- * row needs no soft-delete flag of its own. `ipHash` is still NEVER sent
- * (privacy — it is an internal abuse-tracking column).
+ * moderation vs the recycle bin) is decided by the query (`onlyDeleted`). A
+ * purge-locked row can surface in the recycle bin as cleanup-only, so the UI can
+ * finish an interrupted permanent delete. `ipHash` is still NEVER sent (privacy
+ * — it is an internal abuse-tracking column).
  */
 export interface AdminPhotoDto {
   id: string;
@@ -36,6 +37,7 @@ export interface AdminPhotoDto {
   eventName: string | null;
   description: string | null;
   createdAt: number;
+  purgeLocked?: boolean;
 }
 
 /** GET /api/admin/photos body: a page of photos + a hasMore probe. */

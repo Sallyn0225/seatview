@@ -867,6 +867,7 @@ function RecycleRow({
   const venueName = venue?.name ?? photo.venueId;
   const subMapName = venue?.subMaps[photo.subMapId] ?? photo.subMapId;
   const thumb = imageKeyToUrl(photo.imageKey, r2BaseUrl);
+  const purgeLocked = photo.purgeLocked === true;
 
   const reportError = useCallback(
     (err: unknown) => {
@@ -904,14 +905,25 @@ function RecycleRow({
 
   return (
     <li className="border-border grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-md border p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
-      <img
-        src={thumb}
-        alt={fillTemplate(t.admin.thumbAlt, { label: photo.seatLabel })}
-        width={56}
-        height={56}
-        loading="lazy"
-        className="bg-card size-14 shrink-0 rounded-sm object-cover"
-      />
+      {purgeLocked ? (
+        <div
+          aria-hidden="true"
+          className="bg-card border-border grid size-14 shrink-0 place-items-center rounded-sm border"
+        >
+          <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
+            -1
+          </span>
+        </div>
+      ) : (
+        <img
+          src={thumb}
+          alt={fillTemplate(t.admin.thumbAlt, { label: photo.seatLabel })}
+          width={56}
+          height={56}
+          loading="lazy"
+          className="bg-card size-14 shrink-0 rounded-sm object-cover"
+        />
+      )}
 
       <div className="min-w-0 flex-1">
         <p className="text-foreground text-sm font-medium break-words">
@@ -964,16 +976,22 @@ function RecycleRow({
           </div>
         </div>
       ) : (
-        <div className="col-span-2 flex justify-end gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">
-          <button
-            type="button"
-            onClick={doRestore}
-            disabled={working}
-            aria-label={`${t.admin.restorePhoto} ${photo.seatLabel}`}
-            className="border-border text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {working ? t.admin.working : t.admin.restorePhoto}
-          </button>
+        <div className="col-span-2 flex flex-col items-end gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          {purgeLocked ? (
+            <span className="text-muted-foreground max-w-full text-right text-xs leading-snug sm:max-w-44">
+              {t.admin.purgeLockedPhoto}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={doRestore}
+              disabled={working}
+              aria-label={`${t.admin.restorePhoto} ${photo.seatLabel}`}
+              className="border-border text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {working ? t.admin.working : t.admin.restorePhoto}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setConfirmingPurge(true)}

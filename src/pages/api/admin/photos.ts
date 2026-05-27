@@ -81,8 +81,8 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   const offset = parseCount(url.searchParams.get("offset")) ?? 0;
   const limit = parseCount(url.searchParams.get("limit")) ?? ADMIN_PHOTOS_BATCH;
-  // `?onlyDeleted=1` → the recycle bin view (soft-deleted rows); otherwise the
-  // live moderation view (issue #29).
+  // `?onlyDeleted=1` → the recycle bin view (soft-deleted rows + cleanup-only
+  // purge locks); otherwise the live moderation view (issue #29).
   const onlyDeleted = url.searchParams.get("onlyDeleted") === "1";
   // Optional venue filter (issue #28). Empty/absent → all venues; an unknown
   // slug simply yields an empty page (parameterized eq, no injection risk).
@@ -144,9 +144,13 @@ export const DELETE: APIRoute = async ({ request }) => {
       console.error("[admin:photos] BUCKET R2 binding missing");
       return jsonError("storage_unavailable", 503);
     }
-    let imageKey: string | null;
+    let imageKey: string;
+    let alreadyLocked = false;
     try {
-      imageKey = await claimPhotoForPurge(db, id);
+      const claim = await claimPhotoForPurge(db, id);
+      if (claim === null) return jsonError("not_found", 404);
+      imageKey = claim.imageKey;
+      alreadyLocked = claim.alreadyLocked;
     } catch (err) {
       console.error("[admin:photos] purge claim failed", {
         id,
@@ -154,18 +158,19 @@ export const DELETE: APIRoute = async ({ request }) => {
       });
       return jsonError("database_unavailable", 502);
     }
-    if (imageKey === null) return jsonError("not_found", 404);
 
     // The D1 claim above blocks concurrent restore before the object is purged.
     // If storage fails but the object still exists, release the claim so the row
     // can be retried/restored. Ambiguous or missing storage stays purge-locked so
     // a live row can never point at bytes that may already be gone.
     try {
-      await deleteImage(env.BUCKET, imageKey);
+      if (!alreadyLocked || (await imageExists(env.BUCKET, imageKey))) {
+        await deleteImage(env.BUCKET, imageKey);
+      }
     } catch (err) {
       let released = false;
       try {
-        if (await imageExists(env.BUCKET, imageKey)) {
+        if (!alreadyLocked && (await imageExists(env.BUCKET, imageKey))) {
           released = await releasePhotoPurgeClaim(db, id);
         }
       } catch (releaseErr) {
@@ -198,6 +203,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     console.info("[admin:photos] photo permanently deleted", {
       id,
       by: email,
+      cleanupOnly: alreadyLocked,
     });
     return jsonResponse({ id });
   }

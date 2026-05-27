@@ -347,6 +347,8 @@ const ko: Messages = {
       "삭제하면 모든 페이지에서 사라지지만 휴지통에서 복구할 수 있어요.",
     restorePhoto: "복구",
     purgePhoto: "영구 삭제",
+    purgeLockedPhoto:
+      "이전 영구 삭제가 중단됐어요. 이어서 정리만 할 수 있어요.",
     confirmPurgePhoto:
       "영구 삭제하면 이미지와 기록이 모두 사라지고 복구할 수 없어요.",
     confirmYes: "삭제 확인",

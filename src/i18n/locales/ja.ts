@@ -342,6 +342,8 @@ const ja: Messages = {
       "削除すると全ページから消えますが、ゴミ箱から復元できます。",
     restorePhoto: "復元",
     purgePhoto: "完全に削除",
+    purgeLockedPhoto:
+      "前回の完全削除が中断されました。続きのクリーンアップだけ実行できます。",
     confirmPurgePhoto:
       "完全に削除すると画像も記録も永久に消え、元に戻せません。",
     confirmYes: "削除する",

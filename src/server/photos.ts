@@ -8,7 +8,7 @@
 // Read-only: no auth, no rate limit (those guard the write paths in later
 // steps). Used by the venue page SSR and `GET /api/photos`.
 
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { photos, type NewPhotoRow, type PhotoRow } from "@/server/db/schema";
 import { rowToPhotoDto, type PhotoDto } from "@/lib/photos";
@@ -17,8 +17,7 @@ import type { AdminPhotoDto, AdminPhotoVenueFacet } from "@/lib/admin";
 /**
  * Internal tombstone used while a permanent delete is purging R2. Epoch-ms
  * `deleted_at` values are always positive, so this sentinel is excluded from
- * restore/list eligibility while keeping the row around if cleanup needs a
- * retry or audit.
+ * restore eligibility while remaining visible as a cleanup-only recycle-bin row.
  */
 const PHOTO_PURGE_STARTED_DELETED_AT = -1;
 
@@ -101,9 +100,10 @@ export async function insertPhoto(db: Db, row: NewPhotoRow): Promise<PhotoDto> {
 // ── Maintainer admin (R7) ───────────────────────────────────────────────────
 // These run ONLY behind the Cloudflare Access edge gate (ADR-11). Unlike the
 // public reads (which only ever see live rows), the admin list can also see
-// soft-deleted rows — the recycle bin (`onlyDeleted`, issue #29) — so a
-// maintainer can restore or permanently delete them. They map to AdminPhotoDto
-// (drops the abuse-tracking `ip_hash`).
+// soft-deleted rows — the recycle bin (`onlyDeleted`, issue #29) — plus
+// cleanup-only purge locks, so a maintainer can restore or permanently delete
+// eligible rows and finish interrupted purges. They map to AdminPhotoDto (drops
+// the abuse-tracking `ip_hash`).
 
 /** Map a raw `photos` row to the admin DTO (drops the abuse-tracking
  *  `ip_hash`). */
@@ -118,6 +118,7 @@ function rowToAdminPhotoDto(row: PhotoRow): AdminPhotoDto {
     eventName: row.eventName ?? null,
     description: row.description ?? null,
     createdAt: row.createdAt,
+    purgeLocked: row.deletedAt === PHOTO_PURGE_STARTED_DELETED_AT,
   };
 }
 
@@ -125,8 +126,8 @@ export interface ListAllPhotosOptions {
   offset?: number;
   limit?: number;
   /** When false (default) only LIVE rows (`deleted_at IS NULL`) are returned —
-   *  the photos moderation view. When true ONLY soft-deleted rows
-   *  (`deleted_at IS NOT NULL`) are returned — the recycle bin (issue #29). */
+   *  the photos moderation view. When true deleted rows are returned — the
+   *  recycle bin (issue #29), including cleanup-only purge locks. */
   onlyDeleted?: boolean;
   /** Restrict to one venue (issue #28 admin filter). Omit for all venues. */
   venueId?: string;
@@ -135,16 +136,21 @@ export interface ListAllPhotosOptions {
 /**
  * List photos for the admin surface, newest-first, across ALL venues/sub-maps.
  * Defaults to LIVE rows (the photos moderation view); pass `onlyDeleted` to list
- * the recycle bin instead (soft-deleted rows whose R2 object is still intact and
- * thus restorable, issue #29). Pass `venueId` to restrict to one venue (the admin
- * venue filter — composes with the live view).
+ * the recycle bin instead (soft-deleted rows plus cleanup-only purge locks,
+ * issue #29). Pass `venueId` to restrict to one venue (the admin venue filter —
+ * composes with the live view).
  */
 export async function listAllPhotosForAdmin(
   db: Db,
   options: ListAllPhotosOptions = {},
 ): Promise<AdminPhotoDto[]> {
   const conditions = [
-    options.onlyDeleted ? gt(photos.deletedAt, 0) : isNull(photos.deletedAt),
+    options.onlyDeleted
+      ? or(
+          gt(photos.deletedAt, 0),
+          eq(photos.deletedAt, PHOTO_PURGE_STARTED_DELETED_AT),
+        )
+      : isNull(photos.deletedAt),
     options.venueId ? eq(photos.venueId, options.venueId) : undefined,
   ].filter((c) => c !== undefined);
   const base = db.select().from(photos);
@@ -244,17 +250,41 @@ export async function getDeletedPhotoImageKey(
  * Atomically reserve a recycle-bin row for permanent deletion. After this
  * succeeds, concurrent restores can no longer clear `deleted_at`, even if they
  * already read the image key before the R2 purge starts.
+ *
+ * Existing purge-lock rows are returned as cleanup-only claims so a previous
+ * interrupted permanent-delete can be retried from the admin recycle bin.
  */
+export interface PhotoPurgeClaim {
+  imageKey: string;
+  alreadyLocked: boolean;
+}
+
 export async function claimPhotoForPurge(
   db: Db,
   id: string,
-): Promise<string | null> {
+): Promise<PhotoPurgeClaim | null> {
   const claimed = await db
     .update(photos)
     .set({ deletedAt: PHOTO_PURGE_STARTED_DELETED_AT })
     .where(and(eq(photos.id, id), gt(photos.deletedAt, 0)))
     .returning({ imageKey: photos.imageKey });
-  return claimed[0]?.imageKey ?? null;
+  const newlyClaimed = claimed[0]?.imageKey;
+  if (newlyClaimed) return { imageKey: newlyClaimed, alreadyLocked: false };
+
+  const existingLock = await db
+    .select({ imageKey: photos.imageKey })
+    .from(photos)
+    .where(
+      and(
+        eq(photos.id, id),
+        eq(photos.deletedAt, PHOTO_PURGE_STARTED_DELETED_AT),
+      ),
+    )
+    .limit(1);
+  const lockedImageKey = existingLock[0]?.imageKey;
+  return lockedImageKey
+    ? { imageKey: lockedImageKey, alreadyLocked: true }
+    : null;
 }
 
 /**

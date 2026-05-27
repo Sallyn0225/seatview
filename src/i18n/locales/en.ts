@@ -354,6 +354,8 @@ const en: Messages = {
       "Deleting removes the photo from every page; you can restore it from the recycle bin.",
     restorePhoto: "Restore",
     purgePhoto: "Delete forever",
+    purgeLockedPhoto:
+      "The previous permanent delete was interrupted; only cleanup is available.",
     confirmPurgePhoto:
       "Deleting forever removes the photo and its record permanently. This can't be undone.",
     confirmYes: "Confirm delete",
