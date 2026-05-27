@@ -176,8 +176,8 @@ function PhotosPanel({
   // circuit a re-load when the previous list had already reached its end).
   const hasMoreRef = useRef(true);
   const loadedRef = useRef(false);
-  // Changes whenever the filter key resets. In-flight pages from an older
-  // generation must not merge into the current venue view.
+  // Changes whenever the filter key resets or a local row removal shifts the
+  // server-side offset. Older in-flight pages must not merge into the list.
   const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
@@ -248,7 +248,10 @@ function PhotosPanel({
   const onDeleted = useCallback(
     (id: string, venueId: string) => {
       // Moved to the recycle bin → drop it from the live list.
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
       offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
       setPhotos((prev) => prev.filter((p) => p.id !== id));
       // Optimistically drop the venue's live count by one. When a venue hits
       // zero it leaves the dropdown; if it was the current selection, fall back
@@ -265,8 +268,9 @@ function PhotosPanel({
         }
         return next;
       });
+      if (wasLoading && hasMoreRef.current) loadPage();
     },
-    [selectedVenue],
+    [loadPage, selectedVenue],
   );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -492,14 +496,17 @@ function StagingPanel({ locale }: { locale: Locale }) {
   const [error, setError] = useState(false);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
+  const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || (!hasMore && loaded)) return;
     loadingRef.current = true;
     setError(false);
     const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
     fetchAdminStaging(offset, ADMIN_STAGING_BATCH)
       .then(({ venues: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
         setHasMore(more);
         setVenues((prev) => {
@@ -512,6 +519,7 @@ function StagingPanel({ locale }: { locale: Locale }) {
         loadingRef.current = false;
       })
       .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         loadingRef.current = false;
         setError(true);
       });
@@ -527,10 +535,17 @@ function StagingPanel({ locale }: { locale: Locale }) {
       prev.map((v) => (v.id === id ? { ...v, processed } : v)),
     );
   }, []);
-  const onDeleted = useCallback((id: string) => {
-    offsetRef.current = Math.max(0, offsetRef.current - 1);
-    setVenues((prev) => prev.filter((v) => v.id !== id));
-  }, []);
+  const onDeleted = useCallback(
+    (id: string) => {
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setVenues((prev) => prev.filter((v) => v.id !== id));
+      if (wasLoading && hasMore) loadPage();
+    },
+    [hasMore, loadPage],
+  );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -726,16 +741,19 @@ function RecycleBinPanel({
   const [error, setError] = useState(false);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
+  const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || (!hasMore && loaded)) return;
     loadingRef.current = true;
     setError(false);
     const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
     // onlyDeleted=true → the recycle bin. No venue filter here: it's a flat list
     // a maintainer skims to restore or purge.
     fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, true)
       .then(({ photos: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
         setHasMore(more);
         setPhotos((prev) => {
@@ -748,6 +766,7 @@ function RecycleBinPanel({
         loadingRef.current = false;
       })
       .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         loadingRef.current = false;
         setError(true);
       });
@@ -759,10 +778,17 @@ function RecycleBinPanel({
   }, []);
 
   // Both restore and permanent-delete remove the row from the bin.
-  const onResolved = useCallback((id: string) => {
-    offsetRef.current = Math.max(0, offsetRef.current - 1);
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+  const onResolved = useCallback(
+    (id: string) => {
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      if (wasLoading && hasMore) loadPage();
+    },
+    [hasMore, loadPage],
+  );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
