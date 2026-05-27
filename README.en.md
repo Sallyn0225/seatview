@@ -24,9 +24,9 @@ Live site 👉 **[seat.genchi.top](https://seat.genchi.top)**
 - **Browse by prefecture** — the venue tree on the left is grouped and collapsible by Japanese administrative divisions; Fuse.js client-side fuzzy search matches Chinese / Japanese / romaji aliases.
 - **Seating-chart markers** — view seat markers placed by other users on the venue's official seating chart (supports multi-layer / multi-zone tag switching); adjacent markers auto-cluster and show a count.
 - **Real-view Lightbox** — click a marker to see that seat's actual photo + seat number / text description; the masonry feed below shows every submission for that venue.
-- **Registration-free uploads** — mark → pick image → compress to WebP client-side (EXIF stripped) → two-stage HMAC-ticket submission, with IP rate limiting + Turnstile guarding the whole flow.
+- **Registration-free uploads** — mark (with an optional full-screen zoom mode for precise placement) → pick image → compress to WebP client-side (EXIF stripped) → two-stage HMAC-ticket submission; in-line guidance nudges you through unfinished steps, with IP rate limiting + Turnstile guarding the whole flow.
 - **Multilingual i18n** — `/zh` `/ja` `/en` `/ko` four-prefix routing; the bare root `/` auto-redirects by `Accept-Language` (zh / ja are equal tracks, while en / ko are an accessibility translation layer).
-- **Venue crowdsourcing** — +1 on the in-site "venues you want to see" staging area, or submit venue JSON directly via a GitHub PR.
+- **Venue crowdsourcing** — +1 a venue in the in-site "venues you want to see" staging area (public vote count + daily rate limit + name dedup), or submit venue JSON directly via a GitHub PR.
 - **Maintainer admin** — `/admin` is edge-authenticated by Cloudflare Access and supports soft-deleting submissions.
 
 ## Tech Stack
@@ -66,7 +66,7 @@ npm install
 # 2. Prepare local secrets (defaults to Cloudflare's "always passes" Turnstile test key, works offline)
 cp .dev.vars.example .dev.vars
 
-# 3. Generate local placeholder seating charts (first run, or after adding venues)
+# 3. (Optional) generate placeholder charts for newly added venues whose imageUrl points to .svg; shipped venues' charts come with the repo
 npm run gen:seatmaps
 
 # 4. Initialize local D1 (apply migrations)
@@ -96,6 +96,7 @@ npm run preview    # Full features (bindings + APIs, via miniflare)
 | `npm run build` | `astro build`, produces the Workers bundle into `dist/` |
 | `npm run preview` | `astro build` then `wrangler dev -c dist/server/wrangler.json`, runs the build output + bindings locally |
 | `npm run typecheck` | `astro check`, type checking |
+| `npm run format` / `format:check` | Prettier format / check (CI uses `format:check`) |
 | `npm run db:generate` | `drizzle-kit generate`, generate migrations from schema |
 | `npm run db:migrate:local` / `:prod` | `wrangler d1 migrations apply` (local / remote) |
 | `npm run gen:seatmaps` | generate placeholder seating-chart SVGs |
@@ -142,7 +143,7 @@ npm run deploy
 > The **maintainer admin** (`/admin` + `/api/admin/*`) is protected at the edge by **Cloudflare Access (Zero Trust)**: in the dashboard, Zero Trust → Access → Applications, create a self-hosted app covering `/*/admin` and `/api/admin/*`, and add an Allow → maintainer-email policy. After Access authenticates, it injects `Cf-Access-Authenticated-User-Email`, and the Worker trusts that header (`src/server/admin-auth.ts`); anonymous traffic never reaches the Worker. Production needs **no** admin env vars; **never** set `DEV_ADMIN_EMAIL` in production — that would bypass the SSO gateway.
 
 > [!NOTE]
-> This repo already ships 7 high-traffic venues + demo markers. Real production markers are written to D1 by users via the upload flow. You only need to re-run `npm run db:migrate:prod` after changing the DB schema; pure frontend changes need no migration.
+> This repo already ships 18 Japanese venues (with seating charts) + demo markers. Real production markers are written to D1 by users via the upload flow. You only need to re-run `npm run db:migrate:prod` after changing the DB schema; pure frontend changes need no migration.
 
 ## How It Works
 
@@ -199,10 +200,10 @@ seatmap-real/
 ├── data/
 │   ├── venues/<id>.json      # Static venue metadata, bundled at build time
 │   └── _venue-template.json  # Contributor template (outside venues/, not bundled / seeded)
-├── migrations/0000_init.sql  # D1 initial schema (photos + staging_venues)
+├── migrations/               # D1 migrations: initial schema + photo dimensions + staging votes (staging_votes)
 ├── seeds/0001_demo_photos.sql# Local demo markers (script-generated, local only)
-├── scripts/                  # Placeholder seating-chart / demo seed generation scripts
-├── public/seatmaps/<id>/...  # Placeholder seating-chart SVGs (not real copyrighted images)
+├── scripts/                  # Placeholder seating-chart / demo seed / coordinate migration scripts
+├── public/seatmaps/<id>/...  # Maintainer-uploaded seating charts in WebP (not official copyrighted images)
 └── src/
     ├── env.d.ts              # Cloudflare.Env binding types
     ├── middleware.ts         # Root 302 / locale resolution / admin guard
@@ -211,7 +212,7 @@ seatmap-real/
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue single source of truth
     ├── lib/                  # cross-layer contracts + client utilities
     ├── server/               # Worker side: db / photos / staging / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/ (upload·staging·admin·photos) + [lang]/ (home / venue / staging / admin)
+    ├── pages/                # api/ (upload·staging·admin·photos) + [lang]/ (home / venue / staging / admin / privacy / terms)
     └── styles/global.css     # Tailwind v4 + design tokens (OKLCH neutrals + vermilion accent)
 ```
 
@@ -223,4 +224,4 @@ There are two channels for adding new venues:
 2. **Add the data yourself** — GitHub Fork → edit `data/venues/<id>.json` → PR. An illustrated tutorial for non-coders and field descriptions are in **[CONTRIBUTING.md](CONTRIBUTING.md)**; the template is at [`data/_venue-template.json`](data/_venue-template.json).
 
 > [!IMPORTANT]
-> The site code is open-sourced under **Apache 2.0** (see [LICENSE](LICENSE)). Photos uploaded by users and their metadata are shared under **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** — there's a mandatory consent checkbox before uploading. **Do not submit copyrighted official seating charts**: everything under `public/seatmaps/` is locally hand-drawn placeholder art.
+> The site code is open-sourced under **Apache 2.0** (see [LICENSE](LICENSE)). Photos uploaded by users and their metadata are shared under **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** — there's a mandatory consent checkbox before uploading. **Do not submit copyrighted official seating charts**: everything under `public/seatmaps/` is uploaded by the maintainer (not official copyrighted images).

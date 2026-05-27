@@ -24,9 +24,9 @@
 - **광역자치단체별 탐색** —— 왼쪽 공연장 트리는 일본 행정 구역으로 그룹화되어 접을 수 있습니다. Fuse.js 클라이언트 측 퍼지 검색으로 중국어 / 일본어 / 로마자 별칭까지 매칭됩니다.
 - **좌석도 마킹** —— 공연장 공식 좌석도(다중 레이어 / 다중 구역 tag 전환 지원) 위에서 다른 사용자가 표시한 좌석 포인트를 확인하고, 인접한 포인트는 자동으로 묶여 개수가 표시됩니다.
 - **실제 시야 Lightbox** —— 마커를 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 볼 수 있습니다. 아래의 워터폴(masonry)에는 해당 공연장의 모든 투고가 표시됩니다.
-- **회원 가입 없는 업로드** —— 마킹 → 이미지 선택 → 클라이언트 측에서 WebP 로 압축(EXIF 제거) → HMAC ticket 의 2단계 제출. 전 과정에 IP 요청 빈도 제한 + Turnstile 남용 방지가 적용됩니다.
+- **회원 가입 없는 업로드** —— 마킹(전체 화면 줌으로 정밀하게 배치하는 모드 제공) → 이미지 선택 → 클라이언트 측에서 WebP 로 압축(EXIF 제거) → HMAC ticket 의 2단계 제출. 완료되지 않은 단계는 인라인 안내로 유도하며, 전 과정에 IP 요청 빈도 제한 + Turnstile 남용 방지가 적용됩니다.
 - **다국어 i18n** —— `/zh` `/ja` `/en` `/ko` 4개 프리픽스 라우팅, 루트 직하 `/` 는 `Accept-Language` 에 따라 자동 리다이렉트(`zh` / `ja` 는 대등한 두 축이며, `en` / `ko` 는 접근성을 위한 번역 레이어).
-- **공연장 크라우드소싱** —— 사이트 내 「보고 싶은 공연장」 임시 보관 영역에서 +1 하거나, GitHub PR 로 공연장 JSON 을 직접 제출할 수 있습니다.
+- **공연장 크라우드소싱** —— 사이트 내 「보고 싶은 공연장」 임시 보관 영역에서 +1(공개 득표 수 + 일일 요청 제한 + 동명 중복 제거)하거나, GitHub PR 로 공연장 JSON 을 직접 제출할 수 있습니다.
 - **메인테이너 관리자** —— `/admin` 은 Cloudflare Access 의 엣지 인증으로 보호되며, 투고의 소프트 삭제를 지원합니다.
 
 ## 기술 스택
@@ -66,7 +66,7 @@ npm install
 # 2. 로컬 시크릿 준비(기본값은 Cloudflare 문서의 「항상 통과」 Turnstile 테스트 key, 오프라인 연습 가능)
 cp .dev.vars.example .dev.vars
 
-# 3. 로컬 플레이스홀더 좌석도 생성(최초 또는 공연장 추가 후)
+# 3. (선택) imageUrl 이 .svg 를 가리키는 새 공연장의 플레이스홀더 좌석도 생성. 수록된 공연장의 좌석도는 저장소에 포함
 npm run gen:seatmaps
 
 # 4. 로컬 D1 초기화(마이그레이션 적용)
@@ -96,6 +96,7 @@ npm run preview    # 전체 기능(바인딩 + API, miniflare 경유)
 | `npm run build` | `astro build`, Workers 번들을 `dist/` 에 출력 |
 | `npm run preview` | `astro build` 후 `wrangler dev -c dist/server/wrangler.json`, 빌드 산출물 + 바인딩을 로컬에서 실행 |
 | `npm run typecheck` | `astro check`, 타입 검사 |
+| `npm run format` / `format:check` | Prettier 포맷 / 검사(CI 는 `format:check` 사용) |
 | `npm run db:generate` | `drizzle-kit generate`, schema 에서 마이그레이션 생성 |
 | `npm run db:migrate:local` / `:prod` | `wrangler d1 migrations apply`(로컬 / 원격) |
 | `npm run gen:seatmaps` | 플레이스홀더 좌석도 SVG 생성 |
@@ -142,7 +143,7 @@ npm run deploy
 > **메인테이너 관리자**(`/admin` + `/api/admin/*`)는 **Cloudflare Access (Zero Trust)** 에 의해 엣지에서 보호됩니다: 대시보드의 Zero Trust → Access → Applications 에서 `/*/admin` 과 `/api/admin/*` 를 포함하는 self-hosted 애플리케이션을 새로 만들고, Allow → 메인테이너 이메일의 policy 를 하나 추가하세요. Access 가 인증 후 `Cf-Access-Authenticated-User-Email` 을 주입하면 Worker 는 그 헤더를 신뢰합니다(`src/server/admin-auth.ts`). 익명 트래픽은 Worker 에 도달하지 못합니다. 프로덕션에서는 admin 환경 변수가 **필요 없습니다**. 프로덕션에서 `DEV_ADMIN_EMAIL` 을 **절대 설정하지 마세요** —— 그렇게 하면 SSO 게이트웨이를 우회하게 됩니다.
 
 > [!NOTE]
-> 본 저장소에는 이미 고빈도 7개 공연장 + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
+> 본 저장소에는 이미 18개 일본 공연장(좌석도 포함) + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
 
 ## 작동 원리
 
@@ -199,10 +200,10 @@ seatmap-real/
 ├── data/
 │   ├── venues/<id>.json      # 정적 공연장 메타데이터, 빌드 시 번들에 포함
 │   └── _venue-template.json  # 기여자용 템플릿(venues/ 밖, 번들 / 시드 대상 아님)
-├── migrations/0000_init.sql  # D1 초기 schema(photos + staging_venues)
+├── migrations/               # D1 마이그레이션: 초기 schema + photos 치수 + 임시 보관 +1(staging_votes)
 ├── seeds/0001_demo_photos.sql# 로컬 demo 마커(스크립트 생성, 로컬 전용)
-├── scripts/                  # 플레이스홀더 좌석도 / demo 시드 생성 스크립트
-├── public/seatmaps/<id>/...  # 플레이스홀더 좌석도 SVG(실제 저작권 이미지 아님)
+├── scripts/                  # 플레이스홀더 좌석도 / demo 시드 / 좌표 마이그레이션 스크립트
+├── public/seatmaps/<id>/...  # 메인테이너가 업로드한 좌석도 WebP(공식 저작권 이미지 아님)
 └── src/
     ├── env.d.ts              # Cloudflare.Env 바인딩 타입
     ├── middleware.ts         # 루트 302 / locale 해석 / admin 가드
@@ -211,7 +212,7 @@ seatmap-real/
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 단일 진실 공급원
     ├── lib/                  # 레이어 간 계약 + 클라이언트 유틸리티
     ├── server/               # Worker 측: db / photos / staging / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/(upload·staging·admin·photos) + [lang]/(홈 / 공연장 페이지 / 임시 보관 영역 / 관리자)
+    ├── pages/                # api/(upload·staging·admin·photos) + [lang]/(홈 / 공연장 페이지 / 임시 보관 영역 / 관리자 / 개인정보 / 이용약관)
     └── styles/global.css     # Tailwind v4 + 디자인 토큰(OKLCH 중성색 + 주홍 accent)
 ```
 
@@ -223,4 +224,4 @@ seatmap-real/
 2. **직접 데이터 추가** —— GitHub Fork → `data/venues/<id>.json` 편집 → PR. 비개발자를 위한 그림 설명 튜토리얼과 필드 설명은 **[CONTRIBUTING.md](CONTRIBUTING.md)** 에, 템플릿은 [`data/_venue-template.json`](data/_venue-template.json) 에 있습니다.
 
 > [!IMPORTANT]
-> 사이트 코드는 **Apache 2.0** 으로 오픈 소스화되어 있습니다([LICENSE](LICENSE) 참조). 사용자가 업로드한 사진과 그 메타데이터는 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 으로 공유됩니다 —— 업로드 전에 필수 동의 체크박스가 있습니다. **저작권이 있는 공식 좌석도를 제출하지 마세요**: `public/seatmaps/` 아래는 전부 로컬에서 직접 그린 플레이스홀더 이미지입니다.
+> 사이트 코드는 **Apache 2.0** 으로 오픈 소스화되어 있습니다([LICENSE](LICENSE) 참조). 사용자가 업로드한 사진과 그 메타데이터는 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 으로 공유됩니다 —— 업로드 전에 필수 동의 체크박스가 있습니다. **저작권이 있는 공식 좌석도를 제출하지 마세요**: `public/seatmaps/` 아래는 전부 메인테이너가 업로드한 좌석도입니다(공식 저작권 이미지가 아님).

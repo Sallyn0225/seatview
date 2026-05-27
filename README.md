@@ -24,9 +24,9 @@
 - **按都道府县浏览** —— 左侧场馆树按日本行政区划分组、可折叠；Fuse.js 客户端模糊搜索，中文 / 日文 / 罗马字别名都能命中。
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
 - **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；下方瀑布流展示该场馆的全部投稿。
-- **免注册上传** —— 标点 → 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交，全程 IP 限频 + Turnstile 防滥用。
+- **免注册上传** —— 标点（可进全屏放大精修）→ 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交；未完成步骤有行内引导，全程 IP 限频 + Turnstile 防滥用。
 - **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
-- **场馆众包** —— 站内「想看的场馆」暂存区可 +1，或通过 GitHub PR 直接提交场馆 JSON。
+- **场馆众包** —— 站内「想看的场馆」暂存区可 +1 附议（公开票数 + 每日限流 + 同名去重），或通过 GitHub PR 直接提交场馆 JSON。
 - **维护者后台** —— `/admin` 由 Cloudflare Access 边缘鉴权，支持软删除投稿。
 
 ## 技术栈
@@ -66,7 +66,7 @@ npm install
 # 2. 准备本地密钥（默认用 Cloudflare 文档里的「永远通过」Turnstile 测试 key，可离线演练）
 cp .dev.vars.example .dev.vars
 
-# 3. 生成本地占位坐席图（首次或新增场馆后）
+# 3.（可选）为新增、imageUrl 指向 .svg 的场馆生成占位坐席图；已收录场馆的坐席图已随仓库提供
 npm run gen:seatmaps
 
 # 4. 初始化本地 D1（应用迁移）
@@ -96,6 +96,7 @@ npm run preview    # 全功能（含绑定 + API，走 miniflare）
 | `npm run build` | `astro build`，产出 Workers bundle 到 `dist/` |
 | `npm run preview` | `astro build` 后 `wrangler dev -c dist/server/wrangler.json`，本地跑构建产物 + 绑定 |
 | `npm run typecheck` | `astro check`，类型检查 |
+| `npm run format` / `format:check` | Prettier 格式化 / 校验（CI 用 `format:check`） |
 | `npm run db:generate` | `drizzle-kit generate`，从 schema 生成迁移 |
 | `npm run db:migrate:local` / `:prod` | `wrangler d1 migrations apply`（本地 / 远程） |
 | `npm run gen:seatmaps` | 生成占位坐席图 SVG |
@@ -142,7 +143,7 @@ npm run deploy
 > **维护者后台**（`/admin` + `/api/admin/*`）由 **Cloudflare Access (Zero Trust)** 在边缘保护：在控制台 Zero Trust → Access → Applications 新建 self-hosted 应用覆盖 `/*/admin` 与 `/api/admin/*`，加一条 Allow → 维护者邮箱的 policy。Access 鉴权后注入 `Cf-Access-Authenticated-User-Email`，Worker 信任该头（`src/server/admin-auth.ts`），匿名流量到不了 Worker。生产**无需**任何 admin 环境变量；**切勿**在生产设 `DEV_ADMIN_EMAIL`——那会绕过 SSO 网关。
 
 > [!NOTE]
-> 本仓库已带 7 个高频场馆 + demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
+> 本仓库已带 18 个日本场馆（含坐席图）+ demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
 
 ## 工作原理
 
@@ -199,10 +200,10 @@ seatmap-real/
 ├── data/
 │   ├── venues/<id>.json      # 静态场馆元数据，构建时打进 bundle
 │   └── _venue-template.json  # 贡献者样板（在 venues/ 之外，不进 bundle / 种子）
-├── migrations/0000_init.sql  # D1 初始 schema（photos + staging_venues）
+├── migrations/               # D1 迁移：初始 schema + photos 尺寸 + 暂存附议（staging_votes）
 ├── seeds/0001_demo_photos.sql# 本地 demo 标注点（脚本生成，仅本地）
-├── scripts/                  # 占位坐席图 / demo 种子生成脚本
-├── public/seatmaps/<id>/...  # 占位坐席图 SVG（非真实版权图）
+├── scripts/                  # 占位坐席图 / demo 种子 / 坐标迁移脚本
+├── public/seatmaps/<id>/...  # 维护者上传的坐席图 WebP（非官方版权图）
 └── src/
     ├── env.d.ts              # Cloudflare.Env 绑定类型
     ├── middleware.ts         # 根 302 / locale 解析 / admin 守卫
@@ -211,7 +212,7 @@ seatmap-real/
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 单一真源
     ├── lib/                  # 跨层契约 + 客户端工具
     ├── server/               # Worker 侧：db / photos / staging / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/（upload·staging·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台）
+    ├── pages/                # api/（upload·staging·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）
     └── styles/global.css     # Tailwind v4 + 设计 token（OKLCH 中性色 + 朱赤 accent）
 ```
 
@@ -223,4 +224,4 @@ seatmap-real/
 2. **自己加数据** —— GitHub Fork → 编辑 `data/venues/<id>.json` → PR。面向非编码者的图文教程、字段说明见 **[CONTRIBUTING.md](CONTRIBUTING.md)**，样板见 [`data/_venue-template.json`](data/_venue-template.json)。
 
 > [!IMPORTANT]
-> 站点代码以 **Apache 2.0** 开源（见 [LICENSE](LICENSE)）。用户上传的照片及其元数据以 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 共享——上传前有强制勾选的同意框。**请勿提交有版权的官方坐席图**：`public/seatmaps/` 下全部是本地自绘的占位图。
+> 站点代码以 **Apache 2.0** 开源（见 [LICENSE](LICENSE)）。用户上传的照片及其元数据以 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 共享——上传前有强制勾选的同意框。**请勿提交有版权的官方坐席图**：`public/seatmaps/` 下均为维护者上传的坐席图（非官方版权图）。

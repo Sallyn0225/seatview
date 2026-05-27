@@ -13,7 +13,7 @@
 
 每个场馆是 `data/venues/` 目录下的**一个 JSON 文件**，文件名就是这个场馆的 `id`，例如 `data/venues/k-arena-yokohama.json`。
 
-参考模板：[`data/_venue-template.json`](data/_venue-template.json)（一个填好示例值的样板，复制它改成你的场馆即可）。一个真实例子（单坐席图场馆）：
+参考模板：[`data/_venue-template.json`](data/_venue-template.json)（一个填好示例值的样板，复制它改成你的场馆即可）。一个示例（单坐席图场馆，贡献者可用占位 `.svg` 路径起步，维护者合并后会替换为 `.webp`）：
 
 ```json
 {
@@ -72,7 +72,7 @@
 | `id` | ✅ | string | sub-map 的 url-safe slug，在**同一场馆内唯一**，例如 `L3`、`default`、`arena-center`。它会作为场馆页顶部切换 tag 的 query（`?tab=<id>`）。 |
 | `label_zh` | ✅ | string | tag 的中文文本（如 `L3 三层`、`全场`）。 |
 | `label_jp` | ✅ | string | tag 的日文文本（如 `L3 フロア`、`全体`）。 |
-| `imageUrl` | ✅ | string | 坐席图地址。MVP 用站内静态资源：`/seatmaps/<venue-id>/<sub-map-id>.svg`，对应 `public/seatmaps/...` 下的文件。 |
+| `imageUrl` | ✅ | string | 坐席图地址，站内静态资源路径。贡献者可先填占位 `.svg`（跑 `npm run gen:seatmaps` 生成占位图）；已收录场馆由维护者上传 `.webp`，对应 `public/seatmaps/...` 下的文件。 |
 | `width` | ✅ | number | 坐席图原始宽度（像素）。标注点坐标按百分比换算，需要这个值。 |
 | `height` | ✅ | number | 坐席图原始高度（像素）。 |
 
@@ -100,7 +100,7 @@
 
 **不要提交真实的、有版权的官方坐席图。** 票务平台 / 场馆官网的坐席图通常受版权保护。
 
-MVP 阶段，仓库里 `public/seatmaps/` 下的坐席图全部是**本地自绘的占位图**（米白纸面 + 抽象座席轮廓），仅用于本地开发时让坐席图、瀑布流、Lightbox 有东西可渲染。它们由脚本生成：
+仓库里 `public/seatmaps/` 下已收录场馆的坐席图，均为**维护者上传**的坐席图（WebP，非官方版权图）。当你新增一个场馆、`imageUrl` 仍指向 `/seatmaps/...svg` 时，下面这个脚本会为它生成一张**占位 SVG**（米白纸面 + 抽象座席轮廓），仅用于本地开发时让坐席图、瀑布流、Lightbox 有东西可渲染：
 
 ```bash
 node scripts/gen-placeholder-seatmaps.mjs
