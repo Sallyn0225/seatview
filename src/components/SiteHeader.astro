@@ -33,9 +33,17 @@ const hasTreeTrigger = Astro.slots.has("tree-trigger");
 
     <a
       href={`/${locale}/`}
-      class="text-foreground focus-visible:ring-ring shrink-0 rounded-sm font-serif text-lg font-medium tracking-tight focus-visible:ring-2 focus-visible:outline-none"
+      class="text-foreground focus-visible:ring-ring flex shrink-0 items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:outline-none"
     >
-      SeatView
+      <img
+        src="/logo-mark.png"
+        alt=""
+        width="28"
+        height="28"
+        class="h-6 w-6 lg:h-7 lg:w-7"
+      />
+      <span class="font-serif text-lg font-medium tracking-tight">SeatView</span
+      >
     </a>
 
     {
