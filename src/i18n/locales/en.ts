@@ -194,6 +194,7 @@ const en: Messages = {
     about: "About",
     privacy: "Privacy",
     terms: "Terms",
+    links: "Links",
     copyright: "© SeatView · Real Seat Views",
     navLabel: "Footer",
   },
@@ -247,6 +248,15 @@ const en: Messages = {
     updated: "Last updated: {date}",
     feedback: "Questions or correction requests? Reach us via {github}.",
     feedbackLink: "the GitHub repo",
+  },
+  links: {
+    title: "Links",
+    intro:
+      "A few related projects the maintainer built, plus some sites from friends in the community.",
+    groupMine: "My projects",
+    subGenchi: "On-site guides",
+    subFun: "Fun & games",
+    groupFriends: "Friend links",
   },
   home: {
     subtitle: "Real Seat Views",

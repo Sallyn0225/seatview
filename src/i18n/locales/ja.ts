@@ -185,6 +185,7 @@ const ja: Messages = {
     about: "このサイトについて",
     privacy: "プライバシー",
     terms: "利用規約",
+    links: "リンク集",
     copyright: "© SeatView · リアル座席ビュー",
     navLabel: "フッター",
   },
@@ -238,6 +239,15 @@ const ja: Messages = {
     updated: "最終更新：{date}",
     feedback: "ご質問や訂正のご依頼は {github} からお寄せください。",
     feedbackLink: "GitHub リポジトリ",
+  },
+  links: {
+    title: "リンク集",
+    intro:
+      "管理者が手がけた関連プロジェクトと、仲間のサイトをいくつか置いています。",
+    groupMine: "自分のプロジェクト",
+    subGenchi: "現地関連",
+    subFun: "エンタメ関連",
+    groupFriends: "フレンドリンク",
   },
   home: {
     subtitle: "リアル座席ビュー",

@@ -228,6 +228,8 @@ export interface Messages {
     about: string;
     privacy: string;
     terms: string;
+    /** Friend-links page nav label (issue #32). */
+    links: string;
     copyright: string;
     /** Footer `<nav>` aria-label. */
     navLabel: string;
@@ -252,6 +254,22 @@ export interface Messages {
     feedback: string;
     /** Link text for the GitHub repo inside `feedback`. */
     feedbackLink: string;
+  };
+  /** Standalone friend-links page (issue #32). Only the chrome is translated;
+   *  link names + URLs stay in their original (zh) form and live in the page. */
+  links: {
+    /** Page <h1> + browser title. */
+    title: string;
+    /** Lead paragraph. */
+    intro: string;
+    /** Group heading: the maintainer's own projects. */
+    groupMine: string;
+    /** Sub-group under groupMine: on-site (現地) related. */
+    subGenchi: string;
+    /** Sub-group under groupMine: entertainment / fun. */
+    subFun: string;
+    /** Group heading: other people's projects (friend links). */
+    groupFriends: string;
   };
   /** Home / intro page (shape-home-explainer.md). */
   home: {
@@ -597,6 +615,7 @@ const zh: Messages = {
     about: "关于",
     privacy: "隐私政策",
     terms: "服务条款",
+    links: "友链",
     copyright: "© SeatView · 真实视角图集",
     navLabel: "页脚",
   },
@@ -650,6 +669,14 @@ const zh: Messages = {
     updated: "最后更新：{date}",
     feedback: "如有疑问或更正请求，欢迎通过 {github} 反馈。",
     feedbackLink: "GitHub 仓库",
+  },
+  links: {
+    title: "友链",
+    intro: "这里收着我自己做的一些相关项目，和几个同好的友站。",
+    groupMine: "我自己的项目",
+    subGenchi: "现地相关",
+    subFun: "娱乐相关",
+    groupFriends: "友情链接",
   },
   home: {
     subtitle: "真实视角图集",
