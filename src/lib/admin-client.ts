@@ -13,6 +13,7 @@ import type {
   AdminDeleteStagingRequest,
   AdminErrorCode,
   AdminPhotosResponse,
+  AdminPhotoVenuesResponse,
   AdminStagingMutationResponse,
   AdminStagingResponse,
   AdminUpdateStagingRequest,
@@ -55,11 +56,13 @@ async function jsonRequest<T>(url: string, init: RequestInit): Promise<T> {
 
 // ── Photos ──────────────────────────────────────────────────────────────────
 
-/** Fetch one page of photos for the admin list (newest-first). */
+/** Fetch one page of photos for the admin list (newest-first). Pass `venueId`
+ *  to restrict to one venue (issue #28 filter); null/undefined → all venues. */
 export async function fetchAdminPhotos(
   offset: number,
   limit: number,
   includeDeleted: boolean,
+  venueId?: string | null,
   signal?: AbortSignal,
 ): Promise<AdminPhotosResponse> {
   const params = new URLSearchParams({
@@ -67,7 +70,18 @@ export async function fetchAdminPhotos(
     limit: String(limit),
   });
   if (includeDeleted) params.set("includeDeleted", "1");
+  if (venueId) params.set("venueId", venueId);
   return jsonRequest<AdminPhotosResponse>(`/api/admin/photos?${params}`, {
+    signal,
+  });
+}
+
+/** Fetch venue facets (venues with ≥1 live photo + counts) for the filter
+ *  dropdown. Fetched once on panel mount. */
+export async function fetchAdminPhotoVenues(
+  signal?: AbortSignal,
+): Promise<AdminPhotoVenuesResponse> {
+  return jsonRequest<AdminPhotoVenuesResponse>("/api/admin/photo-venues", {
     signal,
   });
 }

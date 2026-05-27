@@ -331,6 +331,8 @@ const ja: Messages = {
     photosTab: "投稿画像",
     stagingTab: "見たい会場",
     showDeleted: "削除済みも表示",
+    venueFilter: "会場で絞り込む",
+    allVenuesOption: "すべて ({count})",
     photosEmpty: "まだ投稿画像はありません。",
     stagingEmpty: "まだ投稿はありません。",
     end: "ここまでです。",

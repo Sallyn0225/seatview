@@ -56,6 +56,10 @@ export const GET: APIRoute = async ({ request, url }) => {
   const offset = parseCount(url.searchParams.get("offset")) ?? 0;
   const limit = parseCount(url.searchParams.get("limit")) ?? ADMIN_PHOTOS_BATCH;
   const includeDeleted = url.searchParams.get("includeDeleted") === "1";
+  // Optional venue filter (issue #28). Empty/absent → all venues; an unknown
+  // slug simply yields an empty page (parameterized eq, no injection risk).
+  const venueParam = url.searchParams.get("venueId")?.trim();
+  const venueId = venueParam ? venueParam : undefined;
 
   try {
     const db = getDb(env.DB);
@@ -65,6 +69,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       offset,
       limit: limit + 1,
       includeDeleted,
+      venueId,
     });
     const hasMore = rows.length > limit;
     const payload: AdminPhotosResponse = {

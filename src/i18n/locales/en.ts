@@ -343,6 +343,8 @@ const en: Messages = {
     photosTab: "Uploaded photos",
     stagingTab: "Requests",
     showDeleted: "Include deleted",
+    venueFilter: "Filter by venue",
+    allVenuesOption: "All ({count})",
     photosEmpty: "No uploaded photos yet.",
     stagingEmpty: "No requests yet.",
     end: "You've reached the end.",
