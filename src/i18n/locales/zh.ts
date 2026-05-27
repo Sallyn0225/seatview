@@ -166,6 +166,15 @@ export interface Messages {
       /** Generic server error. */
       serverError: string;
     };
+    /** Inline prompts shown when 上传 is clicked with an unfinished step
+     *  (R: issue #30) — the Sheet scrolls to the first gap and shows one. */
+    gapHint: {
+      step1: string;
+      step2: string;
+      step3: string;
+      step4: string;
+      step5: string;
+    };
     /** Inline (NOT modal) unsaved-close confirm bar. */
     confirmClose: {
       body: string;
@@ -542,6 +551,13 @@ const zh: Messages = {
       limitDaily: "你今天已经上传 10 张了。明天再来。",
       limitCooldown: "刚上传过一张，等几秒再上传下一张。",
       serverError: "上传出了点问题，稍后再试。",
+    },
+    gapHint: {
+      step1: "请先点击「确认位置」",
+      step2: "请先上传一张照片",
+      step3: "请点「下一步」确认信息",
+      step4: "请勾选版权同意",
+      step5: "请完成人机验证",
     },
     confirmClose: {
       body: "关闭会丢失你刚标好的位置和照片。",

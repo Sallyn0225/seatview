@@ -106,6 +106,10 @@ export default function UploadSheet({
   // The current step the user is editing (drives the ● marker + auto-scroll).
   const [activeStep, setActiveStep] = useState<StepIndex>(1);
 
+  // Which step's gap hint to show — set when 上传 is pressed with an unfinished
+  // step, cleared once that step is satisfied (issue #30).
+  const [gapHint, setGapHint] = useState<StepIndex | null>(null);
+
   // Unsaved-close confirm bar.
   const [confirming, setConfirming] = useState(false);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -153,6 +157,16 @@ export default function UploadSheet({
     return done ? "done" : "todo";
   };
 
+  // First step (in order) the user still needs to satisfy. Drives both the
+  // 上传-with-gaps jump and confirmPoint's next-step target (issue #30).
+  const firstIncompleteStep = (): StepIndex => {
+    if (!step1Done) return 1;
+    if (!step2Done) return 2;
+    if (!step3Done) return 3;
+    if (!step4Done) return 4;
+    return 5;
+  };
+
   // Smoothly scroll a step into view when it becomes active (shape §7).
   const focusStep = useCallback(
     (step: StepIndex) => {
@@ -166,6 +180,36 @@ export default function UploadSheet({
     },
     [reducedMotion],
   );
+
+  // 上传 pressed while something is unfinished: scroll to the first gap and
+  // flag an inline hint there. An empty required seat reuses the field-level
+  // error instead of a duplicate banner (issue #30).
+  const jumpToGap = () => {
+    const step = firstIncompleteStep();
+    if (step === 3 && seatLabel.trim().length === 0) {
+      setSeatError(true);
+      setGapHint(null);
+    } else {
+      setGapHint(step);
+    }
+    focusStep(step);
+  };
+
+  // Drop the gap hint as soon as its step is satisfied.
+  useEffect(() => {
+    if (gapHint == null) return;
+    const done =
+      gapHint === 1
+        ? step1Done
+        : gapHint === 2
+          ? step2Done
+          : gapHint === 3
+            ? step3Done
+            : gapHint === 4
+              ? step4Done
+              : turnstileToken != null;
+    if (done) setGapHint(null);
+  }, [gapHint, step1Done, step2Done, step3Done, step4Done, turnstileToken]);
 
   // ── Close handling (Esc / ✕ / pull-down all funnel here) ────────────────────
   const requestClose = useCallback(() => {
@@ -203,8 +247,18 @@ export default function UploadSheet({
   const confirmPoint = useCallback(() => {
     if (!point) return;
     setPointConfirmed(true);
-    focusStep(2);
-  }, [point, focusStep]);
+    // step 1 is now satisfied — land on the next step that still needs the
+    // user rather than re-expanding an already-filled step 2 into an empty
+    // dropzone (issue #30).
+    const next: StepIndex = !step2Done
+      ? 2
+      : !step3Done
+        ? 3
+        : !step4Done
+          ? 4
+          : 5;
+    focusStep(next);
+  }, [point, step2Done, step3Done, step4Done, focusStep]);
 
   const undoPoint = useCallback(() => {
     setPoint(null);
@@ -474,6 +528,7 @@ export default function UploadSheet({
                   focusStep(1);
                 }}
                 collapsed={statusOf(1) === "done"}
+                hint={gapHint === 1 ? t.uploadSheet.gapHint.step1 : undefined}
               >
                 <div className="space-y-3 pt-1">
                   <AnnotateSeatmap
@@ -496,7 +551,7 @@ export default function UploadSheet({
                       type="button"
                       onClick={confirmPoint}
                       disabled={!point}
-                      className="text-foreground ml-auto font-medium disabled:opacity-40 rounded-sm focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
+                      className="border-border bg-background text-foreground hover:bg-card focus-visible:ring-ring ml-auto inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium disabled:opacity-40 focus-visible:ring-2 focus-visible:outline-none"
                     >
                       {t.uploadSheet.step1.confirm}
                     </button>
@@ -521,17 +576,17 @@ export default function UploadSheet({
                 }
                 summaryThumb={step2Done ? thumbUrl : undefined}
                 editLabel={t.uploadSheet.edit}
-                onEdit={() => {
-                  resetImage();
-                  focusStep(2);
-                }}
+                onEdit={() => focusStep(2)}
                 collapsed={statusOf(2) === "done"}
+                hint={gapHint === 2 ? t.uploadSheet.gapHint.step2 : undefined}
               >
                 <Step2Body
                   t={t}
                   compressing={compressing}
                   progress={compressProgress}
                   error={imageError}
+                  thumbUrl={thumbUrl}
+                  imageBytes={imageBytes}
                   onPick={handlePickFile}
                   onReset={resetImage}
                 />
@@ -552,6 +607,7 @@ export default function UploadSheet({
                   focusStep(3);
                 }}
                 collapsed={statusOf(3) === "done"}
+                hint={gapHint === 3 ? t.uploadSheet.gapHint.step3 : undefined}
               >
                 <Step3Body
                   t={t}
@@ -584,6 +640,7 @@ export default function UploadSheet({
                 editLabel={t.uploadSheet.edit}
                 onEdit={() => focusStep(4)}
                 collapsed={false}
+                hint={gapHint === 4 ? t.uploadSheet.gapHint.step4 : undefined}
               >
                 <label className="flex cursor-pointer items-start gap-3 pt-1 text-sm leading-relaxed">
                   <input
@@ -625,6 +682,7 @@ export default function UploadSheet({
                 status={statusOf(5)}
                 title={t.uploadSheet.step5.title}
                 collapsed={false}
+                hint={gapHint === 5 ? t.uploadSheet.gapHint.step5 : undefined}
               >
                 {step4Done ? (
                   <div className="space-y-3 pt-1">
@@ -686,8 +744,8 @@ export default function UploadSheet({
               ) : (
                 <button
                   type="button"
-                  onClick={doSubmit}
-                  disabled={!canSubmit}
+                  onClick={canSubmit ? doSubmit : jumpToGap}
+                  disabled={submit.kind === "submitting"}
                   className={cn(
                     "inline-flex h-11 w-full items-center justify-center gap-2 rounded-md text-sm font-medium",
                     "bg-accent/10 text-foreground border-accent/30 border",
@@ -744,6 +802,9 @@ interface StepCardProps {
   editLabel?: string;
   onEdit?: () => void;
   collapsed: boolean;
+  /** Inline gap hint shown above the body when this is the first unfinished
+   *  step at 上传 time (issue #30). */
+  hint?: string | null;
   children: React.ReactNode;
   /** React 19 accepts `ref` as a plain prop on function components. */
   ref?: React.Ref<HTMLDivElement>;
@@ -757,6 +818,7 @@ function StepCard({
   editLabel,
   onEdit,
   collapsed,
+  hint,
   children,
   ref,
 }: StepCardProps) {
@@ -797,7 +859,14 @@ function StepCard({
           </span>
         </div>
       ) : (
-        <div className="pl-6">{children}</div>
+        <div className="pl-6">
+          {hint && (
+            <p className="text-destructive mb-2 text-xs" role="alert">
+              {hint}
+            </p>
+          )}
+          {children}
+        </div>
       )}
     </div>
   );
@@ -826,6 +895,8 @@ function Step2Body({
   compressing,
   progress,
   error,
+  thumbUrl,
+  imageBytes,
   onPick,
   onReset,
 }: {
@@ -833,11 +904,29 @@ function Step2Body({
   compressing: boolean;
   progress: number;
   error: boolean;
+  /** Set once an image is compressed — show it instead of the empty dropzone
+   *  so re-entering step 2 (e.g. after confirmPoint) never looks reset (#30). */
+  thumbUrl: string | null;
+  imageBytes: number;
   onPick: (file: File) => void;
   onReset: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="image/*"
+      className="sr-only"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) onPick(file);
+        e.target.value = ""; // allow re-picking the same file
+      }}
+    />
+  );
 
   if (compressing) {
     return (
@@ -853,6 +942,37 @@ function Step2Body({
             style={{ width: `${progress}%` }}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Already have a compressed image: show it (+ 换一张) instead of a bare
+  // dropzone, so re-entering step 2 never reads as "image lost" (issue #30).
+  if (thumbUrl && !error) {
+    return (
+      <div className="pt-1">
+        <div className="flex items-center gap-3">
+          <img
+            src={thumbUrl}
+            alt=""
+            className="size-16 shrink-0 rounded object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-foreground truncate text-sm [font-variant-numeric:tabular-nums]">
+              {fillTemplate(t.uploadSheet.step2.summary, {
+                size: formatBytes(imageBytes),
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="text-foreground focus-visible:ring-ring mt-1 rounded-sm text-sm underline underline-offset-4 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {t.uploadSheet.step2.retry}
+            </button>
+          </div>
+        </div>
+        {fileInput}
       </div>
     );
   }
@@ -905,17 +1025,7 @@ function Step2Body({
           </button>
         </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) onPick(file);
-          e.target.value = ""; // allow re-picking the same file
-        }}
-      />
+      {fileInput}
     </div>
   );
 }
@@ -965,6 +1075,9 @@ function Step3Body({
       <div>
         <label className="text-muted-foreground mb-1 block text-xs">
           {t.uploadSheet.step3.seatLabel}
+          <span className="text-destructive" aria-hidden="true">
+            {" *"}
+          </span>
         </label>
         <input
           ref={seatRef}
@@ -979,6 +1092,7 @@ function Step3Body({
             }
           }}
           placeholder={t.uploadSheet.step3.seatPlaceholder}
+          aria-required={true}
           aria-invalid={seatError}
           className={cn(
             "bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm",
@@ -1039,7 +1153,7 @@ function Step3Body({
           type="button"
           onClick={onNext}
           disabled={seatLabel.trim().length === 0}
-          className="text-foreground font-medium text-sm disabled:opacity-40 rounded-sm focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
+          className="border-border bg-background text-foreground hover:bg-card focus-visible:ring-ring inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium disabled:opacity-40 focus-visible:ring-2 focus-visible:outline-none"
         >
           {t.uploadSheet.step3.next}
         </button>
