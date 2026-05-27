@@ -192,6 +192,7 @@ const ko: Messages = {
     about: "소개",
     privacy: "개인정보",
     terms: "이용약관",
+    links: "링크",
     copyright: "© SeatView · 실제 좌석 뷰",
     navLabel: "푸터",
   },
@@ -245,6 +246,14 @@ const ko: Messages = {
     updated: "마지막 업데이트: {date}",
     feedback: "질문이나 정정 요청은 {github}로 보내 주세요.",
     feedbackLink: "GitHub 저장소",
+  },
+  links: {
+    title: "링크",
+    intro: "관리자가 만든 관련 프로젝트와 동료들의 사이트를 모아 두었습니다.",
+    groupMine: "내 프로젝트",
+    subGenchi: "현지 관련",
+    subFun: "엔터테인먼트",
+    groupFriends: "프렌드 링크",
   },
   home: {
     subtitle: "실제 좌석 뷰",
