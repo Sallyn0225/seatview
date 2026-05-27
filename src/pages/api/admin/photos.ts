@@ -146,11 +146,13 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
     let imageKey: string;
     let alreadyLocked = false;
+    let previousDeletedAt: number | null = null;
     try {
       const claim = await claimPhotoForPurge(db, id);
       if (claim === null) return jsonError("not_found", 404);
       imageKey = claim.imageKey;
       alreadyLocked = claim.alreadyLocked;
+      previousDeletedAt = claim.previousDeletedAt;
     } catch (err) {
       console.error("[admin:photos] purge claim failed", {
         id,
@@ -171,7 +173,11 @@ export const DELETE: APIRoute = async ({ request }) => {
       let released = false;
       try {
         if (!alreadyLocked && (await imageExists(env.BUCKET, imageKey))) {
-          released = await releasePhotoPurgeClaim(db, id);
+          released = await releasePhotoPurgeClaim(
+            db,
+            id,
+            previousDeletedAt ?? Date.now(),
+          );
         }
       } catch (releaseErr) {
         console.warn("[admin:photos] purge claim retained after R2 failure", {

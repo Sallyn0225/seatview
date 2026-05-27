@@ -257,19 +257,42 @@ export async function getDeletedPhotoImageKey(
 export interface PhotoPurgeClaim {
   imageKey: string;
   alreadyLocked: boolean;
+  /** The row's original positive `deleted_at` captured just before the claim
+   *  overwrote it with the sentinel, so a released claim can restore the real
+   *  recycle-bin time instead of "now". `null` for an already-locked row (its
+   *  original time was lost by the prior interrupted purge) or when unknown. */
+  previousDeletedAt: number | null;
 }
 
 export async function claimPhotoForPurge(
   db: Db,
   id: string,
 ): Promise<PhotoPurgeClaim | null> {
+  // Snapshot the current deletion time before the claim below overwrites it with
+  // the sentinel, so a released claim can restore the ORIGINAL recycle-bin time.
+  // The atomic UPDATE (not this read) is still the claim gate.
+  const snapshot = await db
+    .select({ deletedAt: photos.deletedAt })
+    .from(photos)
+    .where(eq(photos.id, id))
+    .limit(1);
+  const snapshotDeletedAt = snapshot[0]?.deletedAt ?? null;
+
   const claimed = await db
     .update(photos)
     .set({ deletedAt: PHOTO_PURGE_STARTED_DELETED_AT })
     .where(and(eq(photos.id, id), gt(photos.deletedAt, 0)))
     .returning({ imageKey: photos.imageKey });
   const newlyClaimed = claimed[0]?.imageKey;
-  if (newlyClaimed) return { imageKey: newlyClaimed, alreadyLocked: false };
+  if (newlyClaimed)
+    return {
+      imageKey: newlyClaimed,
+      alreadyLocked: false,
+      previousDeletedAt:
+        snapshotDeletedAt !== null && snapshotDeletedAt > 0
+          ? snapshotDeletedAt
+          : null,
+    };
 
   const existingLock = await db
     .select({ imageKey: photos.imageKey })
@@ -283,23 +306,24 @@ export async function claimPhotoForPurge(
     .limit(1);
   const lockedImageKey = existingLock[0]?.imageKey;
   return lockedImageKey
-    ? { imageKey: lockedImageKey, alreadyLocked: true }
+    ? { imageKey: lockedImageKey, alreadyLocked: true, previousDeletedAt: null }
     : null;
 }
 
 /**
  * Release a purge reservation only when storage is known to still contain the
  * image. Ambiguous/missing storage failures keep the sentinel so restore cannot
- * expose a live row with missing bytes.
+ * expose a live row with missing bytes. Restores the row's original recycle-bin
+ * timestamp supplied by the caller, falling back to now only when it is unknown.
  */
 export async function releasePhotoPurgeClaim(
   db: Db,
   id: string,
-  now: number = Date.now(),
+  restoredDeletedAt: number = Date.now(),
 ): Promise<boolean> {
   const released = await db
     .update(photos)
-    .set({ deletedAt: now })
+    .set({ deletedAt: restoredDeletedAt })
     .where(
       and(
         eq(photos.id, id),
