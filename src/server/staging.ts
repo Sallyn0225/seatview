@@ -9,7 +9,7 @@
 // path carries Turnstile + KV limits in /api/staging, while +1 is bounded purely
 // in D1 (permanent per-venue dedup + a 5-different-venues/day cap).
 
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import type { StagingNameDto } from "@/lib/staging";
 import { newId } from "@/server/id";
@@ -45,6 +45,13 @@ export interface ListStagingOptions {
    * (e.g. unknown IP) → all `votedByMe` are false.
    */
   viewerIpHash?: string;
+  /**
+   * Drop already-collected rows (`processed_at IS NULL`, issue #41). The PUBLIC
+   * staging page passes this so a 已收录 venue stops cluttering the wishlist; the
+   * maintainer triage list omits it (admin still needs to see + manage them).
+   * Filtering in the query keeps offset paging self-consistent.
+   */
+  excludeProcessed?: boolean;
 }
 
 /** Default page size for the staging list (text-only rows are light, §11). */
@@ -64,6 +71,9 @@ export async function listStagingVenues(
   const rows = await db
     .select()
     .from(stagingVenues)
+    .where(
+      options.excludeProcessed ? isNull(stagingVenues.processedAt) : undefined,
+    )
     .orderBy(desc(stagingVenues.voteCount), desc(stagingVenues.createdAt))
     .limit(options.limit ?? STAGING_BATCH)
     .offset(options.offset ?? 0);
