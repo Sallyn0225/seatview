@@ -1,0 +1,27 @@
+{
+  "id": "lala-arena-tokyo-bay",
+  "name_zh": "LaLa arena TOKYO-BAY",
+  "name_jp": "ららアリーナ東京ベイ",
+  "name_romaji": "LaLa arena TOKYO-BAY",
+  "prefecture": "chiba",
+  "city": "船橋市",
+  "aliases": [
+    "LaLa arena TOKYO-BAY",
+    "LaLa arena Tokyo Bay",
+    "ららアリーナ東京ベイ",
+    "ららアリーナ TOKYO-BAY",
+    "ららアリーナ",
+    "LaLaアリーナ",
+    "南船橋アリーナ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/lala-arena-tokyo-bay/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
