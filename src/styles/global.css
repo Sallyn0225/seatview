@@ -132,6 +132,9 @@
     /* Tabular numerals for 座位号 / 日期 / 上传时间 (The Photo-Caption Rule). */
     font-feature-settings: "tnum";
     color-scheme: light dark;
+    /* Smooth anchor jumps (home scroll-down hint → #how); reduced-motion forces
+       this back to auto via the rule below. */
+    scroll-behavior: smooth;
   }
 
   body {
@@ -199,4 +202,20 @@
   .seatview-sheet-panel {
     animation: seatview-sheet-right 250ms ease-out;
   }
+}
+
+/* Home hero scroll-down hint (issue #31): a faint ~4px float so the chevron
+   reads as "there's more below". Returns to origin at 100% so reduced-motion
+   (collapsed to one near-instant iteration above) leaves it at rest. */
+@keyframes seatview-scroll-hint {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+.seatview-scroll-hint {
+  animation: seatview-scroll-hint 2s ease-in-out infinite;
 }

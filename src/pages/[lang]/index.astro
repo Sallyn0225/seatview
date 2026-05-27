@@ -65,7 +65,7 @@ const rule3Parts = t.home.rule3.split("{license}");
         /* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */
       }
       <section
-        class="mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]"
+        class="relative mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]"
       >
         <h1
           class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl"
@@ -104,13 +104,38 @@ const rule3Parts = t.home.rule3.split("{license}");
             </svg>
           </a>
         </div>
+
+        {
+          /* Scroll-down hint (issue #31): ink-outline-free, neutral chevron that
+             routes to #how so it works without JS (§7). sr-only label reuses the
+             section heading — accessible name without a visible text label. */
+        }
+        <a
+          href="#how"
+          class="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-x-0 bottom-6 mx-auto flex w-fit rounded-full p-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none"
+        >
+          <span class="sr-only">{t.home.howTitle}</span>
+          <svg
+            viewBox="0 0 24 24"
+            class="seatview-scroll-hint size-6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6"></path>
+          </svg>
+        </a>
       </section>
 
       {
         /* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */
       }
       <section
-        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
+        id="how"
+        class="border-border mx-auto max-w-[680px] scroll-mt-12 border-t px-6 py-14 lg:scroll-mt-14 lg:py-16"
       >
         <SectionHeading primary={t.home.howTitle} alt={t.home.howTitleAlt} />
         <ol class="mt-8 grid gap-8 sm:grid-cols-3">
