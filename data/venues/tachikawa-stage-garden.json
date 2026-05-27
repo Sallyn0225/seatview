@@ -1,0 +1,26 @@
+{
+  "id": "tachikawa-stage-garden",
+  "name_zh": "立川 Stage Garden",
+  "name_jp": "立川ステージガーデン",
+  "name_romaji": "TACHIKAWA STAGE GARDEN",
+  "prefecture": "tokyo",
+  "city": "立川市",
+  "aliases": [
+    "TACHIKAWA STAGE GARDEN",
+    "Tachikawa Stage Garden",
+    "立川 Stage Garden",
+    "立川ステージガーデン",
+    "立川ステガ",
+    "TSG"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/tachikawa-stage-garden/default.webp",
+      "width": 1469,
+      "height": 2048
+    }
+  ]
+}

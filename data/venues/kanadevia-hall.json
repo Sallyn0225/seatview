@@ -1,0 +1,26 @@
+{
+  "id": "kanadevia-hall",
+  "name_zh": "Kanadevia Hall",
+  "name_jp": "カナデビアホール",
+  "name_romaji": "Kanadevia Hall",
+  "prefecture": "tokyo",
+  "city": "文京区",
+  "aliases": [
+    "Kanadevia Hall",
+    "カナデビアホール",
+    "東京ドームシティホール",
+    "Tokyo Dome City Hall",
+    "TDCホール",
+    "TDC Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/kanadevia-hall/default.webp",
+      "width": 1676,
+      "height": 2048
+    }
+  ]
+}
