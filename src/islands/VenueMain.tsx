@@ -106,12 +106,12 @@ export default function VenueMain({
         photosRequestRef.current.subMapId === subMapId;
 
       setPhotosLoading(true);
-      setPhotosError(false);
       fetchSubMapPhotos(venue.id, subMapId)
         .then((next) => {
           if (!isCurrentRequest()) return;
           setPhotos(next);
           setPhotosSubMapId(subMapId);
+          setPhotosError(false);
           photosRequestRef.current = null;
           setPhotosLoading(false);
         })
@@ -228,7 +228,7 @@ export default function VenueMain({
           subMap={activeSubMap}
           photos={activePhotos}
           loading={activePhotosLoading}
-          error={photosMatchActive && photosError}
+          error={photosMatchActive && photosError && !photosLoading}
           selectedPhotoId={selectedPhotoId}
           onOpenLightbox={handleOpenLightbox}
           onRetry={handleRetryPoints}
