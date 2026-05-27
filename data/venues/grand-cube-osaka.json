@@ -1,13 +1,14 @@
 {
   "id": "grand-cube-osaka",
-  "name_zh": "Grand Cube Osaka（大阪府立国际会议场）",
-  "name_jp": "グランキューブ大阪（大阪府立国際会議場）",
+  "name_zh": "Grand Cube 大阪",
+  "name_jp": "グランキューブ大阪",
   "name_romaji": "Grand Cube Osaka",
   "prefecture": "osaka",
   "city": "大阪市北区",
   "aliases": [
     "グランキューブ大阪",
     "大阪府立国際会議場",
+    "大阪府立国际会议场",
     "大阪国際会議場",
     "Grand Cube Osaka",
     "Osaka International Convention Center",

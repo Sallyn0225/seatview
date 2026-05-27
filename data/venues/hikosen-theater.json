@@ -1,15 +1,18 @@
 {
   "id": "hikosen-theater",
-  "name_zh": "飞行船 Theater",
-  "name_jp": "飛行船シアター（スタァライト劇場）",
+  "name_zh": "飞行船剧场",
+  "name_jp": "飛行船シアター",
   "name_romaji": "Hikosen Theater",
   "prefecture": "tokyo",
   "city": "台東区",
   "aliases": [
     "飛行船シアター",
-    "スタァライト劇場",
     "Hikosen Theater",
     "Hikosen Theatre",
+    "スタァライト劇場",
+    "スタァライトシアター",
+    "Starlight剧场",
+    "Starlight Theater",
     "飞行船剧场",
     "上野学園石橋メモリアルホール"
   ],
