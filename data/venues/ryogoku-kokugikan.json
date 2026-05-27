@@ -1,0 +1,26 @@
+{
+  "id": "ryogoku-kokugikan",
+  "name_zh": "两国国技馆",
+  "name_jp": "両国国技館",
+  "name_romaji": "Ryogoku Kokugikan",
+  "prefecture": "tokyo",
+  "city": "墨田区",
+  "aliases": [
+    "両国国技館",
+    "国技館",
+    "Ryogoku Kokugikan",
+    "Ryogoku Sumo Hall",
+    "两国国技馆",
+    "兩國國技館"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/ryogoku-kokugikan/default.webp",
+      "width": 1827,
+      "height": 2048
+    }
+  ]
+}

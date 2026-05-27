@@ -1,0 +1,26 @@
+{
+  "id": "ookini-arena-maishima",
+  "name_zh": "Ookini Arena 舞洲",
+  "name_jp": "おおきにアリーナ舞洲（舞洲アリーナ）",
+  "name_romaji": "Ookini Arena Maishima",
+  "prefecture": "osaka",
+  "city": "大阪市此花区",
+  "aliases": [
+    "おおきにアリーナ舞洲",
+    "舞洲アリーナ",
+    "Ookini Arena Maishima",
+    "Maishima Arena",
+    "Ookini Arena 舞洲",
+    "大阪舞洲竞技馆"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "主竞技馆",
+      "label_jp": "メインアリーナ",
+      "imageUrl": "/seatmaps/ookini-arena-maishima/default.webp",
+      "width": 1890,
+      "height": 2048
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "kawaguchiko-stellar-theater",
+  "name_zh": "河口湖 Stellar Theater 野外大剧场",
+  "name_jp": "河口湖ステラシアター 野外大ホール",
+  "name_romaji": "Kawaguchiko Stellar Theater",
+  "prefecture": "yamanashi",
+  "city": "南都留郡富士河口湖町",
+  "aliases": [
+    "河口湖ステラシアター",
+    "河口湖ステラシアター 野外大ホール",
+    "Kawaguchiko Stellar Theater",
+    "Stellar Theater",
+    "河口湖 Stellar Theater",
+    "河口湖星剧场"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "野外大剧场",
+      "label_jp": "野外大ホール",
+      "imageUrl": "/seatmaps/kawaguchiko-stellar-theater/default.webp",
+      "width": 2048,
+      "height": 1466
+    }
+  ]
+}
