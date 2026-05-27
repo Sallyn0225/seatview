@@ -636,7 +636,6 @@ export default function StagingForm({
                 key={v.id}
                 venue={v}
                 locale={locale}
-                processedLabel={t.staging.processed}
                 votesLabel={t.staging.votes}
                 plusOneLabel={t.staging.plusOne}
                 plusOneDoneLabel={t.staging.plusOneDone}
@@ -699,7 +698,6 @@ export default function StagingForm({
 interface StagingRowProps {
   venue: StagingVenueDto;
   locale: Locale;
-  processedLabel: string;
   /** `{count}` template → "N 人想看" demand tally (need-signal, not a like). */
   votesLabel: string;
   /** "+1" button label. */
@@ -727,7 +725,6 @@ interface StagingRowProps {
 function StagingRow({
   venue,
   locale,
-  processedLabel,
   votesLabel,
   plusOneLabel,
   plusOneDoneLabel,
@@ -776,39 +773,31 @@ function StagingRow({
         <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
           {votesText}
         </span>
+        {/* The public wishlist never lists 已收录 venues (issue #41 filters them
+            in listStagingVenues), so every row here is un-collected and carries
+            the +1 / ✓ 已附议 control. */}
         <div className="flex shrink-0 items-center gap-3">
-          {venue.processed && (
-            // Sumi ink ✓ — never vermilion, never green (decision 2 派生).
+          {venue.votedByMe ? (
             <span className="text-foreground inline-flex items-center gap-1 text-xs">
               <span aria-hidden="true">✓</span>
-              {processedLabel}
+              {plusOneDoneLabel}
             </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onPlusOne(venue.id)}
+              disabled={plusOneBlocked}
+              aria-label={plusOneAriaLabel.replace("{name}", venue.name)}
+              className={cn(
+                "border-border text-muted-foreground inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium",
+                "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
+                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {plusOneLabel}
+            </button>
           )}
-          {/* 已收录 → no +1 affordance at all (issue #15); the ✓ 已收录 marker
-              above already states the terminal state. Only un-collected rows
-              carry the +1 / ✓ 已附议 control. */}
-          {!venue.processed &&
-            (venue.votedByMe ? (
-              <span className="text-foreground inline-flex items-center gap-1 text-xs">
-                <span aria-hidden="true">✓</span>
-                {plusOneDoneLabel}
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onPlusOne(venue.id)}
-                disabled={plusOneBlocked}
-                aria-label={plusOneAriaLabel.replace("{name}", venue.name)}
-                className={cn(
-                  "border-border text-muted-foreground inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium",
-                  "transition-colors duration-150 hover:text-foreground hover:border-foreground/40",
-                  "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                )}
-              >
-                {plusOneLabel}
-              </button>
-            ))}
         </div>
       </div>
     </li>

@@ -26,9 +26,9 @@
     "gen:seed": "node scripts/gen-demo-seed.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.5.4",
+    "@astrojs/cloudflare": "^13.5.5",
     "@astrojs/react": "^5.0.5",
-    "astro": "^6.3.0",
+    "astro": "^6.3.8",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -39,13 +39,13 @@
     "react-dom": "^19.0.0",
     "react-photo-album": "^3.0.2",
     "react-zoom-pan-pinch": "^3.6.1",
-    "tailwind-merge": "^2.6.0",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
     "yet-another-react-lightbox": "^3.21.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@cloudflare/workers-types": "^4.20241218.0",
+    "@cloudflare/workers-types": "^4.20260527.1",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^22.19.19",
     "@types/react": "^19.0.0",
@@ -54,8 +54,8 @@
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.0",
-    "typescript": "^5.7.0",
-    "wrangler": "^4.83.0"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.95.0"
   },
   "overrides": {
     "vite": "^7.3.2",

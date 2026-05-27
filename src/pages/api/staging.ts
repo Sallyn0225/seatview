@@ -169,6 +169,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       offset,
       limit: limit + 1,
       viewerIpHash,
+      excludeProcessed: true, // hide 已收录 from the public wishlist (issue #41)
     });
     const hasMore = rows.length > limit;
     const payload: StagingListResponse = {
