@@ -149,6 +149,13 @@ const en: Messages = {
         "You just uploaded one. Wait a few seconds before the next.",
       serverError: "Something went wrong with the upload. Try again later.",
     },
+    gapHint: {
+      step1: "Tap “Confirm location” first",
+      step2: "Upload a photo first",
+      step3: "Tap “Next” to confirm the details",
+      step4: "Check the copyright consent",
+      step5: "Complete the verification",
+    },
     confirmClose: {
       body: "Closing will discard the location and photo you just set.",
       discard: "Close anyway",
