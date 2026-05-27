@@ -9,11 +9,12 @@
 
 import type {
   AdminDeletePhotoRequest,
-  AdminDeletePhotoResponse,
   AdminDeleteStagingRequest,
   AdminErrorCode,
+  AdminPhotoMutationResponse,
   AdminPhotosResponse,
   AdminPhotoVenuesResponse,
+  AdminRestorePhotoRequest,
   AdminStagingMutationResponse,
   AdminStagingResponse,
   AdminUpdateStagingRequest,
@@ -56,12 +57,13 @@ async function jsonRequest<T>(url: string, init: RequestInit): Promise<T> {
 
 // ── Photos ──────────────────────────────────────────────────────────────────
 
-/** Fetch one page of photos for the admin list (newest-first). Pass `venueId`
- *  to restrict to one venue (issue #28 filter); null/undefined → all venues. */
+/** Fetch one page of photos for the admin list (newest-first). `onlyDeleted`
+ *  switches to the recycle bin view (issue #29). Pass `venueId` to restrict to
+ *  one venue (issue #28 filter); null/undefined → all venues. */
 export async function fetchAdminPhotos(
   offset: number,
   limit: number,
-  includeDeleted: boolean,
+  onlyDeleted: boolean,
   venueId?: string | null,
   signal?: AbortSignal,
 ): Promise<AdminPhotosResponse> {
@@ -69,7 +71,7 @@ export async function fetchAdminPhotos(
     offset: String(offset),
     limit: String(limit),
   });
-  if (includeDeleted) params.set("includeDeleted", "1");
+  if (onlyDeleted) params.set("onlyDeleted", "1");
   if (venueId) params.set("venueId", venueId);
   return jsonRequest<AdminPhotosResponse>(`/api/admin/photos?${params}`, {
     signal,
@@ -86,14 +88,44 @@ export async function fetchAdminPhotoVenues(
   });
 }
 
-/** Soft-delete one photo (+ R2 purge, server-side). Not retried. */
+/** Move one photo to the recycle bin: soft-delete in D1, R2 object kept
+ *  (restorable, issue #29). Not retried. */
 export async function deleteAdminPhoto(
   id: string,
   signal?: AbortSignal,
-): Promise<AdminDeletePhotoResponse> {
+): Promise<AdminPhotoMutationResponse> {
   const body: AdminDeletePhotoRequest = { id };
-  return jsonRequest<AdminDeletePhotoResponse>("/api/admin/photos", {
+  return jsonRequest<AdminPhotoMutationResponse>("/api/admin/photos", {
     method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+/** 彻底删除 one photo from the recycle bin: physically remove the D1 row + purge
+ *  the R2 object. Live rows are not eligible. Irreversible. Not retried. */
+export async function purgeAdminPhoto(
+  id: string,
+  signal?: AbortSignal,
+): Promise<AdminPhotoMutationResponse> {
+  const body: AdminDeletePhotoRequest = { id, permanent: true };
+  return jsonRequest<AdminPhotoMutationResponse>("/api/admin/photos", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+/** Restore one photo from the recycle bin (clear `deleted_at`). Not retried. */
+export async function restoreAdminPhoto(
+  id: string,
+  signal?: AbortSignal,
+): Promise<AdminPhotoMutationResponse> {
+  const body: AdminRestorePhotoRequest = { id };
+  return jsonRequest<AdminPhotoMutationResponse>("/api/admin/photos", {
+    method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
     signal,

@@ -1,0 +1,13 @@
+-- Intentionally a no-op (issue #29 review follow-up).
+--
+-- An earlier version of this migration bulk-deleted every soft-deleted row
+-- (`DELETE FROM photos WHERE deleted_at IS NOT NULL`). That was harmful: the
+-- pre-#29 delete path was "soft-delete D1 + best-effort R2 purge", so rows whose
+-- purge had FAILED still had their R2 object alive. Bulk-deleting them orphaned
+-- those bytes (no DB pointer left) and discarded photos that were still
+-- restorable.
+--
+-- Legacy soft-deleted rows are now handled by the recycle-bin model instead:
+-- restorable when the R2 object still exists, otherwise restore returns 404 and
+-- the row can be permanently deleted from the bin. No bulk delete needed.
+SELECT 1;

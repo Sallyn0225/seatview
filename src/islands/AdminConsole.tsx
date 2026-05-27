@@ -34,6 +34,8 @@ import {
   fetchAdminPhotos,
   fetchAdminPhotoVenues,
   fetchAdminStaging,
+  purgeAdminPhoto,
+  restoreAdminPhoto,
   setAdminStagingProcessed,
 } from "@/lib/admin-client";
 
@@ -55,7 +57,7 @@ interface AdminConsoleProps {
   venueLabels: VenueLabels;
 }
 
-type Tab = "photos" | "staging";
+type Tab = "photos" | "staging" | "recycle";
 
 export default function AdminConsole({
   locale,
@@ -92,6 +94,11 @@ export default function AdminConsole({
           onClick={() => setTab("staging")}
           label={t.admin.stagingTab}
         />
+        <TabButton
+          active={tab === "recycle"}
+          onClick={() => setTab("recycle")}
+          label={t.admin.recycleTab}
+        />
       </div>
 
       {tab === "photos" ? (
@@ -100,8 +107,14 @@ export default function AdminConsole({
           r2BaseUrl={r2BaseUrl}
           venueLabels={venueLabels}
         />
-      ) : (
+      ) : tab === "staging" ? (
         <StagingPanel locale={locale} />
+      ) : (
+        <RecycleBinPanel
+          locale={locale}
+          r2BaseUrl={r2BaseUrl}
+          venueLabels={venueLabels}
+        />
       )}
     </div>
   );
@@ -150,10 +163,9 @@ function PhotosPanel({
   const [hasMore, setHasMore] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const [includeDeleted, setIncludeDeleted] = useState(false);
-  // Venue filter (issue #28): live non-deleted counts per venue (drives the
-  // dropdown options + optimistic decrement on delete) and the current
-  // selection (null = all venues). Counts are NOT affected by includeDeleted.
+  // Venue filter (issue #28): live photo counts per venue (drives the dropdown
+  // options + optimistic decrement on delete) and the current selection
+  // (null = all venues).
   const [venueCounts, setVenueCounts] = useState<Record<string, number>>({});
   const [selectedVenue, setSelectedVenue] = useState<string | null>(null);
   const offsetRef = useRef(0);
@@ -164,8 +176,8 @@ function PhotosPanel({
   // circuit a re-load when the previous list had already reached its end).
   const hasMoreRef = useRef(true);
   const loadedRef = useRef(false);
-  // Changes whenever the filter key resets. In-flight pages from an older
-  // generation must not merge into the current venue/includeDeleted view.
+  // Changes whenever the filter key resets or a local row removal shifts the
+  // server-side offset. Older in-flight pages must not merge into the list.
   const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
@@ -175,7 +187,8 @@ function PhotosPanel({
     setError(false);
     const offset = offsetRef.current;
     const requestGeneration = requestGenerationRef.current;
-    fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, includeDeleted, selectedVenue)
+    // Live photos only — deleted ones live in the recycle bin tab (issue #29).
+    fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, false, selectedVenue)
       .then(({ photos: next, hasMore: more }) => {
         if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
@@ -196,7 +209,7 @@ function PhotosPanel({
         loadingRef.current = false;
         setError(true);
       });
-  }, [includeDeleted, selectedVenue]);
+  }, [selectedVenue]);
 
   // Load venue facets once on mount (best-effort: if this fails the dropdown
   // simply isn't rendered and the list behaves as the old "all venues" view).
@@ -217,8 +230,7 @@ function PhotosPanel({
     };
   }, []);
 
-  // Reset + reload when either filter changes (includeDeleted audit toggle OR
-  // the selected venue). Both compose server-side. Reset the refs too so the
+  // Reset + reload when the selected venue changes. Reset the refs too so the
   // synchronous loadPage() below sees a fresh "start over" state.
   useEffect(() => {
     requestGenerationRef.current += 1;
@@ -231,18 +243,19 @@ function PhotosPanel({
     setLoaded(false);
     loadPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeDeleted, selectedVenue]);
+  }, [selectedVenue]);
 
   const onDeleted = useCallback(
     (id: string, venueId: string) => {
-      setPhotos((prev) =>
-        // Keep the row visible (now flagged deleted) when auditing; otherwise drop.
-        prev.map((p) => (p.id === id ? { ...p, deleted: true } : p)),
-      );
-      // Optimistically drop the venue's live count by one (the deleted photo was
-      // necessarily a live one — the delete button only shows on non-deleted
-      // rows). When a venue hits zero it leaves the dropdown; if it was the
-      // current selection, fall back to "all".
+      // Moved to the recycle bin → drop it from the live list.
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      // Optimistically drop the venue's live count by one. When a venue hits
+      // zero it leaves the dropdown; if it was the current selection, fall back
+      // to "all".
       setVenueCounts((prev) => {
         const current = prev[venueId];
         if (current === undefined) return prev;
@@ -255,8 +268,9 @@ function PhotosPanel({
         }
         return next;
       });
+      if (wasLoading && hasMoreRef.current) loadPage();
     },
-    [selectedVenue],
+    [loadPage, selectedVenue],
   );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -313,15 +327,6 @@ function PhotosPanel({
             ))}
           </select>
         )}
-        <label className="text-muted-foreground inline-flex cursor-pointer items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={includeDeleted}
-            onChange={(e) => setIncludeDeleted(e.target.checked)}
-            className="accent-foreground size-4"
-          />
-          {t.admin.showDeleted}
-        </label>
       </div>
 
       {loaded && photos.length === 0 && !error ? (
@@ -419,11 +424,6 @@ function PhotoRow({
       <div className="min-w-0 flex-1">
         <p className="text-foreground text-sm font-medium break-words">
           {photo.seatLabel}
-          {photo.deleted && (
-            <span className="text-muted-foreground ml-2 text-xs">
-              · {t.admin.deletedBadge}
-            </span>
-          )}
         </p>
         <p className="text-muted-foreground text-xs break-words">
           {venueName} · {subMapName}
@@ -442,47 +442,46 @@ function PhotoRow({
         )}
       </div>
 
-      {/* Delete action — only for not-already-deleted rows. Inline confirm bar
+      {/* Delete action = move to recycle bin (issue #29). Inline confirm bar
           (no native confirm, no modal). */}
-      {!photo.deleted &&
-        (confirming ? (
-          <div className="flex shrink-0 flex-col items-end gap-1">
-            <span className="text-muted-foreground max-w-44 text-right text-xs leading-snug">
-              {t.admin.confirmDeletePhoto}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={doDelete}
-                disabled={working}
-                className={cn(
-                  "border-destructive text-destructive inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium",
-                  "hover:bg-destructive/10 focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                )}
-              >
-                {working ? t.admin.working : t.admin.confirmYes}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                disabled={working}
-                className="border-border text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
-              >
-                {t.admin.confirmNo}
-              </button>
-            </div>
+      {confirming ? (
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="text-muted-foreground max-w-44 text-right text-xs leading-snug">
+            {t.admin.confirmDeletePhoto}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={doDelete}
+              disabled={working}
+              className={cn(
+                "border-destructive text-destructive inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium",
+                "hover:bg-destructive/10 focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {working ? t.admin.working : t.admin.confirmYes}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              disabled={working}
+              className="border-border text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {t.admin.confirmNo}
+            </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            aria-label={`${t.admin.deletePhoto} ${photo.seatLabel}`}
-            className="border-border text-muted-foreground hover:text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
-          >
-            {t.admin.deletePhoto}
-          </button>
-        ))}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label={`${t.admin.deletePhoto} ${photo.seatLabel}`}
+          className="border-border text-muted-foreground hover:text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {t.admin.deletePhoto}
+        </button>
+      )}
     </li>
   );
 }
@@ -497,14 +496,17 @@ function StagingPanel({ locale }: { locale: Locale }) {
   const [error, setError] = useState(false);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
+  const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || (!hasMore && loaded)) return;
     loadingRef.current = true;
     setError(false);
     const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
     fetchAdminStaging(offset, ADMIN_STAGING_BATCH)
       .then(({ venues: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
         setHasMore(more);
         setVenues((prev) => {
@@ -517,6 +519,7 @@ function StagingPanel({ locale }: { locale: Locale }) {
         loadingRef.current = false;
       })
       .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         loadingRef.current = false;
         setError(true);
       });
@@ -532,9 +535,17 @@ function StagingPanel({ locale }: { locale: Locale }) {
       prev.map((v) => (v.id === id ? { ...v, processed } : v)),
     );
   }, []);
-  const onDeleted = useCallback((id: string) => {
-    setVenues((prev) => prev.filter((v) => v.id !== id));
-  }, []);
+  const onDeleted = useCallback(
+    (id: string) => {
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setVenues((prev) => prev.filter((v) => v.id !== id));
+      if (wasLoading && hasMore) loadPage();
+    },
+    [hasMore, loadPage],
+  );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -708,6 +719,290 @@ function StagingAdminRow({
           </button>
         )}
       </div>
+    </li>
+  );
+}
+
+/* ── Recycle bin panel (issue #29) ────────────────────────────────────────── */
+
+function RecycleBinPanel({
+  locale,
+  r2BaseUrl,
+  venueLabels,
+}: {
+  locale: Locale;
+  r2BaseUrl: string;
+  venueLabels: VenueLabels;
+}) {
+  const { t } = useLocale(locale);
+  const [photos, setPhotos] = useState<AdminPhotoDto[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const offsetRef = useRef(0);
+  const loadingRef = useRef(false);
+  const requestGenerationRef = useRef(0);
+
+  const loadPage = useCallback(() => {
+    if (loadingRef.current || (!hasMore && loaded)) return;
+    loadingRef.current = true;
+    setError(false);
+    const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
+    // onlyDeleted=true → the recycle bin. No venue filter here: it's a flat list
+    // a maintainer skims to restore or purge.
+    fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, true)
+      .then(({ photos: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
+        offsetRef.current = offset + next.length;
+        setHasMore(more);
+        setPhotos((prev) => {
+          const ids = new Set(prev.map((p) => p.id));
+          const merged = [...prev];
+          for (const p of next) if (!ids.has(p.id)) merged.push(p);
+          return merged;
+        });
+        setLoaded(true);
+        loadingRef.current = false;
+      })
+      .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
+        loadingRef.current = false;
+        setError(true);
+      });
+  }, [hasMore, loaded]);
+
+  useEffect(() => {
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Both restore and permanent-delete remove the row from the bin.
+  const onResolved = useCallback(
+    (id: string) => {
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setPhotos((prev) => prev.filter((p) => p.id !== id));
+      if (wasLoading && hasMore) loadPage();
+    },
+    [hasMore, loadPage],
+  );
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore || error || !loaded) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) loadPage();
+      },
+      { rootMargin: "600px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, error, loaded, loadPage]);
+
+  return (
+    <section aria-label={t.admin.recycleTab}>
+      {loaded && photos.length === 0 && !error ? (
+        <p className="text-muted-foreground/80 mt-8 text-center text-sm">
+          {t.admin.recycleEmpty}
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {photos.map((p) => (
+            <RecycleRow
+              key={p.id}
+              photo={p}
+              locale={locale}
+              r2BaseUrl={r2BaseUrl}
+              venueLabels={venueLabels}
+              onResolved={onResolved}
+            />
+          ))}
+        </ul>
+      )}
+
+      {error ? (
+        <LoadFailure
+          locale={locale}
+          onRetry={() => {
+            loadingRef.current = false;
+            loadPage();
+          }}
+          className="mt-6 rounded-md"
+        />
+      ) : hasMore ? (
+        <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+      ) : photos.length > 0 ? (
+        <p className="text-muted-foreground py-6 text-center text-xs">
+          {t.admin.end}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function RecycleRow({
+  photo,
+  locale,
+  r2BaseUrl,
+  venueLabels,
+  onResolved,
+}: {
+  photo: AdminPhotoDto;
+  locale: Locale;
+  r2BaseUrl: string;
+  venueLabels: VenueLabels;
+  onResolved: (id: string) => void;
+}) {
+  const { t } = useLocale(locale);
+  const [confirmingPurge, setConfirmingPurge] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
+
+  const venue = venueLabels[photo.venueId];
+  const venueName = venue?.name ?? photo.venueId;
+  const subMapName = venue?.subMaps[photo.subMapId] ?? photo.subMapId;
+  const thumb = imageKeyToUrl(photo.imageKey, r2BaseUrl);
+  const purgeLocked = photo.purgeLocked === true;
+
+  const reportError = useCallback(
+    (err: unknown) => {
+      const code = err instanceof AdminError ? err.code : "server_error";
+      setRowError(
+        code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+      );
+    },
+    [t],
+  );
+
+  const doRestore = useCallback(async () => {
+    setWorking(true);
+    setRowError(null);
+    try {
+      await restoreAdminPhoto(photo.id);
+      onResolved(photo.id);
+    } catch (err) {
+      reportError(err);
+      setWorking(false);
+    }
+  }, [photo.id, onResolved, reportError]);
+
+  const doPurge = useCallback(async () => {
+    setWorking(true);
+    setRowError(null);
+    try {
+      await purgeAdminPhoto(photo.id);
+      onResolved(photo.id);
+    } catch (err) {
+      reportError(err);
+      setWorking(false);
+    }
+  }, [photo.id, onResolved, reportError]);
+
+  return (
+    <li className="border-border grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-md border p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+      {purgeLocked ? (
+        <div
+          aria-hidden="true"
+          className="bg-card border-border grid size-14 shrink-0 place-items-center rounded-sm border"
+        >
+          <span className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]">
+            -1
+          </span>
+        </div>
+      ) : (
+        <img
+          src={thumb}
+          alt={fillTemplate(t.admin.thumbAlt, { label: photo.seatLabel })}
+          width={56}
+          height={56}
+          loading="lazy"
+          className="bg-card size-14 shrink-0 rounded-sm object-cover"
+        />
+      )}
+
+      <div className="min-w-0 flex-1">
+        <p className="text-foreground text-sm font-medium break-words">
+          {photo.seatLabel}
+        </p>
+        <p className="text-muted-foreground text-xs break-words">
+          {venueName} · {subMapName}
+        </p>
+        <time
+          dateTime={new Date(photo.createdAt).toISOString()}
+          title={absoluteDate(photo.createdAt, locale)}
+          className="text-muted-foreground text-xs [font-variant-numeric:tabular-nums]"
+        >
+          {relativeTime(photo.createdAt, locale)}
+        </time>
+        {rowError && (
+          <p className="text-destructive mt-1 text-xs" role="alert">
+            {rowError}
+          </p>
+        )}
+      </div>
+
+      {/* Restore (reversible, no confirm) + permanent delete (inline confirm). */}
+      {confirmingPurge ? (
+        <div className="col-span-2 flex flex-col items-end gap-1 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          <span className="text-muted-foreground max-w-full text-right text-xs leading-snug sm:max-w-44">
+            {t.admin.confirmPurgePhoto}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={doPurge}
+              disabled={working}
+              className={cn(
+                "border-destructive text-destructive inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium",
+                "hover:bg-destructive/10 focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {working ? t.admin.working : t.admin.confirmYes}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingPurge(false)}
+              disabled={working}
+              className="border-border text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {t.admin.confirmNo}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="col-span-2 flex flex-col items-end gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          {purgeLocked ? (
+            <span className="text-muted-foreground max-w-full text-right text-xs leading-snug sm:max-w-44">
+              {t.admin.purgeLockedPhoto}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={doRestore}
+              disabled={working}
+              aria-label={`${t.admin.restorePhoto} ${photo.seatLabel}`}
+              className="border-border text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {working ? t.admin.working : t.admin.restorePhoto}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setConfirmingPurge(true)}
+            disabled={working}
+            aria-label={`${t.admin.purgePhoto} ${photo.seatLabel}`}
+            className="border-border text-muted-foreground hover:text-destructive hover:border-destructive focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t.admin.purgePhoto}
+          </button>
+        </div>
+      )}
     </li>
   );
 }

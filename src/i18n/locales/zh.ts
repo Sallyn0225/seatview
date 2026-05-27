@@ -397,8 +397,8 @@ export interface Messages {
     photosTab: string;
     /** Tab: staging-area triage. */
     stagingTab: string;
-    /** Toggle to include already-deleted photos in the list (audit). */
-    showDeleted: string;
+    /** Tab: recycle bin — deleted photos awaiting restore / permanent delete. */
+    recycleTab: string;
     /** Accessible label for the venue filter dropdown (issue #28). */
     venueFilter: string;
     /** "All venues" option in the filter, `{count}` → total live photo count. */
@@ -407,14 +407,22 @@ export interface Messages {
     photosEmpty: string;
     /** Empty staging list. */
     stagingEmpty: string;
+    /** Empty recycle bin. */
+    recycleEmpty: string;
     /** End-of-list full stop. */
     end: string;
-    /** Already soft-deleted badge on a photo row. */
-    deletedBadge: string;
-    /** Delete photo button (+ aria). */
+    /** Delete photo button (+ aria) — moves the photo to the recycle bin. */
     deletePhoto: string;
-    /** Inline confirm bar before a destructive photo delete. */
+    /** Inline confirm bar before moving a photo to the recycle bin. */
     confirmDeletePhoto: string;
+    /** Restore a photo from the recycle bin (+ aria). */
+    restorePhoto: string;
+    /** Permanently delete a photo from the recycle bin (+ aria). */
+    purgePhoto: string;
+    /** Cleanup-only row left by an interrupted permanent delete. */
+    purgeLockedPhoto: string;
+    /** Inline confirm bar before an irreversible permanent delete. */
+    confirmPurgePhoto: string;
     /** Confirm / cancel (shared by photo + staging delete confirm bars). */
     confirmYes: string;
     confirmNo: string;
@@ -760,15 +768,19 @@ const zh: Messages = {
     signedInAs: "已登录：{email}",
     photosTab: "上传图片",
     stagingTab: "暂存区",
-    showDeleted: "包含已删除",
+    recycleTab: "回收站",
     venueFilter: "按场馆筛选",
     allVenuesOption: "全部 ({count})",
     photosEmpty: "还没有上传图片。",
     stagingEmpty: "暂存区还没有提交。",
+    recycleEmpty: "回收站是空的。",
     end: "已经到底了。",
-    deletedBadge: "已删除",
     deletePhoto: "删除",
-    confirmDeletePhoto: "删除后图片会从所有页面消失，且无法恢复。",
+    confirmDeletePhoto: "删除后图片会从所有页面消失，可在回收站恢复。",
+    restorePhoto: "恢复",
+    purgePhoto: "彻底删除",
+    purgeLockedPhoto: "上次彻底删除中断了，只能继续清理。",
+    confirmPurgePhoto: "彻底删除后图片和记录都将永久消失，无法恢复。",
     confirmYes: "确认删除",
     confirmNo: "取消",
     markProcessed: "标记已收录",

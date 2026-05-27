@@ -156,7 +156,7 @@ Instead of client-side direct upload via presigned URLs, it uses a **two-stage s
 3. **`POST /api/upload/commit`** (multipart) — the client sends the ticket + WebP bytes back. The Worker re-validates HMAC + expiry, writes the bytes to R2 via the `BUCKET` binding, then inserts into D1 **using the fields from the ticket** (not trusting the request body), and only then decrements the daily quota + starts the 30s cooldown.
 4. Network errors / 5xx auto-retry, reusing the same ticket (and the already-consumed Turnstile token); 4xx (e.g. an expired ticket) does not retry.
 
-Soft delete: when a maintainer soft-deletes in `/admin`, D1 sets `deleted_at` (public queries filter `deleted_at IS NULL`, so the marker / card disappears immediately) and the R2 object is physically deleted.
+Soft delete: when a maintainer deletes a photo in `/admin`, D1 sets `deleted_at` (public queries filter `deleted_at IS NULL`, so the marker / card disappears immediately), while the R2 object stays in the recycle bin and can be restored. Only "Delete forever" in the recycle bin physically deletes both the R2 object and the D1 row.
 
 ### Environment Variables / Bindings
 

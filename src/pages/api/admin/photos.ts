@@ -1,28 +1,42 @@
-// /api/admin/photos — maintainer photo moderation (R7.2). ALL methods sit behind
-// the Cloudflare Access edge gate (ADR-11); the middleware admin guard
-// additionally rejects requests lacking a maintainer identity (defense in
-// depth), so these handlers can assume an authenticated maintainer.
+// /api/admin/photos — maintainer photo moderation (R7.2, recycle bin issue #29).
+// ALL methods sit behind the Cloudflare Access edge gate (ADR-11); the
+// middleware admin guard additionally rejects requests lacking a maintainer
+// identity (defense in depth), so these handlers can assume an authenticated
+// maintainer.
 //
-// GET     list ALL photos newest-first (across venues/sub-maps), paged. Defaults
-//         to non-deleted rows; `?includeDeleted=1` audits removed content.
-// DELETE  soft-delete one photo: set D1 `deleted_at` (ADR-6 — the public
-//         seatmap/grid queries filter `deleted_at IS NULL`, so the pin + card
-//         vanish for users) AND physically delete the R2 object (节省存储, not
-//         reversible — the maintainer confirms in the UI first).
+// GET     list photos newest-first (across venues/sub-maps), paged. Defaults to
+//         LIVE rows; `?onlyDeleted=1` lists the recycle bin instead.
+// DELETE  `{id}`                 → move to recycle bin: set D1 `deleted_at` only
+//                                   (public queries filter `deleted_at IS NULL`,
+//                                   so the pin + card vanish), R2 object KEPT so
+//                                   the photo can be restored.
+//         `{id, permanent:true}` → 彻底删除: physically remove a recycle-bin row
+//                                   after purging the R2 object. Irreversible.
+// PATCH   `{id}`                 → restore from the recycle bin (clear
+//                                   `deleted_at` after verifying the R2 object).
 //
 // User-facing prose stays in i18n (R9); the API only returns stable error codes.
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
-import { listAllPhotosForAdmin, softDeletePhoto } from "@/server/photos";
-import { deleteImage } from "@/server/r2/images";
+import {
+  claimPhotoForPurge,
+  getDeletedPhotoImageKey,
+  hardDeletePhoto,
+  listAllPhotosForAdmin,
+  releasePhotoPurgeClaim,
+  restorePhoto,
+  softDeletePhoto,
+} from "@/server/photos";
+import { deleteImage, imageExists } from "@/server/r2/images";
 import {
   ADMIN_PHOTOS_BATCH,
   type AdminDeletePhotoRequest,
-  type AdminDeletePhotoResponse,
   type AdminErrorCode,
+  type AdminPhotoMutationResponse,
   type AdminPhotosResponse,
+  type AdminRestorePhotoRequest,
 } from "@/lib/admin";
 
 export const prerender = false;
@@ -31,6 +45,18 @@ function jsonError(code: AdminErrorCode, status: number): Response {
   return new Response(JSON.stringify({ error: code }), {
     status,
     headers: { "content-type": "application/json" },
+  });
+}
+
+/** 200 with an admin mutation payload. No edge cache — admin views must reflect
+ *  the delete/restore/purge immediately. */
+function jsonResponse(payload: AdminPhotoMutationResponse): Response {
+  return new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
 }
 
@@ -55,7 +81,9 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   const offset = parseCount(url.searchParams.get("offset")) ?? 0;
   const limit = parseCount(url.searchParams.get("limit")) ?? ADMIN_PHOTOS_BATCH;
-  const includeDeleted = url.searchParams.get("includeDeleted") === "1";
+  // `?onlyDeleted=1` → the recycle bin view (soft-deleted rows + cleanup-only
+  // purge locks); otherwise the live moderation view (issue #29).
+  const onlyDeleted = url.searchParams.get("onlyDeleted") === "1";
   // Optional venue filter (issue #28). Empty/absent → all venues; an unknown
   // slug simply yields an empty page (parameterized eq, no injection risk).
   const venueParam = url.searchParams.get("venueId")?.trim();
@@ -68,7 +96,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const rows = await listAllPhotosForAdmin(db, {
       offset,
       limit: limit + 1,
-      includeDeleted,
+      onlyDeleted,
       venueId,
     });
     const hasMore = rows.length > limit;
@@ -97,10 +125,6 @@ export const DELETE: APIRoute = async ({ request }) => {
     console.error("[admin:photos] DB binding missing");
     return jsonError("database_unavailable", 503);
   }
-  if (!env.BUCKET) {
-    console.error("[admin:photos] BUCKET R2 binding missing");
-    return jsonError("storage_unavailable", 503);
-  }
 
   let body: Partial<AdminDeletePhotoRequest>;
   try {
@@ -110,12 +134,89 @@ export const DELETE: APIRoute = async ({ request }) => {
   }
   const id = typeof body.id === "string" ? body.id.trim() : "";
   if (id.length === 0) return jsonError("missing_id", 400);
+  const permanent = body.permanent === true;
 
+  const db = getDb(env.DB);
+
+  // ── 彻底删除 (issue #29): physically remove a recycle-bin row + purge R2. ───
+  if (permanent) {
+    if (!env.BUCKET) {
+      console.error("[admin:photos] BUCKET R2 binding missing");
+      return jsonError("storage_unavailable", 503);
+    }
+    let imageKey: string;
+    let alreadyLocked = false;
+    let previousDeletedAt: number | null = null;
+    try {
+      const claim = await claimPhotoForPurge(db, id);
+      if (claim === null) return jsonError("not_found", 404);
+      imageKey = claim.imageKey;
+      alreadyLocked = claim.alreadyLocked;
+      previousDeletedAt = claim.previousDeletedAt;
+    } catch (err) {
+      console.error("[admin:photos] purge claim failed", {
+        id,
+        err: String(err),
+      });
+      return jsonError("database_unavailable", 502);
+    }
+
+    // The D1 claim above blocks concurrent restore before the object is purged.
+    // If storage fails but the object still exists, release the claim so the row
+    // can be retried/restored. Ambiguous or missing storage stays purge-locked so
+    // a live row can never point at bytes that may already be gone.
+    try {
+      if (!alreadyLocked || (await imageExists(env.BUCKET, imageKey))) {
+        await deleteImage(env.BUCKET, imageKey);
+      }
+    } catch (err) {
+      let released = false;
+      try {
+        if (!alreadyLocked && (await imageExists(env.BUCKET, imageKey))) {
+          released = await releasePhotoPurgeClaim(
+            db,
+            id,
+            previousDeletedAt ?? Date.now(),
+          );
+        }
+      } catch (releaseErr) {
+        console.warn("[admin:photos] purge claim retained after R2 failure", {
+          id,
+          key: imageKey,
+          err: String(releaseErr),
+        });
+      }
+      console.warn("[admin:photos] R2 purge failed", {
+        id,
+        key: imageKey,
+        released,
+        err: String(err),
+      });
+      return jsonError("storage_unavailable", 502);
+    }
+
+    try {
+      const deletedImageKey = await hardDeletePhoto(db, id);
+      if (deletedImageKey === null) return jsonError("not_found", 404);
+    } catch (err) {
+      console.error("[admin:photos] hard-delete failed after R2 purge", {
+        id,
+        key: imageKey,
+        err: String(err),
+      });
+      return jsonError("database_unavailable", 502);
+    }
+    console.info("[admin:photos] photo permanently deleted", {
+      id,
+      by: email,
+      cleanupOnly: alreadyLocked,
+    });
+    return jsonResponse({ id });
+  }
+
+  // ── Move to recycle bin: D1 soft-delete only, R2 object KEPT (restorable). ───
   let imageKey: string | null;
   try {
-    const db = getDb(env.DB);
-    // D1 soft-delete first (ADR-6). This is the source of truth for visibility —
-    // even if the R2 purge below fails, the row is already hidden everywhere.
     imageKey = await softDeletePhoto(db, id);
   } catch (err) {
     console.error("[admin:photos] soft-delete failed", {
@@ -124,37 +225,71 @@ export const DELETE: APIRoute = async ({ request }) => {
     });
     return jsonError("database_unavailable", 502);
   }
+  if (imageKey === null) return jsonError("not_found", 404);
 
-  if (imageKey === null) {
-    return jsonError("not_found", 404);
+  console.info("[admin:photos] photo moved to recycle bin", { id, by: email });
+  return jsonResponse({ id });
+};
+
+export const PATCH: APIRoute = async ({ request }) => {
+  const email = maintainerEmail(request, env.DEV_ADMIN_EMAIL);
+  if (!email) return jsonError("unauthorized", 403);
+  if (!env.DB) {
+    console.error("[admin:photos] DB binding missing");
+    return jsonError("database_unavailable", 503);
   }
 
-  // Physically purge the R2 object (节省存储, irreversible). Best-effort: a purge
-  // failure must not undo the already-applied soft-delete — the maintainer can
-  // sweep orphans later. Log the deletion as a key moderation event.
-  let objectPurged = true;
+  let body: Partial<AdminRestorePhotoRequest>;
   try {
-    await deleteImage(env.BUCKET, imageKey);
+    body = (await request.json()) as Partial<AdminRestorePhotoRequest>;
+  } catch {
+    return jsonError("missing_id", 400);
+  }
+  const id = typeof body.id === "string" ? body.id.trim() : "";
+  if (id.length === 0) return jsonError("missing_id", 400);
+  if (!env.BUCKET) {
+    console.error("[admin:photos] BUCKET R2 binding missing");
+    return jsonError("storage_unavailable", 503);
+  }
+
+  const db = getDb(env.DB);
+  let imageKey: string | null;
+  try {
+    imageKey = await getDeletedPhotoImageKey(db, id);
   } catch (err) {
-    objectPurged = false;
-    console.warn("[admin:photos] R2 purge failed (D1 soft-delete stands)", {
+    console.error("[admin:photos] restore lookup failed", {
+      id,
+      err: String(err),
+    });
+    return jsonError("database_unavailable", 502);
+  }
+  if (imageKey === null) return jsonError("not_found", 404);
+
+  try {
+    if (!(await imageExists(env.BUCKET, imageKey))) {
+      console.warn("[admin:photos] restore blocked; R2 object missing", {
+        id,
+        key: imageKey,
+      });
+      return jsonError("not_found", 404);
+    }
+  } catch (err) {
+    console.warn("[admin:photos] R2 restore check failed", {
       id,
       key: imageKey,
       err: String(err),
     });
+    return jsonError("storage_unavailable", 502);
   }
-  console.info("[admin:photos] photo soft-deleted", {
-    id,
-    by: email,
-    objectPurged,
-  });
 
-  const payload: AdminDeletePhotoResponse = { id, objectPurged };
-  return new Response(JSON.stringify(payload), {
-    status: 200,
-    headers: {
-      "content-type": "application/json",
-      "cache-control": "no-store",
-    },
-  });
+  try {
+    imageKey = await restorePhoto(db, id);
+  } catch (err) {
+    console.error("[admin:photos] restore failed", { id, err: String(err) });
+    return jsonError("database_unavailable", 502);
+  }
+  if (imageKey === null) return jsonError("not_found", 404);
+
+  console.info("[admin:photos] photo restored", { id, by: email });
+  return jsonResponse({ id });
 };

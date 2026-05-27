@@ -156,7 +156,7 @@ npm run deploy
 3. **`POST /api/upload/commit`**（multipart）—— 客户端把 ticket + WebP 字节发回。Worker 重新校验 HMAC + 过期，将字节经 `BUCKET` 绑定写入 R2，再**用 ticket 里的字段**（不信任请求体）插入 D1，最后才扣每日配额 + 启动 30s 冷却。
 4. 网络错误 / 5xx 自动重试，复用同一 ticket（与已消费的 Turnstile token）；4xx（如 ticket 过期）不重试。
 
-软删除：维护者在 `/admin` 软删时，D1 置 `deleted_at`（公共查询过滤 `deleted_at IS NULL`，标注点 / 卡片立即消失）并物理删除 R2 对象。
+软删除：维护者在 `/admin` 删除图片时，D1 置 `deleted_at`（公共查询过滤 `deleted_at IS NULL`，标注点 / 卡片立即消失），R2 对象保留在回收站，可恢复；只有回收站里的「彻底删除」会同时物理删除 R2 对象和 D1 行。
 
 ### 环境变量 / 绑定
 
