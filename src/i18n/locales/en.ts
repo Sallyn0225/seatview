@@ -11,7 +11,7 @@ import type { Messages } from "./zh";
 const en: Messages = {
   meta: {
     title: "SeatView · Real Seat Views",
-    tagline: "The 30 seconds before you buy: see what that seat actually sees.",
+    tagline: "Before you take that seat, see what it actually sees.",
   },
   nav: {
     home: "Home",
@@ -261,7 +261,7 @@ const en: Messages = {
   home: {
     subtitle: "Real Seat Views",
     heroLine:
-      "The last 30 seconds before you buy: take one look at what that seat can really see.",
+      "Before you actually sit down, take one good look at what that seat can really see.",
     cta: "Open the atlas",
     howTitle: "How to use",
     howTitleAlt: "",
@@ -275,7 +275,8 @@ const en: Messages = {
       "Shoot your own seat view and place it on the chart the same way.",
     recommendTitle: "Start here",
     recommendTitleAlt: "",
-    venue1Note: "Multi-tier wrap-around, 100+ views across 4 sub-maps",
+    venue1Note:
+      "Large multi-tier wrap-around arena, real views collected by floor",
     venue2Note: "8,000 seats, a much-debated venue for the best sightline",
     uploadTitle: "About uploading",
     uploadTitleAlt: "",
