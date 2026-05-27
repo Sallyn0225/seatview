@@ -20,11 +20,11 @@ export const ADMIN_PHOTOS_BATCH = 40;
 export const ADMIN_STAGING_BATCH = 50;
 
 /**
- * One photo row as the admin list sees it. Unlike the public `PhotoDto` this
- * keeps the soft-delete state (`deleted`) so a maintainer can tell at a glance
- * which rows are already removed, and includes coordinates only incidentally
- * (the admin UI shows a thumbnail + seat label + venue/sub-map + time). `ipHash`
- * is still NEVER sent (privacy — it is an internal abuse-tracking column).
+ * One photo row as the admin list sees it. The admin UI shows a thumbnail +
+ * seat label + venue/sub-map + time. Which surface a row appears on (live
+ * moderation vs the recycle bin) is decided by the query (`onlyDeleted`), so the
+ * row needs no soft-delete flag of its own. `ipHash` is still NEVER sent
+ * (privacy — it is an internal abuse-tracking column).
  */
 export interface AdminPhotoDto {
   id: string;
@@ -36,8 +36,6 @@ export interface AdminPhotoDto {
   eventName: string | null;
   description: string | null;
   createdAt: number;
-  /** Whether this row is already soft-deleted (ADR-6). */
-  deleted: boolean;
 }
 
 /** GET /api/admin/photos body: a page of photos + a hasMore probe. */
@@ -49,8 +47,8 @@ export interface AdminPhotosResponse {
 /** One venue facet for the admin photo filter: a venue that has at least one
  *  non-deleted photo, plus its live photo count. The venue's display NAME is
  *  resolved client-side from static venue data (ADR-1), so only the slug + count
- *  travel over the wire. `count` is always the NON-deleted tally (independent of
- *  the list's `includeDeleted` audit toggle). */
+ *  travel over the wire. `count` is always the NON-deleted tally (the recycle
+ *  bin is a separate tab and does not affect it). */
 export interface AdminPhotoVenueFacet {
   venueId: string;
   count: number;
@@ -71,17 +69,29 @@ export interface AdminStagingResponse {
   hasMore: boolean;
 }
 
-/** DELETE /api/admin/photos body: which photo to soft-delete (+ purge R2). */
+/**
+ * DELETE /api/admin/photos body (issue #29).
+ * - `permanent` absent/false → move the photo to the recycle bin: soft-delete in
+ *   D1 only, the R2 object is KEPT so it can be restored.
+ * - `permanent: true` → 彻底删除: physically remove a recycle-bin D1 row AND purge
+ *   the R2 object. Irreversible; reached only from the recycle bin after a
+ *   confirm.
+ */
 export interface AdminDeletePhotoRequest {
+  id: string;
+  permanent?: boolean;
+}
+
+/** PATCH /api/admin/photos body: restore one photo from the recycle bin
+ *  (clear `deleted_at`; the R2 object was never purged). */
+export interface AdminRestorePhotoRequest {
   id: string;
 }
 
-/** Result of a photo soft-delete: echoes the id so the client drops that row. */
-export interface AdminDeletePhotoResponse {
+/** Result of a photo delete/restore: echoes the affected id so the client can
+ *  drop (delete/purge) or move (restore) that row. */
+export interface AdminPhotoMutationResponse {
   id: string;
-  /** Whether the R2 object was purged (false → object missing / purge failed;
-   *  the D1 soft-delete still succeeded and the row is hidden everywhere). */
-  objectPurged: boolean;
 }
 
 /** PATCH /api/admin/staging body: mark a suggestion processed / unprocessed. */

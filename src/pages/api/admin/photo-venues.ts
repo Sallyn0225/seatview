@@ -4,10 +4,10 @@
 // depth vs edge misconfig).
 //
 // GET  one row per venue that currently has ≥1 NON-deleted photo, with its live
-//      count — feeds the "filter by venue" dropdown. Counts ignore the list's
-//      `includeDeleted` audit toggle by design (always the live tally), so this
-//      is fetched once on panel mount; the client decrements optimistically on
-//      delete instead of re-fetching.
+//      count — feeds the "filter by venue" dropdown. Counts are always the live
+//      tally (the recycle bin is a separate tab and does not affect them), so
+//      this is fetched once on panel mount; the client decrements optimistically
+//      on delete instead of re-fetching.
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
