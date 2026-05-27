@@ -14,7 +14,7 @@
 // contribution surfaces, NOT this internal tool). LoadFailure is reused for a
 // whole-page list failure.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { relativeTime, absoluteDate, fillTemplate } from "@/lib/format";
@@ -32,6 +32,7 @@ import {
   deleteAdminPhoto,
   deleteAdminStaging,
   fetchAdminPhotos,
+  fetchAdminPhotoVenues,
   fetchAdminStaging,
   setAdminStagingProcessed,
 } from "@/lib/admin-client";
@@ -150,17 +151,35 @@ function PhotosPanel({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [includeDeleted, setIncludeDeleted] = useState(false);
+  // Venue filter (issue #28): live non-deleted counts per venue (drives the
+  // dropdown options + optimistic decrement on delete) and the current
+  // selection (null = all venues). Counts are NOT affected by includeDeleted.
+  const [venueCounts, setVenueCounts] = useState<Record<string, number>>({});
+  const [selectedVenue, setSelectedVenue] = useState<string | null>(null);
   const offsetRef = useRef(0);
   const loadingRef = useRef(false);
+  // Mirror hasMore/loaded in refs so loadPage's guard reads CURRENT values even
+  // when called synchronously from the reset effect (the state setters there
+  // haven't flushed yet — relying on the state closure would wrongly short-
+  // circuit a re-load when the previous list had already reached its end).
+  const hasMoreRef = useRef(true);
+  const loadedRef = useRef(false);
+  // Changes whenever the filter key resets. In-flight pages from an older
+  // generation must not merge into the current venue/includeDeleted view.
+  const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
-    if (loadingRef.current || (!hasMore && loaded)) return;
+    if (loadingRef.current || (!hasMoreRef.current && loadedRef.current))
+      return;
     loadingRef.current = true;
     setError(false);
     const offset = offsetRef.current;
-    fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, includeDeleted)
+    const requestGeneration = requestGenerationRef.current;
+    fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, includeDeleted, selectedVenue)
       .then(({ photos: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
+        hasMoreRef.current = more;
         setHasMore(more);
         setPhotos((prev) => {
           const ids = new Set(prev.map((p) => p.id));
@@ -168,32 +187,77 @@ function PhotosPanel({
           for (const p of next) if (!ids.has(p.id)) merged.push(p);
           return merged;
         });
+        loadedRef.current = true;
         setLoaded(true);
         loadingRef.current = false;
       })
       .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         loadingRef.current = false;
         setError(true);
       });
-  }, [hasMore, loaded, includeDeleted]);
+  }, [includeDeleted, selectedVenue]);
 
-  // Reset + reload when the includeDeleted filter flips.
+  // Load venue facets once on mount (best-effort: if this fails the dropdown
+  // simply isn't rendered and the list behaves as the old "all venues" view).
   useEffect(() => {
+    let alive = true;
+    fetchAdminPhotoVenues()
+      .then(({ venues }) => {
+        if (!alive) return;
+        const counts: Record<string, number> = {};
+        for (const v of venues) counts[v.venueId] = v.count;
+        setVenueCounts(counts);
+      })
+      .catch(() => {
+        /* non-critical enhancement; leave the dropdown hidden */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Reset + reload when either filter changes (includeDeleted audit toggle OR
+  // the selected venue). Both compose server-side. Reset the refs too so the
+  // synchronous loadPage() below sees a fresh "start over" state.
+  useEffect(() => {
+    requestGenerationRef.current += 1;
     offsetRef.current = 0;
+    hasMoreRef.current = true;
+    loadedRef.current = false;
+    loadingRef.current = false;
     setPhotos([]);
     setHasMore(true);
     setLoaded(false);
-    loadingRef.current = false;
     loadPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [includeDeleted]);
+  }, [includeDeleted, selectedVenue]);
 
-  const onDeleted = useCallback((id: string) => {
-    setPhotos((prev) =>
-      // Keep the row visible (now flagged deleted) when auditing; otherwise drop.
-      prev.map((p) => (p.id === id ? { ...p, deleted: true } : p)),
-    );
-  }, []);
+  const onDeleted = useCallback(
+    (id: string, venueId: string) => {
+      setPhotos((prev) =>
+        // Keep the row visible (now flagged deleted) when auditing; otherwise drop.
+        prev.map((p) => (p.id === id ? { ...p, deleted: true } : p)),
+      );
+      // Optimistically drop the venue's live count by one (the deleted photo was
+      // necessarily a live one — the delete button only shows on non-deleted
+      // rows). When a venue hits zero it leaves the dropdown; if it was the
+      // current selection, fall back to "all".
+      setVenueCounts((prev) => {
+        const current = prev[venueId];
+        if (current === undefined) return prev;
+        const next = { ...prev };
+        if (current <= 1) {
+          delete next[venueId];
+          if (selectedVenue === venueId) setSelectedVenue(null);
+        } else {
+          next[venueId] = current - 1;
+        }
+        return next;
+      });
+    },
+    [selectedVenue],
+  );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -209,17 +273,56 @@ function PhotosPanel({
     return () => io.disconnect();
   }, [hasMore, error, loaded, loadPage]);
 
+  // Dropdown options: only venues that have live photos, resolved to display
+  // names (ADR-1 static data) and sorted by name (D5). Total drives "All (N)".
+  const venueOptions = useMemo(
+    () =>
+      Object.entries(venueCounts)
+        .map(([venueId, count]) => ({
+          venueId,
+          count,
+          name: venueLabels[venueId]?.name ?? venueId,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, locale)),
+    [venueCounts, venueLabels, locale],
+  );
+  const totalCount = useMemo(
+    () => Object.values(venueCounts).reduce((sum, n) => sum + n, 0),
+    [venueCounts],
+  );
+
   return (
     <section aria-label={t.admin.photosTab}>
-      <label className="text-muted-foreground mb-4 inline-flex cursor-pointer items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={includeDeleted}
-          onChange={(e) => setIncludeDeleted(e.target.checked)}
-          className="accent-foreground size-4"
-        />
-        {t.admin.showDeleted}
-      </label>
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {venueOptions.length > 0 && (
+          <select
+            value={selectedVenue ?? ""}
+            onChange={(e) => setSelectedVenue(e.target.value || null)}
+            aria-label={t.admin.venueFilter}
+            className="border-border text-foreground bg-background focus-visible:ring-ring rounded-md border px-2 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <option value="">
+              {fillTemplate(t.admin.allVenuesOption, {
+                count: String(totalCount),
+              })}
+            </option>
+            {venueOptions.map((v) => (
+              <option key={v.venueId} value={v.venueId}>
+                {v.name} ({v.count})
+              </option>
+            ))}
+          </select>
+        )}
+        <label className="text-muted-foreground inline-flex cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={includeDeleted}
+            onChange={(e) => setIncludeDeleted(e.target.checked)}
+            className="accent-foreground size-4"
+          />
+          {t.admin.showDeleted}
+        </label>
+      </div>
 
       {loaded && photos.length === 0 && !error ? (
         <p className="text-muted-foreground/80 mt-8 text-center text-sm">
@@ -271,7 +374,7 @@ function PhotoRow({
   locale: Locale;
   r2BaseUrl: string;
   venueLabels: VenueLabels;
-  onDeleted: (id: string) => void;
+  onDeleted: (id: string, venueId: string) => void;
 }) {
   const { t } = useLocale(locale);
   const [confirming, setConfirming] = useState(false);
@@ -288,7 +391,7 @@ function PhotoRow({
     setRowError(null);
     try {
       await deleteAdminPhoto(photo.id);
-      onDeleted(photo.id);
+      onDeleted(photo.id, photo.venueId);
       setConfirming(false);
     } catch (err) {
       const code = err instanceof AdminError ? err.code : "server_error";
@@ -298,7 +401,7 @@ function PhotoRow({
     } finally {
       setWorking(false);
     }
-  }, [photo.id, onDeleted, t]);
+  }, [photo.id, photo.venueId, onDeleted, t]);
 
   return (
     <li className="border-border flex gap-3 rounded-md border p-3">

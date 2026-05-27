@@ -8,11 +8,11 @@
 // Read-only: no auth, no rate limit (those guard the write paths in later
 // steps). Used by the venue page SSR and `GET /api/photos`.
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { photos, type NewPhotoRow, type PhotoRow } from "@/server/db/schema";
 import { rowToPhotoDto, type PhotoDto } from "@/lib/photos";
-import type { AdminPhotoDto } from "@/lib/admin";
+import type { AdminPhotoDto, AdminPhotoVenueFacet } from "@/lib/admin";
 
 export interface ListPhotosOptions {
   /** Skip this many rows (grid pagination, step 5). */
@@ -119,26 +119,53 @@ export interface ListAllPhotosOptions {
   /** When false (default) only non-deleted rows are returned; true → include
    *  soft-deleted rows too (audit view). */
   includeDeleted?: boolean;
+  /** Restrict to one venue (issue #28 admin filter). Omit for all venues. */
+  venueId?: string;
 }
 
 /**
  * List photos for the admin surface, newest-first, across ALL venues/sub-maps.
  * By default hides soft-deleted rows (the common moderation view); pass
- * `includeDeleted` to audit removed content.
+ * `includeDeleted` to audit removed content. Pass `venueId` to restrict to one
+ * venue (the admin venue filter — both filters compose).
  */
 export async function listAllPhotosForAdmin(
   db: Db,
   options: ListAllPhotosOptions = {},
 ): Promise<AdminPhotoDto[]> {
+  const conditions = [
+    options.includeDeleted ? undefined : isNull(photos.deletedAt),
+    options.venueId ? eq(photos.venueId, options.venueId) : undefined,
+  ].filter((c) => c !== undefined);
   const base = db.select().from(photos);
-  const filtered = options.includeDeleted
-    ? base
-    : base.where(isNull(photos.deletedAt));
+  const filtered =
+    conditions.length > 0 ? base.where(and(...conditions)) : base;
   const rows = await filtered
     .orderBy(desc(photos.createdAt))
     .limit(options.limit ?? 40)
     .offset(options.offset ?? 0);
   return rows.map(rowToAdminPhotoDto);
+}
+
+/**
+ * Per-venue NON-deleted photo counts for the admin filter dropdown (issue #28):
+ * one row per venue that currently has ≥1 live photo. Soft-deleted rows are
+ * excluded so the count matches the default moderation view (the `includeDeleted`
+ * audit toggle deliberately does NOT change these numbers). Venue display names
+ * are resolved client-side from static data (ADR-1) — only slug + count here.
+ */
+export async function listAdminPhotoVenueFacets(
+  db: Db,
+): Promise<AdminPhotoVenueFacet[]> {
+  const rows = await db
+    .select({
+      venueId: photos.venueId,
+      count: sql<number>`count(*)`,
+    })
+    .from(photos)
+    .where(isNull(photos.deletedAt))
+    .groupBy(photos.venueId);
+  return rows.map((r) => ({ venueId: r.venueId, count: Number(r.count) }));
 }
 
 /**

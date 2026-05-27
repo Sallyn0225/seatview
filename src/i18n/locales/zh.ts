@@ -399,6 +399,10 @@ export interface Messages {
     stagingTab: string;
     /** Toggle to include already-deleted photos in the list (audit). */
     showDeleted: string;
+    /** Accessible label for the venue filter dropdown (issue #28). */
+    venueFilter: string;
+    /** "All venues" option in the filter, `{count}` → total live photo count. */
+    allVenuesOption: string;
     /** Empty photo list. */
     photosEmpty: string;
     /** Empty staging list. */
@@ -757,6 +761,8 @@ const zh: Messages = {
     photosTab: "上传图片",
     stagingTab: "暂存区",
     showDeleted: "包含已删除",
+    venueFilter: "按场馆筛选",
+    allVenuesOption: "全部 ({count})",
     photosEmpty: "还没有上传图片。",
     stagingEmpty: "暂存区还没有提交。",
     end: "已经到底了。",

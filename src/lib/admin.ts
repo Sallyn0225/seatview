@@ -46,6 +46,23 @@ export interface AdminPhotosResponse {
   hasMore: boolean;
 }
 
+/** One venue facet for the admin photo filter: a venue that has at least one
+ *  non-deleted photo, plus its live photo count. The venue's display NAME is
+ *  resolved client-side from static venue data (ADR-1), so only the slug + count
+ *  travel over the wire. `count` is always the NON-deleted tally (independent of
+ *  the list's `includeDeleted` audit toggle). */
+export interface AdminPhotoVenueFacet {
+  venueId: string;
+  count: number;
+}
+
+/** GET /api/admin/photo-venues body: venues that have photos, for the filter
+ *  dropdown. Fetched once on panel mount; the client decrements counts
+ *  optimistically on delete rather than re-fetching. */
+export interface AdminPhotoVenuesResponse {
+  venues: AdminPhotoVenueFacet[];
+}
+
 /** GET /api/admin/staging body: a page of staging suggestions + hasMore probe. */
 export interface AdminStagingResponse {
   /** The admin list keeps the `processed` flag from the public DTO; that is all

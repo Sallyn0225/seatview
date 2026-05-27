@@ -336,6 +336,8 @@ const ko: Messages = {
     photosTab: "업로드 이미지",
     stagingTab: "요청",
     showDeleted: "삭제된 항목 포함",
+    venueFilter: "회장으로 필터",
+    allVenuesOption: "전체 ({count})",
     photosEmpty: "아직 업로드된 이미지가 없어요.",
     stagingEmpty: "아직 제출이 없어요.",
     end: "여기까지예요.",
