@@ -58,6 +58,10 @@
     "wrangler": "^4.83.0"
   },
   "overrides": {
-    "vite": "^7.3.2"
+    "vite": "^7.3.2",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    },
+    "yaml": "^2.9.0"
   }
 }

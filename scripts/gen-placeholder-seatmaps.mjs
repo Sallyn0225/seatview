@@ -22,7 +22,9 @@ function escapeXml(value) {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 // Render a quiet, folio-paper placeholder: warm rice-paper field, a rounded
