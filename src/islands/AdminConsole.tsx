@@ -164,6 +164,9 @@ function PhotosPanel({
   // circuit a re-load when the previous list had already reached its end).
   const hasMoreRef = useRef(true);
   const loadedRef = useRef(false);
+  // Changes whenever the filter key resets. In-flight pages from an older
+  // generation must not merge into the current venue/includeDeleted view.
+  const requestGenerationRef = useRef(0);
 
   const loadPage = useCallback(() => {
     if (loadingRef.current || (!hasMoreRef.current && loadedRef.current))
@@ -171,8 +174,10 @@ function PhotosPanel({
     loadingRef.current = true;
     setError(false);
     const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
     fetchAdminPhotos(offset, ADMIN_PHOTOS_BATCH, includeDeleted, selectedVenue)
       .then(({ photos: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         offsetRef.current = offset + next.length;
         hasMoreRef.current = more;
         setHasMore(more);
@@ -187,6 +192,7 @@ function PhotosPanel({
         loadingRef.current = false;
       })
       .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
         loadingRef.current = false;
         setError(true);
       });
@@ -215,6 +221,7 @@ function PhotosPanel({
   // the selected venue). Both compose server-side. Reset the refs too so the
   // synchronous loadPage() below sees a fresh "start over" state.
   useEffect(() => {
+    requestGenerationRef.current += 1;
     offsetRef.current = 0;
     hasMoreRef.current = true;
     loadedRef.current = false;
