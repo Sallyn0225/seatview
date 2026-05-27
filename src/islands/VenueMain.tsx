@@ -116,7 +116,11 @@ export default function VenueMain({
   // the first run for the SSR-seeded sub-map to avoid a double fetch.
   useEffect(() => {
     if (!activeSubMapId) return;
-    if (activeSubMapId === photosSubMapId) return;
+    if (activeSubMapId === photosSubMapId) {
+      photosSubMapRef.current = activeSubMapId;
+      if (photosLoading) setPhotosLoading(false);
+      return;
+    }
     if (activeSubMapId === photosSubMapRef.current && photosLoading) return;
     loadPoints(activeSubMapId);
   }, [activeSubMapId, photosLoading, photosSubMapId, loadPoints]);
