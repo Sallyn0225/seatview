@@ -65,8 +65,7 @@ export default function MarkSurface({
   const surfaceRef = useRef<HTMLDivElement>(null);
   // Unscaled outer box (NOT the transformed content) → the object-contain image
   // content rect for positioning the dot. Re-measured on resize / fullscreen.
-  const outerRef = useRef<HTMLDivElement>(null);
-  const outerSize = useElementSize(outerRef);
+  const [outerRef, outerSize] = useElementSize<HTMLDivElement>();
   const [scale, setScale] = useState(MIN_SCALE);
   const draggingRef = useRef(false);
 
