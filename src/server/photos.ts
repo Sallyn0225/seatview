@@ -8,11 +8,19 @@
 // Read-only: no auth, no rate limit (those guard the write paths in later
 // steps). Used by the venue page SSR and `GET /api/photos`.
 
-import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { photos, type NewPhotoRow, type PhotoRow } from "@/server/db/schema";
 import { rowToPhotoDto, type PhotoDto } from "@/lib/photos";
 import type { AdminPhotoDto, AdminPhotoVenueFacet } from "@/lib/admin";
+
+/**
+ * Internal tombstone used while a permanent delete is purging R2. Epoch-ms
+ * `deleted_at` values are always positive, so this sentinel is excluded from
+ * restore/list eligibility while keeping the row around if cleanup needs a
+ * retry or audit.
+ */
+const PHOTO_PURGE_STARTED_DELETED_AT = -1;
 
 export interface ListPhotosOptions {
   /** Skip this many rows (grid pagination, step 5). */
@@ -136,9 +144,7 @@ export async function listAllPhotosForAdmin(
   options: ListAllPhotosOptions = {},
 ): Promise<AdminPhotoDto[]> {
   const conditions = [
-    options.onlyDeleted
-      ? isNotNull(photos.deletedAt)
-      : isNull(photos.deletedAt),
+    options.onlyDeleted ? gt(photos.deletedAt, 0) : isNull(photos.deletedAt),
     options.venueId ? eq(photos.venueId, options.venueId) : undefined,
   ].filter((c) => c !== undefined);
   const base = db.select().from(photos);
@@ -210,14 +216,12 @@ export async function softDeletePhoto(
  * or `null` when no such deleted row exists.
  */
 export async function restorePhoto(db: Db, id: string): Promise<string | null> {
-  const imageKey = await getDeletedPhotoImageKey(db, id);
-  if (imageKey === null) return null;
-
-  await db
+  const restored = await db
     .update(photos)
     .set({ deletedAt: null })
-    .where(and(eq(photos.id, id), isNotNull(photos.deletedAt)));
-  return imageKey;
+    .where(and(eq(photos.id, id), gt(photos.deletedAt, 0)))
+    .returning({ imageKey: photos.imageKey });
+  return restored[0]?.imageKey ?? null;
 }
 
 /**
@@ -231,31 +235,74 @@ export async function getDeletedPhotoImageKey(
   const existing = await db
     .select({ imageKey: photos.imageKey })
     .from(photos)
-    .where(and(eq(photos.id, id), isNotNull(photos.deletedAt)))
+    .where(and(eq(photos.id, id), gt(photos.deletedAt, 0)))
     .limit(1);
   return existing[0]?.imageKey ?? null;
 }
 
 /**
+ * Atomically reserve a recycle-bin row for permanent deletion. After this
+ * succeeds, concurrent restores can no longer clear `deleted_at`, even if they
+ * already read the image key before the R2 purge starts.
+ */
+export async function claimPhotoForPurge(
+  db: Db,
+  id: string,
+): Promise<string | null> {
+  const claimed = await db
+    .update(photos)
+    .set({ deletedAt: PHOTO_PURGE_STARTED_DELETED_AT })
+    .where(and(eq(photos.id, id), gt(photos.deletedAt, 0)))
+    .returning({ imageKey: photos.imageKey });
+  return claimed[0]?.imageKey ?? null;
+}
+
+/**
+ * Release a purge reservation only when storage is known to still contain the
+ * image. Ambiguous/missing storage failures keep the sentinel so restore cannot
+ * expose a live row with missing bytes.
+ */
+export async function releasePhotoPurgeClaim(
+  db: Db,
+  id: string,
+  now: number = Date.now(),
+): Promise<boolean> {
+  const released = await db
+    .update(photos)
+    .set({ deletedAt: now })
+    .where(
+      and(
+        eq(photos.id, id),
+        eq(photos.deletedAt, PHOTO_PURGE_STARTED_DELETED_AT),
+      ),
+    )
+    .returning({ id: photos.id });
+  return released.length > 0;
+}
+
+/**
  * Permanently delete one photo row (彻底删除, issue #29): physically remove the D1
- * row after the API route has already purged the R2 object (it owns the BUCKET
- * binding). This function only touches D1. IRREVERSIBLE — the route reaches here
- * only from the recycle bin after an explicit maintainer confirm and successful
- * storage purge.
+ * row after the API route has already claimed the purge and purged the R2
+ * object (it owns the BUCKET binding). This function only touches D1.
+ * IRREVERSIBLE — the route reaches here only from the recycle bin after an
+ * explicit maintainer confirm and successful storage purge.
  *
- * Only recycle-bin rows are eligible: a live row must first move through the
- * reversible delete path. Returns the `image_key` of the removed row, or `null`
- * when no such deleted row exists.
+ * Only purge-claimed rows are eligible: a live/restorable row must first move
+ * through `claimPhotoForPurge`. Returns the `image_key` of the removed row, or
+ * `null` when no such claimed row exists.
  */
 export async function hardDeletePhoto(
   db: Db,
   id: string,
 ): Promise<string | null> {
-  const imageKey = await getDeletedPhotoImageKey(db, id);
-  if (imageKey === null) return null;
-
-  await db
+  const deleted = await db
     .delete(photos)
-    .where(and(eq(photos.id, id), isNotNull(photos.deletedAt)));
-  return imageKey;
+    .where(
+      and(
+        eq(photos.id, id),
+        eq(photos.deletedAt, PHOTO_PURGE_STARTED_DELETED_AT),
+      ),
+    )
+    .returning({ imageKey: photos.imageKey });
+  return deleted[0]?.imageKey ?? null;
 }

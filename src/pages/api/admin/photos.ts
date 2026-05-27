@@ -21,9 +21,11 @@ import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
 import {
+  claimPhotoForPurge,
   getDeletedPhotoImageKey,
   hardDeletePhoto,
   listAllPhotosForAdmin,
+  releasePhotoPurgeClaim,
   restorePhoto,
   softDeletePhoto,
 } from "@/server/photos";
@@ -144,9 +146,9 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
     let imageKey: string | null;
     try {
-      imageKey = await getDeletedPhotoImageKey(db, id);
+      imageKey = await claimPhotoForPurge(db, id);
     } catch (err) {
-      console.error("[admin:photos] hard-delete lookup failed", {
+      console.error("[admin:photos] purge claim failed", {
         id,
         err: String(err),
       });
@@ -154,14 +156,29 @@ export const DELETE: APIRoute = async ({ request }) => {
     }
     if (imageKey === null) return jsonError("not_found", 404);
 
-    // Purge R2 before removing the D1 row. If storage fails, the recycle-bin row
-    // keeps its image key so a maintainer can retry the permanent delete.
+    // The D1 claim above blocks concurrent restore before the object is purged.
+    // If storage fails but the object still exists, release the claim so the row
+    // can be retried/restored. Ambiguous or missing storage stays purge-locked so
+    // a live row can never point at bytes that may already be gone.
     try {
       await deleteImage(env.BUCKET, imageKey);
     } catch (err) {
-      console.warn("[admin:photos] R2 purge failed; D1 row retained", {
+      let released = false;
+      try {
+        if (await imageExists(env.BUCKET, imageKey)) {
+          released = await releasePhotoPurgeClaim(db, id);
+        }
+      } catch (releaseErr) {
+        console.warn("[admin:photos] purge claim retained after R2 failure", {
+          id,
+          key: imageKey,
+          err: String(releaseErr),
+        });
+      }
+      console.warn("[admin:photos] R2 purge failed", {
         id,
         key: imageKey,
+        released,
         err: String(err),
       });
       return jsonError("storage_unavailable", 502);
