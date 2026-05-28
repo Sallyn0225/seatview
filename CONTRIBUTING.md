@@ -24,10 +24,7 @@
   "prefecture": "tokyo",
   "city": "江東区",
   "aliases": [
-    "東京ガーデンシアター",
-    "东京花园剧场",
-    "Tokyo Garden Theater",
-    "ガーデンシアター"
+    "有明ガーデンシアター"
   ],
   "subMaps": [
     {
@@ -62,7 +59,7 @@
 | `name_romaji` | ✅ | string | 罗马字 / 英文名，作为副标题显示，也参与搜索。 |
 | `prefecture` | ✅ | string | 都道府县的 **slug**，必须取自 [`src/data/prefectures.ts`](src/data/prefectures.ts)（见下方对照表）。海外场馆用 `overseas`。它决定场馆挂在左侧场馆树的哪个分支。 |
 | `city` | ✅ | string | 城市 / 区名，自由文本（如 `横浜市`、`江東区`）。 |
-| `aliases` | ✅ | string[] | 别名数组，用于搜索命中（Fuse.js）。把中文名、日文名、罗马字、常见简称都放进来，让 "K Arena" / "横浜 K" / "Kアリーナ" 都能搜到同一个场馆。可以为空数组 `[]`，但强烈建议填。 |
+| `aliases` | ✅ | string[] | 别名数组，用于搜索命中（Fuse.js）。`name_zh` / `name_jp` / `name_romaji` 已经直接参与搜索，**不要在这里重复它们**；只填它们覆盖不到的简称、旧称、其他语言写法（如 "横浜 K" / "Kアリーナ"）。没有就留空数组 `[]`。 |
 | `subMaps` | ✅ | SubMap[] | 坐席图数组，**至少一个**。单坐席图的场馆也要放一个（习惯用 `id: "default"`）。 |
 
 ### 坐席图（`subMaps[]` 里每个对象 = `SubMap`）
@@ -93,6 +90,8 @@
 | `overseas` | 海外 | 海外 |
 
 > 用错 slug（写成一个 `prefectures.ts` 里不存在的值）不会让构建失败，但场馆会挂不到树上、无法被浏览到。务必从对照表里照抄。
+>
+> 不确定某场馆属于哪个都道府县？去 [eventernote.com/places](https://www.eventernote.com/places) 查，或用搜索引擎确认，再对照上表取对应 slug。
 
 ---
 
@@ -109,6 +108,18 @@ node scripts/gen-placeholder-seatmaps.mjs
 这个脚本会读取每个 `data/venues/*.json`，为其中 `imageUrl` 指向 `/seatmaps/...svg` 的 sub-map 生成一张占位 SVG（尺寸取你写的 `width` / `height`）。
 
 **给非编码贡献者的实用建议**：你只需要在 PR 里**用文字说明这个场馆有几层 / 几个分区**，并把 `subMaps` 写好、`imageUrl` 指向占位路径即可。坐席图本身的「截图待补」可以留给维护者处理。**不要伪造图片，也不要上传你没有授权的图片。**
+
+---
+
+## 给维护者：上传正式坐席图
+
+合并贡献者 PR 时，把占位 SVG 换成正式坐席图（维护者上传，非官方版权图），统一约定：
+
+- 格式 **WebP**；
+- **长边 ≤ 2048px**，保持原始纵横比；
+- 质量约 82（用 `sharp` 默认即可），单张通常几百 KB；
+- 路径 `public/seatmaps/<venue-id>/<sub-map-id>.webp`，并把对应 sub-map 的 `imageUrl` 一并改成 `.webp`；
+- `width` / `height` 填**优化后**图片的真实像素（标注点坐标按它换算，务必与实际文件一致）。
 
 ---
 
