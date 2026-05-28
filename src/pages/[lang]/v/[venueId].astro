@@ -198,10 +198,10 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
             }
           };
 
-          treeScroller.addEventListener("scroll", rememberTreeScroll, {
-            passive: true,
-          });
           window.addEventListener("pagehide", rememberTreeScroll);
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") rememberTreeScroll();
+          });
 
           if (treeReadyEvent) {
             window.addEventListener(
