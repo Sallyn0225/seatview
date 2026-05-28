@@ -1,0 +1,23 @@
+{
+  "id": "japan-national-stadium",
+  "name_zh": "国立竞技场",
+  "name_jp": "国立競技場",
+  "name_romaji": "Japan National Stadium",
+  "prefecture": "tokyo",
+  "city": "新宿区",
+  "aliases": [
+    "新国立競技場",
+    "Kokuritsu Kyogijo",
+    "MUFG STADIUM"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/japan-national-stadium/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
