@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Menu, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
@@ -29,6 +35,7 @@ export default function VenueTreeDrawer({
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const restoringScrollRef = useRef(false);
   const userScrolledRef = useRef(false);
 
   const rememberScroll = useCallback(() => {
@@ -38,6 +45,7 @@ export default function VenueTreeDrawer({
   }, []);
 
   const handleScroll = useCallback(() => {
+    if (restoringScrollRef.current) return;
     userScrolledRef.current = true;
     rememberScroll();
   }, [rememberScroll]);
@@ -46,43 +54,74 @@ export default function VenueTreeDrawer({
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
-    requestAnimationFrame(() => {
-      const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
-      const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
+    restoringScrollRef.current = true;
 
-      if (
-        userScrolledRef.current &&
-        Number.isFinite(scrollTop) &&
-        scrollTop > 0
-      ) {
-        scroller.scrollTop = scrollTop;
-        return;
-      }
+    // Tie the guard reset to whichever fires first: the programmatic scroll
+    // event from `scroller.scrollTop = X`, or a RAF fallback for the case
+    // where the assignment doesn't actually change the value (browser elides
+    // the event). Safari/under-load can deliver the scroll event AFTER a
+    // bare RAF callback, which would let `handleScroll` flip
+    // `userScrolledRef` even though the user never touched the drawer.
+    const finishRestoring = () => {
+      let done = false;
+      const clear = () => {
+        if (done) return;
+        done = true;
+        scroller.removeEventListener("scroll", clear);
+        restoringScrollRef.current = false;
+      };
+      scroller.addEventListener("scroll", clear, { once: true });
+      requestAnimationFrame(clear);
+    };
 
-      const activeLink = activeVenueId
-        ? scroller.querySelector<HTMLElement>('a[aria-current="page"]')
-        : null;
+    const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
+    const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
 
-      if (activeLink) {
-        const scrollerRect = scroller.getBoundingClientRect();
-        const activeRect = activeLink.getBoundingClientRect();
-        const centeredTop =
-          activeRect.top -
-          scrollerRect.top +
-          scroller.scrollTop -
-          scroller.clientHeight / 2 +
-          activeLink.clientHeight / 2;
+    if (
+      userScrolledRef.current &&
+      Number.isFinite(scrollTop) &&
+      scrollTop > 0
+    ) {
+      scroller.scrollTop = scrollTop;
+      finishRestoring();
+      return;
+    }
 
-        scroller.scrollTop = Math.max(0, centeredTop);
-        rememberScroll();
-        return;
-      }
+    const activeLink = activeVenueId
+      ? scroller.querySelector<HTMLElement>("[data-venue-tree-active-row]")
+      : null;
 
-      if (Number.isFinite(scrollTop) && scrollTop > 0) {
-        scroller.scrollTop = scrollTop;
-      }
-    });
+    if (activeLink) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activeRect = activeLink.getBoundingClientRect();
+      const centeredTop =
+        activeRect.top -
+        scrollerRect.top +
+        scroller.scrollTop -
+        scroller.clientHeight / 2 +
+        activeLink.clientHeight / 2;
+      const maxScrollTop = Math.max(
+        0,
+        scroller.scrollHeight - scroller.clientHeight,
+      );
+
+      scroller.scrollTop = Math.min(Math.max(0, centeredTop), maxScrollTop);
+      rememberScroll();
+      finishRestoring();
+      return;
+    }
+
+    if (Number.isFinite(scrollTop) && scrollTop > 0) {
+      scroller.scrollTop = scrollTop;
+    }
+
+    finishRestoring();
   }, [activeVenueId, rememberScroll]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    restoreScroll();
+  }, [open, restoreScroll]);
 
   const close = useCallback(() => {
     rememberScroll();

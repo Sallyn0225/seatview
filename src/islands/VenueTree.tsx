@@ -131,6 +131,10 @@ export default function VenueTree({
                                   <a
                                     href={`/${locale}/v/${venue.id}`}
                                     aria-current={active ? "page" : undefined}
+                                    data-venue-tree-active-row={
+                                      active ? "true" : undefined
+                                    }
+                                    data-venue-tree-venue-id={venue.id}
                                     onClick={() => onSelect?.(venue.id)}
                                     className={cn(
                                       "flex items-center gap-1.5 rounded-sm py-1.5 pr-2 pl-2 text-sm",
