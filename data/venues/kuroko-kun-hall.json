@@ -1,0 +1,26 @@
+{
+  "id": "kuroko-kun-hall",
+  "name_zh": "Kuroko-kun Hall（名古屋市综合体育馆）",
+  "name_jp": "クロコくんホール（名古屋市総合体育館）",
+  "name_romaji": "Kuroko-kun Hall",
+  "prefecture": "aichi",
+  "city": "名古屋市南区",
+  "aliases": [
+    "クロコくんホール-名古屋市総合体育館",
+    "名古屋市総合体育館",
+    "NGKスポーツプラザ",
+    "日本ガイシホール",
+    "レインボーホール",
+    "Rainbow Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/kuroko-kun-hall/default.webp",
+      "width": 1761,
+      "height": 2048
+    }
+  ]
+}

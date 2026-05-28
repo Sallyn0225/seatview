@@ -1,0 +1,23 @@
+{
+  "id": "glion-arena-kobe",
+  "name_zh": "GLION ARENA KOBE",
+  "name_jp": "ジーライオンアリーナ神戸",
+  "name_romaji": "GLION Arena Kobe",
+  "prefecture": "hyogo",
+  "city": "神戸市中央区",
+  "aliases": [
+    "ジーライオンアリーナ神戸-Glion Arena Kobe",
+    "Glion Arena Kobe",
+    "神戸アリーナ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/glion-arena-kobe/default.webp",
+      "width": 2048,
+      "height": 1493
+    }
+  ]
+}
