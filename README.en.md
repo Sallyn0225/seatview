@@ -225,3 +225,8 @@ There are two channels for adding new venues:
 
 > [!IMPORTANT]
 > The site code is open-sourced under **Apache 2.0** (see [LICENSE](LICENSE)). Photos uploaded by users and their metadata are shared under **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** — there's a mandatory consent checkbox before uploading. **Do not submit copyrighted official seating charts**: everything under `public/seatmaps/` is uploaded by the maintainer (not official copyrighted images).
+
+## Acknowledgments
+
+- **Tech community** — thanks to the [Linux Do](https://linux.do/) community for the discussions and help during development.
+- **Seating-chart references** — venue seating charts were proofread with reference to [LiveKiti](https://livekiti.com/) and [LiveWalker](https://www.livewalker.com/).
