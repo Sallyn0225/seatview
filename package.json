@@ -13,6 +13,7 @@
     "build": "astro build",
     "preview": "astro build && wrangler dev -c dist/server/wrangler.json",
     "deploy": "astro build && wrangler deploy -c dist/server/wrangler.json",
+    "test": "node --experimental-strip-types --test \"src/**/*.test.ts\"",
     "astro": "astro",
     "typecheck": "astro check",
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css}\" \"scripts/**/*.{mjs,js}\" \"*.{ts,mjs}\"",
