@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   locale: "seatview:locale",
   /** Venue-tree expanded region/prefecture slugs (session-scoped feel). */
   treeExpanded: "seatview:lang-tree-expanded",
+  /** Desktop venue-tree scroll offset, preserved across venue-page reloads. */
+  treeScrollTop: "seatview:venue-tree-scroll-top",
 } as const;
 
 /** SSR-safe localStorage read. Returns null on the server or on access error. */
