@@ -225,3 +225,8 @@ seatmap-real/
 
 > [!IMPORTANT]
 > 사이트 코드는 **Apache 2.0** 으로 오픈 소스화되어 있습니다([LICENSE](LICENSE) 참조). 사용자가 업로드한 사진과 그 메타데이터는 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 으로 공유됩니다 —— 업로드 전에 필수 동의 체크박스가 있습니다. **저작권이 있는 공식 좌석도를 제출하지 마세요**: `public/seatmaps/` 아래는 전부 메인테이너가 업로드한 좌석도입니다(공식 저작권 이미지가 아님).
+
+## 감사의 말
+
+- **기술 커뮤니티** —— 개발 과정에서 교류와 도움을 준 [Linux Do](https://linux.do/) 커뮤니티에 감사드립니다.
+- **좌석도 참고 출처** —— 공연장 좌석도는 [LiveKiti](https://livekiti.com/) 와 [LiveWalker](https://www.livewalker.com/) 를 참고하여 교정했습니다.

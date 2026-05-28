@@ -225,3 +225,8 @@ seatmap-real/
 
 > [!IMPORTANT]
 > サイトのコードは **Apache 2.0** でオープンソース化されています（[LICENSE](LICENSE) 参照）。ユーザーがアップロードした写真とそのメタデータは **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** で共有されます——アップロード前に必須の同意チェックボックスがあります。**著作権のある公式座席表は提出しないでください**：`public/seatmaps/` 以下はすべてメンテナーがアップロードした座席表です（公式の著作権画像ではありません）。
+
+## 謝辞
+
+- **技術コミュニティ** —— 開発中の交流と協力をいただいた [Linux Do](https://linux.do/) コミュニティに感謝します。
+- **座席表の参考元** —— 会場の座席表は [LiveKiti](https://livekiti.com/) と [LiveWalker](https://www.livewalker.com/) を参考に校正しました。

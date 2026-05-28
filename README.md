@@ -225,3 +225,8 @@ seatmap-real/
 
 > [!IMPORTANT]
 > 站点代码以 **Apache 2.0** 开源（见 [LICENSE](LICENSE)）。用户上传的照片及其元数据以 **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** 共享——上传前有强制勾选的同意框。**请勿提交有版权的官方坐席图**：`public/seatmaps/` 下均为维护者上传的坐席图（非官方版权图）。
+
+## 致谢
+
+- **技术社区** —— 感谢 [Linux Do](https://linux.do/) 社区在开发过程中的交流与帮助。
+- **坐席图参考来源** —— 场馆坐席图的校对参考了 [LiveKiti](https://livekiti.com/) 与 [LiveWalker](https://www.livewalker.com/)。
