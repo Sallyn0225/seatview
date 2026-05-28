@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Menu, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
@@ -29,6 +35,7 @@ export default function VenueTreeDrawer({
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const restoringScrollRef = useRef(false);
   const userScrolledRef = useRef(false);
 
   const rememberScroll = useCallback(() => {
@@ -38,6 +45,7 @@ export default function VenueTreeDrawer({
   }, []);
 
   const handleScroll = useCallback(() => {
+    if (restoringScrollRef.current) return;
     userScrolledRef.current = true;
     rememberScroll();
   }, [rememberScroll]);
@@ -46,43 +54,61 @@ export default function VenueTreeDrawer({
     const scroller = scrollerRef.current;
     if (!scroller) return;
 
+    restoringScrollRef.current = true;
+    const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
+    const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
+
+    if (
+      userScrolledRef.current &&
+      Number.isFinite(scrollTop) &&
+      scrollTop > 0
+    ) {
+      scroller.scrollTop = scrollTop;
+      requestAnimationFrame(() => {
+        restoringScrollRef.current = false;
+      });
+      return;
+    }
+
+    const activeLink = activeVenueId
+      ? scroller.querySelector<HTMLElement>("[data-venue-tree-active-row]")
+      : null;
+
+    if (activeLink) {
+      const scrollerRect = scroller.getBoundingClientRect();
+      const activeRect = activeLink.getBoundingClientRect();
+      const centeredTop =
+        activeRect.top -
+        scrollerRect.top +
+        scroller.scrollTop -
+        scroller.clientHeight / 2 +
+        activeLink.clientHeight / 2;
+      const maxScrollTop = Math.max(
+        0,
+        scroller.scrollHeight - scroller.clientHeight,
+      );
+
+      scroller.scrollTop = Math.min(Math.max(0, centeredTop), maxScrollTop);
+      rememberScroll();
+      requestAnimationFrame(() => {
+        restoringScrollRef.current = false;
+      });
+      return;
+    }
+
+    if (Number.isFinite(scrollTop) && scrollTop > 0) {
+      scroller.scrollTop = scrollTop;
+    }
+
     requestAnimationFrame(() => {
-      const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
-      const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
-
-      if (
-        userScrolledRef.current &&
-        Number.isFinite(scrollTop) &&
-        scrollTop > 0
-      ) {
-        scroller.scrollTop = scrollTop;
-        return;
-      }
-
-      const activeLink = activeVenueId
-        ? scroller.querySelector<HTMLElement>('a[aria-current="page"]')
-        : null;
-
-      if (activeLink) {
-        const scrollerRect = scroller.getBoundingClientRect();
-        const activeRect = activeLink.getBoundingClientRect();
-        const centeredTop =
-          activeRect.top -
-          scrollerRect.top +
-          scroller.scrollTop -
-          scroller.clientHeight / 2 +
-          activeLink.clientHeight / 2;
-
-        scroller.scrollTop = Math.max(0, centeredTop);
-        rememberScroll();
-        return;
-      }
-
-      if (Number.isFinite(scrollTop) && scrollTop > 0) {
-        scroller.scrollTop = scrollTop;
-      }
+      restoringScrollRef.current = false;
     });
   }, [activeVenueId, rememberScroll]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    restoreScroll();
+  }, [open, restoreScroll]);
 
   const close = useCallback(() => {
     rememberScroll();
