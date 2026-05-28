@@ -1,0 +1,23 @@
+{
+  "id": "yokohama-buntai",
+  "name_zh": "横滨BUNTAI",
+  "name_jp": "横浜BUNTAI",
+  "name_romaji": "Yokohama BUNTAI",
+  "prefecture": "kanagawa",
+  "city": "横浜市",
+  "aliases": [
+    "横浜文化体育館",
+    "横滨文化体育馆",
+    "Yokohama Bunka Taiikukan"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/yokohama-buntai/default.webp",
+      "width": 2048,
+      "height": 1814
+    }
+  ]
+}

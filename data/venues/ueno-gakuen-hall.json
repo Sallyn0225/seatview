@@ -1,0 +1,23 @@
+{
+  "id": "ueno-gakuen-hall",
+  "name_zh": "上野学园音乐厅",
+  "name_jp": "上野学園ホール",
+  "name_romaji": "Ueno Gakuen Hall",
+  "prefecture": "hiroshima",
+  "city": "広島市",
+  "aliases": [
+    "広島県立文化芸術ホール",
+    "广岛县立文化艺术厅",
+    "Hiroshima Prefectural Cultural Arts Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/ueno-gakuen-hall/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}

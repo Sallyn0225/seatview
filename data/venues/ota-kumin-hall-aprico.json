@@ -1,0 +1,23 @@
+{
+  "id": "ota-kumin-hall-aprico",
+  "name_zh": "大田区民音乐厅 Aprico",
+  "name_jp": "大田区民ホール・アプリコ",
+  "name_romaji": "Ota Kumin Hall Aprico",
+  "prefecture": "tokyo",
+  "city": "大田区",
+  "aliases": [
+    "大田区民ホール",
+    "アプリコ",
+    "Ota Citizens' Hall Aprico"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/ota-kumin-hall-aprico/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
