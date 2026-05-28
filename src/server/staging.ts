@@ -52,14 +52,21 @@ export interface ListStagingOptions {
    * Filtering in the query keeps offset paging self-consistent.
    */
   excludeProcessed?: boolean;
+  /**
+   * Public wishlist defaults to demand sorting. Admin triage can request
+   * unprocessed-first, newest-first ordering (issue #48).
+   */
+  sort?: "demand" | "adminTriage";
 }
 
 /** Default page size for the staging list (text-only rows are light, §11). */
 export const STAGING_BATCH = 50;
 
 /**
- * List staging-area suggestions, **most-seconded first** (`vote_count DESC`,
- * then `created_at DESC` as tiebreak — demand-strength signal for maintainers).
+ * List staging-area suggestions. Public views default to **most-seconded first**
+ * (`vote_count DESC`, then `created_at DESC`) as a demand-strength signal.
+ * Admin triage can request issue #48 ordering: unprocessed rows first, then
+ * processed rows, with each group newest-first.
  * Strips `ip_hash` and maps `processed_at` → a boolean `processed` flag. When
  * `viewerIpHash` is given, marks each row's `votedByMe` so the client can disable
  * the +1 button on venues this viewer already seconded.
@@ -68,13 +75,23 @@ export async function listStagingVenues(
   db: Db,
   options: ListStagingOptions = {},
 ): Promise<StagingVenueDto[]> {
+  const orderBy =
+    options.sort === "adminTriage"
+      ? [
+          // SQLite sorts false (0) before true (1), so unprocessed rows
+          // (`processed_at IS NOT NULL` = false) come first.
+          sql`${stagingVenues.processedAt} IS NOT NULL`,
+          desc(stagingVenues.createdAt),
+        ]
+      : [desc(stagingVenues.voteCount), desc(stagingVenues.createdAt)];
+
   const rows = await db
     .select()
     .from(stagingVenues)
     .where(
       options.excludeProcessed ? isNull(stagingVenues.processedAt) : undefined,
     )
-    .orderBy(desc(stagingVenues.voteCount), desc(stagingVenues.createdAt))
+    .orderBy(...orderBy)
     .limit(options.limit ?? STAGING_BATCH)
     .offset(options.offset ?? 0);
 
@@ -274,9 +291,10 @@ export async function addVote(
 }
 
 // ── Maintainer admin (R7.2) ─────────────────────────────────────────────────
-// Behind the Cloudflare Access gate (ADR-11). The admin staging list reuses the
-// SAME `listStagingVenues` read above (it already exposes `processed`); the only
-// extra operations are the two mutations below: mark processed / unprocessed
+// Behind the Cloudflare Access gate (ADR-11). The admin staging list reuses
+// `listStagingVenues` (which exposes `processed`) but with the `adminTriage`
+// sort (unprocessed-first, newest-first; issue #48); the only extra
+// operations are the two mutations below: mark processed / unprocessed
 // (R7.2 "标记已处理") and delete a suggestion (R7.2 "删除已处理的提交"). The
 // "转正式" promotion itself happens via GitHub PR, NOT here (R7.3) — the schema
 // only tracks the `processed_at` triage flag.
