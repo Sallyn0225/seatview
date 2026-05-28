@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Star } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { getMessages, venueName } from "@/i18n";
@@ -20,6 +20,7 @@ interface VenueTreeProps {
 }
 
 const expandedKey = STORAGE_KEYS.treeExpanded;
+export const VENUE_TREE_READY_EVENT = "seatview:venue-tree-ready";
 
 /** Read the persisted set of expanded region/prefecture slugs. */
 function readExpanded(): Set<string> | null {
@@ -49,6 +50,7 @@ export default function VenueTree({
   activeVenueId,
   onSelect,
 }: VenueTreeProps) {
+  const readyDispatchedRef = useRef(false);
   const tree: RegionNode[] = useMemo(() => buildVenueTree(), []);
 
   // Every populated region + prefecture starts expanded (shape decision 3).
@@ -64,11 +66,19 @@ export default function VenueTree({
   // Start from the all-expanded default for a stable SSR/first paint, then
   // reconcile with any persisted choice after mount (avoids hydration drift).
   const [expanded, setExpanded] = useState<Set<string>>(allSlugs);
+  const [expandedReady, setExpandedReady] = useState(false);
 
   useEffect(() => {
     const persisted = readExpanded();
     if (persisted) setExpanded(persisted);
+    setExpandedReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!expandedReady || readyDispatchedRef.current) return;
+    readyDispatchedRef.current = true;
+    window.dispatchEvent(new Event(VENUE_TREE_READY_EVENT));
+  }, [expanded, expandedReady]);
 
   const toggle = useCallback((slug: string) => {
     setExpanded((prev) => {

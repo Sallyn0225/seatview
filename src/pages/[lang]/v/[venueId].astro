@@ -8,7 +8,7 @@
 import Layout from "@/layouts/Layout.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import SiteFooter from "@/components/SiteFooter.astro";
-import VenueTree from "@/islands/VenueTree.tsx";
+import VenueTree, { VENUE_TREE_READY_EVENT } from "@/islands/VenueTree.tsx";
 import VenueTreeDrawer from "@/islands/VenueTreeDrawer.tsx";
 import VenueSearch from "@/islands/VenueSearch.tsx";
 import SubMapTabs from "@/islands/SubMapTabs.tsx";
@@ -83,6 +83,7 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
           {/* Desktop venue tree: 280px, always-on, independent scroll. */}
           <aside
             data-venue-tree-scroll-container
+            data-ready-event={VENUE_TREE_READY_EVENT}
             data-scroll-storage-key={STORAGE_KEYS.treeScrollTop}
             class="border-border bg-card sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[280px] shrink-0 overflow-y-auto border-r px-3 py-4 lg:block"
           >
@@ -169,6 +170,7 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
 
         if (treeScroller instanceof HTMLElement) {
           const treeScrollTopKey = treeScroller.dataset.scrollStorageKey;
+          const treeReadyEvent = treeScroller.dataset.readyEvent;
           const rememberTreeScroll = () => {
             if (!treeScrollTopKey) return;
             try {
@@ -181,7 +183,7 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
             }
           };
 
-          try {
+          const restoreTreeScroll = () => {
             const rawScrollTop = treeScrollTopKey
               ? localStorage.getItem(treeScrollTopKey)
               : null;
@@ -194,14 +196,26 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
                 treeScroller.scrollTop = scrollTop;
               });
             }
-          } catch (_) {
-            /* ignore privacy-mode errors */
-          }
+          };
 
           treeScroller.addEventListener("scroll", rememberTreeScroll, {
             passive: true,
           });
           window.addEventListener("pagehide", rememberTreeScroll);
+
+          if (treeReadyEvent) {
+            window.addEventListener(
+              treeReadyEvent,
+              () => {
+                try {
+                  restoreTreeScroll();
+                } catch (_) {
+                  /* ignore privacy-mode errors */
+                }
+              },
+              { once: true },
+            );
+          }
         }
       </script>
       </Fragment>
