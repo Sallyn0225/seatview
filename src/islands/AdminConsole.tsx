@@ -513,7 +513,7 @@ function StagingPanel({ locale }: { locale: Locale }) {
           const ids = new Set(prev.map((v) => v.id));
           const merged = [...prev];
           for (const v of next) if (!ids.has(v.id)) merged.push(v);
-          return merged;
+          return sortAdminStagingVenues(merged);
         });
         setLoaded(true);
         loadingRef.current = false;
@@ -532,7 +532,9 @@ function StagingPanel({ locale }: { locale: Locale }) {
 
   const onProcessedChange = useCallback((id: string, processed: boolean) => {
     setVenues((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, processed } : v)),
+      sortAdminStagingVenues(
+        prev.map((v) => (v.id === id ? { ...v, processed } : v)),
+      ),
     );
   }, []);
   const onDeleted = useCallback(
@@ -599,6 +601,15 @@ function StagingPanel({ locale }: { locale: Locale }) {
       ) : null}
     </section>
   );
+}
+
+function sortAdminStagingVenues(
+  venues: readonly StagingVenueDto[],
+): StagingVenueDto[] {
+  return [...venues].sort((a, b) => {
+    if (a.processed !== b.processed) return a.processed ? 1 : -1;
+    return b.createdAt - a.createdAt;
+  });
 }
 
 function StagingAdminRow({
