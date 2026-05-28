@@ -11,11 +11,19 @@
   ],
   "subMaps": [
     {
-      "id": "default",
-      "label_zh": "全场",
-      "label_jp": "全体",
-      "imageUrl": "/seatmaps/saitama-super-arena/default.webp",
-      "width": 1911,
+      "id": "stadium",
+      "label_zh": "体育场模式",
+      "label_jp": "スタジアムモード",
+      "imageUrl": "/seatmaps/saitama-super-arena/stadium.webp",
+      "width": 2048,
+      "height": 1568
+    },
+    {
+      "id": "arena",
+      "label_zh": "竞技场模式",
+      "label_jp": "アリーナモード",
+      "imageUrl": "/seatmaps/saitama-super-arena/arena.webp",
+      "width": 1984,
       "height": 2048
     }
   ]
