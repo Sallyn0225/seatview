@@ -1,0 +1,23 @@
+{
+  "id": "pacifico-yokohama-national-hall",
+  "name_zh": "Pacifico横滨 国立大厅",
+  "name_jp": "パシフィコ横浜 国立大ホール",
+  "name_romaji": "Pacifico Yokohama National Convention Hall",
+  "prefecture": "kanagawa",
+  "city": "横浜市",
+  "aliases": [
+    "国立横浜国際会議場",
+    "パシフィコ横浜",
+    "Pacifico Yokohama"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/pacifico-yokohama-national-hall/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
