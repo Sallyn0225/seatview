@@ -1,30 +1,28 @@
 // Annotation-point clustering for the seatmap (R3.5 / R3.6 / Open Question Q6).
 //
-// Points are clustered by SCREEN-pixel proximity, and the threshold shrinks as
-// the user zooms in (inverse to scale): two pins that overlap at scale 1 pull
-// apart and become individually clickable as you zoom. This is what makes the
-// "click cluster → zoom in → it explodes into single pins" flow work (ADR-4).
+// Points are clustered by image-surface proximity, and the threshold shrinks
+// quickly as the user zooms in: two pins that overlap at scale 1 pull apart and
+// become individually clickable as you zoom. This is what makes the "click
+// cluster → zoom in → it explodes into single pins" flow work (ADR-4).
 //
-// Algorithm: greedy single-pass grid-free agglomeration. O(n²) worst case, but
-// n is a single sub-map's point count (tens, not thousands) so this is fine for
-// the MVP. If a sub-map ever holds 100s of points we'd swap in a spatial grid
-// (noted in frontend-libraries.md performance checkpoints).
+// Algorithm: build a distance graph and return its connected components. O(n²)
+// worst case, but n is a single sub-map's point count (tens, not thousands) so
+// this is fine for the MVP. If a sub-map ever holds 100s of points we'd swap in
+// a spatial grid (noted in frontend-libraries.md performance checkpoints).
 //
-// All magic numbers live in CLUSTER_TUNING so Q6 ("initial 36px/scale, tune
+// All magic numbers live in CLUSTER_TUNING so Q6 ("initial 75px/scale, tune
 // after seeing it") is a one-line change.
 
 import type { PhotoDto } from "@/lib/photos";
 
 export const CLUSTER_TUNING = {
   /**
-   * Base merge distance in SCREEN pixels at scale 1. Two points whose
-   * on-screen centers are closer than `BASE_THRESHOLD_PX / scale` merge into a
-   * cluster. 36px ≈ comfortably larger than a 8-10px pin so visually touching
-   * pins group up (Q6 initial value).
+   * Base merge distance in image-surface pixels at scale 1. The effective
+   * surface threshold is `BASE_THRESHOLD_PX / scale²`: low zoom strongly groups
+   * close seat marks, while high zoom quickly separates them for clicking.
    */
-  BASE_THRESHOLD_PX: 36,
-  /** Below this scale, never cluster (points are spread enough). Keeps fully
-   *  zoomed-in views showing every individual pin even if data is dense. */
+  BASE_THRESHOLD_PX: 75,
+  /** Below this surface-pixel threshold, never shrink further. */
   MIN_THRESHOLD_PX: 2,
 } as const;
 
@@ -51,8 +49,8 @@ export interface Cluster {
 }
 
 /**
- * Compute the active screen-pixel merge threshold for a given zoom scale.
- * Inverse to scale (Q6), floored so it never reaches zero.
+ * Compute the first-stage merge threshold for a given zoom scale. `clusterPoints`
+ * divides this by scale again to compare image-surface distances.
  */
 export function clusterThresholdPx(scale: number): number {
   const safeScale = scale > 0 ? scale : 1;
@@ -80,61 +78,72 @@ export function layOutPoints(
 }
 
 /**
- * Greedy-agglomerate laid-out points into clusters at the given zoom scale.
+ * Group laid-out points into connected components at the given zoom scale.
  *
- * The merge distance is measured in SCREEN pixels, so we compare image-surface
- * distances against `threshold / scale` (image-space) — equivalently the
- * on-screen distance against `threshold`. A point joins the first existing
- * cluster whose centroid is within range; centroids are recomputed as members
- * are added so a cluster's anchor tracks its members.
+ * The merge distance is compared in image-surface pixels. Any chain of points
+ * where each adjacent pair is within threshold becomes one cluster, so a dense
+ * row cannot be split by centroid drift or input order.
  */
 export function clusterPoints(
   points: readonly LaidOutPoint[],
   scale: number,
 ): Cluster[] {
-  const thresholdScreenPx = clusterThresholdPx(scale);
-  // Convert the screen-pixel threshold to image-surface pixels: the surface is
-  // magnified by `scale`, so a fixed on-screen gap spans fewer surface pixels
-  // as you zoom in.
   const safeScale = scale > 0 ? scale : 1;
-  const thresholdSurfacePx = thresholdScreenPx / safeScale;
+  const thresholdSurfacePx = clusterThresholdPx(safeScale) / safeScale;
   const thresholdSq = thresholdSurfacePx * thresholdSurfacePx;
 
-  const clusters: Cluster[] = [];
+  const parent = points.map((_, index) => index);
+  const find = (index: number): number => {
+    const root = parent[index];
+    if (root === undefined) return index;
+    if (root === index) return index;
+    const next = find(root);
+    parent[index] = next;
+    return next;
+  };
+  const union = (a: number, b: number): void => {
+    const rootA = find(a);
+    const rootB = find(b);
+    if (rootA !== rootB) parent[rootB] = rootA;
+  };
 
-  for (const point of points) {
-    let merged = false;
-    for (const cluster of clusters) {
-      const dx = cluster.x - point.x;
-      const dy = cluster.y - point.y;
-      if (dx * dx + dy * dy <= thresholdSq) {
-        cluster.members.push(point);
-        // Recompute centroid incrementally.
-        const n = cluster.members.length;
-        cluster.x += (point.x - cluster.x) / n;
-        cluster.y += (point.y - cluster.y) / n;
-        merged = true;
-        break;
-      }
-    }
-    if (!merged) {
-      clusters.push({
-        id: point.photo.id,
-        x: point.x,
-        y: point.y,
-        members: [point],
-      });
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i]!;
+    for (let j = i + 1; j < points.length; j += 1) {
+      const b = points[j]!;
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      if (dx * dx + dy * dy <= thresholdSq) union(i, j);
     }
   }
 
-  // Give multi-member clusters a distinct, stable id so React keys don't clash
-  // with the single-pin case (member[0].id is reused as the pin id).
-  for (const cluster of clusters) {
-    if (cluster.members.length > 1)
-      cluster.id = `cluster:${cluster.members[0]!.photo.id}`;
+  const groups = new Map<number, LaidOutPoint[]>();
+  for (let index = 0; index < points.length; index += 1) {
+    const root = find(index);
+    const group = groups.get(root);
+    if (group) {
+      group.push(points[index]!);
+    } else {
+      groups.set(root, [points[index]!]);
+    }
   }
 
-  return clusters;
+  return Array.from(groups.values())
+    .map((members) => {
+      members.sort((a, b) => a.photo.id.localeCompare(b.photo.id));
+      const x =
+        members.reduce((sum, member) => sum + member.x, 0) / members.length;
+      const y =
+        members.reduce((sum, member) => sum + member.y, 0) / members.length;
+      const first = members[0]!;
+      return {
+        id: members.length > 1 ? `cluster:${first.photo.id}` : first.photo.id,
+        x,
+        y,
+        members,
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function clamp01(value: number): number {
