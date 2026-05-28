@@ -17,6 +17,8 @@ interface VenueTreeProps {
    * the drawer after selection.
    */
   onSelect?: (venueId: string) => void;
+  /** Called once after persisted expand/collapse state has been applied. */
+  onReady?: () => void;
 }
 
 const expandedKey = STORAGE_KEYS.treeExpanded;
@@ -49,6 +51,7 @@ export default function VenueTree({
   locale,
   activeVenueId,
   onSelect,
+  onReady,
 }: VenueTreeProps) {
   const readyDispatchedRef = useRef(false);
   const tree: RegionNode[] = useMemo(() => buildVenueTree(), []);
@@ -78,7 +81,8 @@ export default function VenueTree({
     if (!expandedReady || readyDispatchedRef.current) return;
     readyDispatchedRef.current = true;
     window.dispatchEvent(new Event(VENUE_TREE_READY_EVENT));
-  }, [expanded, expandedReady]);
+    onReady?.();
+  }, [expanded, expandedReady, onReady]);
 
   const toggle = useCallback((slug: string) => {
     setExpanded((prev) => {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
+import { STORAGE_KEYS, readStorage, writeStorage } from "@/lib/storage";
 import VenueTree from "./VenueTree";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +27,68 @@ export default function VenueTreeDrawer({
   const { t } = useLocale(locale);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const userScrolledRef = useRef(false);
+
+  const rememberScroll = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    writeStorage(STORAGE_KEYS.treeScrollTop, String(scroller.scrollTop));
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    userScrolledRef.current = true;
+    rememberScroll();
+  }, [rememberScroll]);
+
+  const restoreScroll = useCallback(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    requestAnimationFrame(() => {
+      const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
+      const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
+
+      if (
+        userScrolledRef.current &&
+        Number.isFinite(scrollTop) &&
+        scrollTop > 0
+      ) {
+        scroller.scrollTop = scrollTop;
+        return;
+      }
+
+      const activeLink = activeVenueId
+        ? scroller.querySelector<HTMLElement>('a[aria-current="page"]')
+        : null;
+
+      if (activeLink) {
+        const scrollerRect = scroller.getBoundingClientRect();
+        const activeRect = activeLink.getBoundingClientRect();
+        const centeredTop =
+          activeRect.top -
+          scrollerRect.top +
+          scroller.scrollTop -
+          scroller.clientHeight / 2 +
+          activeLink.clientHeight / 2;
+
+        scroller.scrollTop = Math.max(0, centeredTop);
+        rememberScroll();
+        return;
+      }
+
+      if (Number.isFinite(scrollTop) && scrollTop > 0) {
+        scroller.scrollTop = scrollTop;
+      }
+    });
+  }, [activeVenueId, rememberScroll]);
 
   const close = useCallback(() => {
+    rememberScroll();
     setOpen(false);
     triggerRef.current?.focus();
-  }, []);
+  }, [rememberScroll]);
 
   // Esc to close + body scroll lock while open.
   useEffect(() => {
@@ -96,10 +153,15 @@ export default function VenueTreeDrawer({
                 <X className="size-4" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-2 py-3">
+            <div
+              ref={scrollerRef}
+              onScroll={handleScroll}
+              className="flex-1 overflow-y-auto px-2 py-3"
+            >
               <VenueTree
                 locale={locale}
                 activeVenueId={activeVenueId}
+                onReady={restoreScroll}
                 onSelect={() => close()}
               />
             </div>
