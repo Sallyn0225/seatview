@@ -55,6 +55,25 @@ export default function VenueTreeDrawer({
     if (!scroller) return;
 
     restoringScrollRef.current = true;
+
+    // Tie the guard reset to whichever fires first: the programmatic scroll
+    // event from `scroller.scrollTop = X`, or a RAF fallback for the case
+    // where the assignment doesn't actually change the value (browser elides
+    // the event). Safari/under-load can deliver the scroll event AFTER a
+    // bare RAF callback, which would let `handleScroll` flip
+    // `userScrolledRef` even though the user never touched the drawer.
+    const finishRestoring = () => {
+      let done = false;
+      const clear = () => {
+        if (done) return;
+        done = true;
+        scroller.removeEventListener("scroll", clear);
+        restoringScrollRef.current = false;
+      };
+      scroller.addEventListener("scroll", clear, { once: true });
+      requestAnimationFrame(clear);
+    };
+
     const rawScrollTop = readStorage(STORAGE_KEYS.treeScrollTop);
     const scrollTop = rawScrollTop ? Number.parseInt(rawScrollTop, 10) : 0;
 
@@ -64,9 +83,7 @@ export default function VenueTreeDrawer({
       scrollTop > 0
     ) {
       scroller.scrollTop = scrollTop;
-      requestAnimationFrame(() => {
-        restoringScrollRef.current = false;
-      });
+      finishRestoring();
       return;
     }
 
@@ -90,9 +107,7 @@ export default function VenueTreeDrawer({
 
       scroller.scrollTop = Math.min(Math.max(0, centeredTop), maxScrollTop);
       rememberScroll();
-      requestAnimationFrame(() => {
-        restoringScrollRef.current = false;
-      });
+      finishRestoring();
       return;
     }
 
@@ -100,9 +115,7 @@ export default function VenueTreeDrawer({
       scroller.scrollTop = scrollTop;
     }
 
-    requestAnimationFrame(() => {
-      restoringScrollRef.current = false;
-    });
+    finishRestoring();
   }, [activeVenueId, rememberScroll]);
 
   useLayoutEffect(() => {

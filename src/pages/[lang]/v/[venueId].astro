@@ -181,7 +181,7 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
                 }
 
                 const scrollTop = readTreeScrollTop();
-                if (scrollTop && scrollTop > 0) {
+                if (scrollTop !== null) {
                   treeScroller.scrollTop = scrollTop;
                   return;
                 }
@@ -191,7 +191,6 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
 
               const preferActiveVenue = consumePendingVenueMatch();
               restoreTreeScroll(preferActiveVenue);
-              requestAnimationFrame(() => restoreTreeScroll(preferActiveVenue));
 
               treeScroller.addEventListener(
                 "click",
