@@ -291,9 +291,10 @@ export async function addVote(
 }
 
 // ── Maintainer admin (R7.2) ─────────────────────────────────────────────────
-// Behind the Cloudflare Access gate (ADR-11). The admin staging list reuses the
-// SAME `listStagingVenues` read above (it already exposes `processed`); the only
-// extra operations are the two mutations below: mark processed / unprocessed
+// Behind the Cloudflare Access gate (ADR-11). The admin staging list reuses
+// `listStagingVenues` (which exposes `processed`) but with the `adminTriage`
+// sort (unprocessed-first, newest-first; issue #48); the only extra
+// operations are the two mutations below: mark processed / unprocessed
 // (R7.2 "标记已处理") and delete a suggestion (R7.2 "删除已处理的提交"). The
 // "转正式" promotion itself happens via GitHub PR, NOT here (R7.3) — the schema
 // only tracks the `processed_at` triage flag.
