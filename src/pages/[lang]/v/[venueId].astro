@@ -83,7 +83,9 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
           {/* Desktop venue tree: 280px, always-on, independent scroll. */}
           <aside
             data-venue-tree-scroll-container
+            data-active-venue-id={venue.id}
             data-ready-event={VENUE_TREE_READY_EVENT}
+            data-pending-venue-key={STORAGE_KEYS.treePendingVenue}
             data-scroll-storage-key={STORAGE_KEYS.treeScrollTop}
             class="border-border bg-card sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[280px] shrink-0 overflow-y-auto border-r px-3 py-4 lg:block"
           >
@@ -97,6 +99,142 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
               </a>
             </div>
           </aside>
+          <script is:inline>
+            const treeScroller = document.querySelector(
+              "[data-venue-tree-scroll-container]",
+            );
+
+            if (treeScroller instanceof HTMLElement) {
+              const activeVenueId = treeScroller.dataset.activeVenueId;
+              const pendingVenueKey = treeScroller.dataset.pendingVenueKey;
+              const treeScrollTopKey = treeScroller.dataset.scrollStorageKey;
+              const treeReadyEvent = treeScroller.dataset.readyEvent;
+
+              const readTreeScrollTop = () => {
+                if (!treeScrollTopKey) return null;
+                try {
+                  const rawScrollTop = localStorage.getItem(treeScrollTopKey);
+                  const scrollTop = rawScrollTop
+                    ? Number.parseInt(rawScrollTop, 10)
+                    : 0;
+                  return Number.isFinite(scrollTop)
+                    ? Math.max(0, scrollTop)
+                    : null;
+                } catch (_) {
+                  return null;
+                }
+              };
+
+              const rememberTreeScroll = () => {
+                if (!treeScrollTopKey) return;
+                try {
+                  localStorage.setItem(
+                    treeScrollTopKey,
+                    String(treeScroller.scrollTop),
+                  );
+                } catch (_) {
+                  /* ignore privacy-mode errors */
+                }
+              };
+
+              const centerActiveVenue = () => {
+                const activeLink = treeScroller.querySelector(
+                  "[data-venue-tree-active-row]",
+                );
+                if (!(activeLink instanceof HTMLElement)) return false;
+
+                const scrollerRect = treeScroller.getBoundingClientRect();
+                const activeRect = activeLink.getBoundingClientRect();
+                const centeredTop =
+                  activeRect.top -
+                  scrollerRect.top +
+                  treeScroller.scrollTop -
+                  treeScroller.clientHeight / 2 +
+                  activeLink.clientHeight / 2;
+                const maxScrollTop = Math.max(
+                  0,
+                  treeScroller.scrollHeight - treeScroller.clientHeight,
+                );
+
+                treeScroller.scrollTop = Math.min(
+                  Math.max(0, centeredTop),
+                  maxScrollTop,
+                );
+                return true;
+              };
+
+              const consumePendingVenueMatch = () => {
+                if (!pendingVenueKey || !activeVenueId) return false;
+                try {
+                  const pendingVenueId = localStorage.getItem(pendingVenueKey);
+                  if (pendingVenueId) localStorage.removeItem(pendingVenueKey);
+                  return pendingVenueId === activeVenueId;
+                } catch (_) {
+                  return false;
+                }
+              };
+
+              const restoreTreeScroll = (preferActiveVenue) => {
+                if (preferActiveVenue && centerActiveVenue()) {
+                  rememberTreeScroll();
+                  return;
+                }
+
+                const scrollTop = readTreeScrollTop();
+                if (scrollTop && scrollTop > 0) {
+                  treeScroller.scrollTop = scrollTop;
+                  return;
+                }
+
+                if (centerActiveVenue()) rememberTreeScroll();
+              };
+
+              const preferActiveVenue = consumePendingVenueMatch();
+              restoreTreeScroll(preferActiveVenue);
+              requestAnimationFrame(() => restoreTreeScroll(preferActiveVenue));
+
+              treeScroller.addEventListener(
+                "click",
+                (event) => {
+                  if (!pendingVenueKey) return;
+                  const target =
+                    event.target instanceof Element ? event.target : null;
+                  const link = target?.closest("[data-venue-tree-venue-id]");
+                  if (!(link instanceof HTMLElement)) return;
+
+                  const nextVenueId = link.dataset.venueTreeVenueId;
+                  if (!nextVenueId) return;
+                  try {
+                    localStorage.setItem(pendingVenueKey, nextVenueId);
+                  } catch (_) {
+                    /* ignore privacy-mode errors */
+                  }
+                  rememberTreeScroll();
+                },
+                { capture: true },
+              );
+
+              window.addEventListener("pagehide", rememberTreeScroll);
+              document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === "hidden")
+                  rememberTreeScroll();
+              });
+
+              if (treeReadyEvent) {
+                window.addEventListener(
+                  treeReadyEvent,
+                  () => {
+                    try {
+                      restoreTreeScroll(preferActiveVenue);
+                    } catch (_) {
+                      /* ignore layout/storage errors */
+                    }
+                  },
+                  { once: true },
+                );
+              }
+            }
+          </script>
 
           {/* Main column: breadcrumb → title → tabs → seatmap → upload → grid. */}
           <main class="min-w-0 flex-1">
@@ -161,61 +299,6 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
           localStorage.setItem("seatview:last-venue", lastVenueId);
         } catch (_) {
           /* ignore privacy-mode errors */
-        }
-      </script>
-      <script is:inline>
-        const treeScroller = document.querySelector(
-          "[data-venue-tree-scroll-container]",
-        );
-
-        if (treeScroller instanceof HTMLElement) {
-          const treeScrollTopKey = treeScroller.dataset.scrollStorageKey;
-          const treeReadyEvent = treeScroller.dataset.readyEvent;
-          const rememberTreeScroll = () => {
-            if (!treeScrollTopKey) return;
-            try {
-              localStorage.setItem(
-                treeScrollTopKey,
-                String(treeScroller.scrollTop),
-              );
-            } catch (_) {
-              /* ignore privacy-mode errors */
-            }
-          };
-
-          const restoreTreeScroll = () => {
-            const rawScrollTop = treeScrollTopKey
-              ? localStorage.getItem(treeScrollTopKey)
-              : null;
-            const scrollTop = rawScrollTop
-              ? Number.parseInt(rawScrollTop, 10)
-              : 0;
-
-            if (Number.isFinite(scrollTop) && scrollTop > 0) {
-              requestAnimationFrame(() => {
-                treeScroller.scrollTop = scrollTop;
-              });
-            }
-          };
-
-          window.addEventListener("pagehide", rememberTreeScroll);
-          document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "hidden") rememberTreeScroll();
-          });
-
-          if (treeReadyEvent) {
-            window.addEventListener(
-              treeReadyEvent,
-              () => {
-                try {
-                  restoreTreeScroll();
-                } catch (_) {
-                  /* ignore privacy-mode errors */
-                }
-              },
-              { once: true },
-            );
-          }
         }
       </script>
       </Fragment>

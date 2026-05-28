@@ -16,6 +16,8 @@ export const STORAGE_KEYS = {
   treeExpanded: "seatview:lang-tree-expanded",
   /** Desktop venue-tree scroll offset, preserved across venue-page reloads. */
   treeScrollTop: "seatview:venue-tree-scroll-top",
+  /** Venue id picked from the desktop tree, used to center the next page early. */
+  treePendingVenue: "seatview:venue-tree-pending-venue",
 } as const;
 
 /** SSR-safe localStorage read. Returns null on the server or on access error. */
