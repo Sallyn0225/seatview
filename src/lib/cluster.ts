@@ -11,18 +11,24 @@
 // a spatial grid (noted in frontend-libraries.md performance checkpoints).
 //
 // All magic numbers live in CLUSTER_TUNING so Q6 ("initial 75px/scale, tune
-// after seeing it") is a one-line change.
+// after seeing it") stays localized.
 
 import type { PhotoDto } from "@/lib/photos";
 
 export const CLUSTER_TUNING = {
   /**
-   * Base merge distance in image-surface pixels at scale 1. The effective
-   * surface threshold is `BASE_THRESHOLD_PX / scale²`: low zoom strongly groups
-   * close seat marks, while high zoom quickly separates them for clicking.
+   * Base merge distance in image-surface pixels at scale 1. Before the minimum
+   * floor applies, the effective surface threshold is
+   * `BASE_THRESHOLD_PX / scale²`: low zoom strongly groups close seat marks,
+   * while high zoom quickly separates them for clicking.
    */
   BASE_THRESHOLD_PX: 75,
-  /** Below this surface-pixel threshold, never shrink further. */
+  /**
+   * Floor for the first-stage threshold returned by `clusterThresholdPx`.
+   * `clusterPoints` still divides by scale before comparing image-surface
+   * distances, so at extreme zoom the effective surface threshold is
+   * `MIN_THRESHOLD_PX / scale`.
+   */
   MIN_THRESHOLD_PX: 2,
 } as const;
 
@@ -49,8 +55,9 @@ export interface Cluster {
 }
 
 /**
- * Compute the first-stage merge threshold for a given zoom scale. `clusterPoints`
- * divides this by scale again to compare image-surface distances.
+ * Compute the first-stage merge threshold for a given zoom scale. This value is
+ * floored by `MIN_THRESHOLD_PX`; `clusterPoints` divides it by scale again to
+ * compare image-surface distances.
  */
 export function clusterThresholdPx(scale: number): number {
   const safeScale = scale > 0 ? scale : 1;
