@@ -15,6 +15,8 @@
 import imageCompression from "browser-image-compression";
 import { isHeic, heicToBlob } from "./heic-decode";
 
+export { HeicImageTooLargeError } from "./heic-decode";
+
 /** R5 target: ~500KB. */
 const MAX_SIZE_MB = 0.5;
 /** R5.2: long edge cap. */

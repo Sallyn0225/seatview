@@ -11,6 +11,18 @@ export function isHeic(file: File): boolean {
   return ext === "heic" || ext === "heif";
 }
 
+/**
+ * Thrown when a source HEIC exceeds the safe decode caps. Distinct from a
+ * generic decode failure so the UI can route it to a size-specific message
+ * ("use a smaller image") instead of the generic "try another format".
+ */
+export class HeicImageTooLargeError extends Error {
+  constructor(message = "HEIC image is too large to decode safely") {
+    super(message);
+    this.name = "HeicImageTooLargeError";
+  }
+}
+
 /** Output dimension cap for browser canvas conversion. */
 const MAX_OUTPUT_DIMENSION = 4096;
 const MAX_SOURCE_DIMENSION = 16384;
@@ -35,7 +47,7 @@ export function assertSafeHeicSourceDimensions(
     height > MAX_SOURCE_DIMENSION ||
     width * height > MAX_SOURCE_PIXELS
   ) {
-    throw new Error("HEIC image is too large to decode safely");
+    throw new HeicImageTooLargeError();
   }
 }
 
@@ -118,10 +130,21 @@ export async function heicToBlob(
           srcW,
           srcH,
         );
-        // If we need to resize, drawImage handles the scaling.
+        // If we need to resize, downscale during decode via createImageBitmap's
+        // resize options. This avoids materializing a SECOND full-resolution
+        // bitmap (the full-res RGBA buffer above is already unavoidable —
+        // libheif decodes at native resolution), keeping peak memory near one
+        // source buffer instead of two on large phone HEICs.
         if (width !== srcW || height !== srcH) {
-          createImageBitmap(imageData).then(
+          createImageBitmap(imageData, {
+            resizeWidth: width,
+            resizeHeight: height,
+            resizeQuality: "high",
+          }).then(
             (bmp) => {
+              // Keep the explicit destination size: if a browser ignores the
+              // resize options above (older Safari), bmp is still full-res and
+              // this scales it down — without it, drawImage would crop instead.
               ctx.drawImage(bmp, 0, 0, width, height);
               bmp.close();
               settle(resolve);

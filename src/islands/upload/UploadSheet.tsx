@@ -28,7 +28,11 @@ import { subMapLabel } from "@/i18n";
 import type { SubMap, Venue } from "@/types";
 import type { PhotoDto } from "@/lib/photos";
 import { fillTemplate } from "@/lib/format";
-import { compressToWebp, formatBytes } from "@/lib/image-compress";
+import {
+  compressToWebp,
+  formatBytes,
+  HeicImageTooLargeError,
+} from "@/lib/image-compress";
 import { signUpload, commitUpload, UploadError } from "@/lib/upload-client";
 import { DESCRIPTION_MAX, SEAT_LABEL_MAX } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -89,7 +93,11 @@ export default function UploadSheet({
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
   const [compressing, setCompressing] = useState(false);
   const [compressProgress, setCompressProgress] = useState(0);
-  const [imageError, setImageError] = useState(false);
+  // null = no error; "failed" = generic decode/compress failure (try another
+  // format); "tooLarge" = source exceeded the size cap (use a smaller image).
+  const [imageError, setImageError] = useState<null | "failed" | "tooLarge">(
+    null,
+  );
 
   const [seatLabel, setSeatLabel] = useState("");
   const [seatError, setSeatError] = useState(false);
@@ -269,7 +277,7 @@ export default function UploadSheet({
   const compressAbortRef = useRef<AbortController | null>(null);
   const handlePickFile = useCallback(
     async (file: File) => {
-      setImageError(false);
+      setImageError(null);
       // Reset any prior image.
       if (thumbUrl) URL.revokeObjectURL(thumbUrl);
       setThumbUrl(null);
@@ -300,10 +308,14 @@ export default function UploadSheet({
         setThumbUrl(URL.createObjectURL(webp));
         setCompressing(false);
         focusStep(3);
-      } catch {
+      } catch (err) {
         if (controller.signal.aborted) return;
         setCompressing(false);
-        setImageError(true);
+        // A source that tripped the HEIC decode size cap is a size problem,
+        // not a format problem — route it to the size-specific message.
+        setImageError(
+          err instanceof HeicImageTooLargeError ? "tooLarge" : "failed",
+        );
       }
     },
     [thumbUrl, focusStep],
@@ -316,7 +328,7 @@ export default function UploadSheet({
     setImageFile(null);
     setImageBytes(0);
     setImageDims(null);
-    setImageError(false);
+    setImageError(null);
     setCompressing(false);
     setMetaConfirmed(false);
   }, [thumbUrl]);
@@ -433,7 +445,7 @@ export default function UploadSheet({
     setThumbUrl(null);
     setCompressing(false);
     setCompressProgress(0);
-    setImageError(false);
+    setImageError(null);
     setSeatLabel("");
     setSeatError(false);
     setPerfDate(null);
@@ -903,7 +915,7 @@ function Step2Body({
   t: ReturnType<typeof useLocale>["t"];
   compressing: boolean;
   progress: number;
-  error: boolean;
+  error: null | "failed" | "tooLarge";
   /** Set once an image is compressed — show it instead of the empty dropzone
    *  so re-entering step 2 (e.g. after confirmPoint) never looks reset (#30). */
   thumbUrl: string | null;
@@ -1012,7 +1024,7 @@ function Step2Body({
       </button>
       {error && (
         <div className="mt-2 text-sm" role="alert">
-          <p className="text-destructive">{t.uploadSheet.step2.failed}</p>
+          <p className="text-destructive">{t.uploadSheet.step2[error]}</p>
           <button
             type="button"
             onClick={() => {
