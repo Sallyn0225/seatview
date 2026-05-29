@@ -13,6 +13,7 @@
 // (and its Web Worker) is not in the venue page's initial bundle.
 
 import imageCompression from "browser-image-compression";
+import { isHeic, heicToBlob } from "./heic-decode";
 
 /** R5 target: ~500KB. */
 const MAX_SIZE_MB = 0.5;
@@ -80,7 +81,18 @@ export async function compressToWebp(
   onProgress?: (percent: number) => void,
   signal?: AbortSignal,
 ): Promise<CompressResult> {
-  const compressed = await imageCompression(source, {
+  // HEIC/HEIF is not supported by browser Canvas — convert via WASM first.
+  let input = source;
+  if (isHeic(source)) {
+    const blob = await heicToBlob(source, signal);
+    const baseName = source.name.replace(/\.[^./\\]+$/, "") || "photo";
+    input = new File([blob], `${baseName}.webp`, {
+      type: "image/webp",
+      lastModified: Date.now(),
+    });
+  }
+
+  const compressed = await imageCompression(input, {
     maxSizeMB: MAX_SIZE_MB,
     maxWidthOrHeight: MAX_LONG_EDGE,
     fileType: OUTPUT_TYPE,
