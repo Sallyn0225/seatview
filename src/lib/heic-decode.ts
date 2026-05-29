@@ -11,8 +11,29 @@ export function isHeic(file: File): boolean {
   return ext === "heic" || ext === "heif";
 }
 
-/** Dimension cap — canvas output is scaled down to this. */
-const MAX_DIMENSION = 4096;
+/** Output dimension cap for browser canvas conversion. */
+const MAX_OUTPUT_DIMENSION = 4096;
+const MAX_SOURCE_DIMENSION = 16384;
+const MAX_SOURCE_PIXELS = MAX_OUTPUT_DIMENSION * MAX_OUTPUT_DIMENSION;
+
+function assertSafeSourceDimensions(width: number, height: number): void {
+  if (
+    !Number.isSafeInteger(width) ||
+    !Number.isSafeInteger(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    throw new Error("HEIC decode failed: invalid image dimensions");
+  }
+
+  if (
+    width > MAX_SOURCE_DIMENSION ||
+    height > MAX_SOURCE_DIMENSION ||
+    width * height > MAX_SOURCE_PIXELS
+  ) {
+    throw new Error("HEIC image is too large to decode safely");
+  }
+}
 
 /**
  * Decode a HEIC/HEIF file via libheif-js (WASM) and return a WebP Blob.
@@ -25,80 +46,85 @@ export async function heicToBlob(
   signal?.throwIfAborted();
 
   const buffer = await file.arrayBuffer();
-  const libheif = await import("libheif-js");
+  const libheif = await import("libheif-js/wasm-bundle");
   const decoder = new libheif.HeifDecoder();
   const images = decoder.decode(buffer);
   if (!images || images.length === 0) {
     throw new Error("HEIC decode failed: no images found");
   }
   const img = images[0]!;
-  const srcW = img.get_width();
-  const srcH = img.get_height();
 
-  // Scale down if either dimension exceeds the cap (preserve aspect ratio).
-  let width = srcW;
-  let height = srcH;
-  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-    const scale = MAX_DIMENSION / Math.max(width, height);
-    width = Math.round(width * scale);
-    height = Math.round(height * scale);
-  }
+  try {
+    const srcW = img.get_width();
+    const srcH = img.get_height();
+    assertSafeSourceDimensions(srcW, srcH);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d")!;
+    // Scale down if either dimension exceeds the cap (preserve aspect ratio).
+    let width = srcW;
+    let height = srcH;
+    if (width > MAX_OUTPUT_DIMENSION || height > MAX_OUTPUT_DIMENSION) {
+      const scale = MAX_OUTPUT_DIMENSION / Math.max(width, height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
 
-  signal?.throwIfAborted();
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
 
-  // libheif-js display() fills pixelData.data in-place, then calls callback
-  // with the same object. The pre-allocation is required by the API.
-  // Allocate at the ORIGINAL dimensions — libheif decodes at full resolution,
-  // and we use createImageBitmap + drawImage to scale down afterward.
-  const pixelData = { data: new Uint8ClampedArray(srcW * srcH * 4) };
-  await new Promise<void>((resolve, reject) => {
-    signal?.addEventListener("abort", () => reject(signal.reason), {
-      once: true,
-    });
-    img.display(pixelData, (result: { data: Uint8ClampedArray } | null) => {
-      // Fallback: some libheif-js versions may return null here but fill
-      // pixelData.data directly.
-      const data = result?.data ?? pixelData.data;
-      if (!data || data.length === 0) {
-        reject(new Error("HEIC display failed"));
-        return;
-      }
-      const imageData = new ImageData(
-        data as Uint8ClampedArray<ArrayBuffer>,
-        srcW,
-        srcH,
-      );
-      // If we need to resize, drawImage handles the scaling.
-      if (width !== srcW || height !== srcH) {
-        createImageBitmap(imageData).then((bmp) => {
-          ctx.drawImage(bmp, 0, 0, width, height);
-          bmp.close();
+    signal?.throwIfAborted();
+
+    // libheif-js display() fills pixelData.data in-place, then calls callback
+    // with the same object. The pre-allocation is required by the API.
+    // Allocate at the ORIGINAL dimensions — libheif decodes at full resolution,
+    // and we use createImageBitmap + drawImage to scale down afterward.
+    const pixelData = { data: new Uint8ClampedArray(srcW * srcH * 4) };
+    await new Promise<void>((resolve, reject) => {
+      img.display(pixelData, (result: { data: Uint8ClampedArray } | null) => {
+        // Fallback: some libheif-js versions may return null here but fill
+        // pixelData.data directly.
+        const data = result?.data ?? pixelData.data;
+        if (!data || data.length === 0) {
+          reject(new Error("HEIC display failed"));
+          return;
+        }
+        const imageData = new ImageData(
+          data as Uint8ClampedArray<ArrayBuffer>,
+          srcW,
+          srcH,
+        );
+        // If we need to resize, drawImage handles the scaling.
+        if (width !== srcW || height !== srcH) {
+          createImageBitmap(imageData).then((bmp) => {
+            ctx.drawImage(bmp, 0, 0, width, height);
+            bmp.close();
+            resolve();
+          }, reject);
+        } else {
+          ctx.putImageData(imageData, 0, 0);
           resolve();
-        }, reject);
-      } else {
-        ctx.putImageData(imageData, 0, 0);
-        resolve();
-      }
+        }
+      });
     });
-  });
 
-  signal?.throwIfAborted();
+    signal?.throwIfAborted();
 
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (b) => {
-        if (b && b.size > 0) resolve(b);
-        else reject(new Error("Canvas toBlob failed"));
-      },
-      "image/webp",
-      0.92,
-    );
-  });
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => {
+          if (b && b.size > 0) resolve(b);
+          else reject(new Error("Canvas toBlob failed"));
+        },
+        "image/webp",
+        0.92,
+      );
+    });
 
-  return blob;
+    return blob;
+  } finally {
+    for (const image of images) {
+      image.free();
+    }
+  }
 }

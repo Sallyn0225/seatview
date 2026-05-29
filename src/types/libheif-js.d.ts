@@ -19,3 +19,7 @@ declare module "libheif-js" {
     decode(buffer: ArrayBuffer): HeifImage[];
   }
 }
+
+declare module "libheif-js/wasm-bundle" {
+  export * from "libheif-js";
+}
