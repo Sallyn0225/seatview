@@ -119,8 +119,12 @@ export interface Messages {
       note: string;
       /** `{percent}` → 0..100. */
       progress: string;
-      /** Oversized / unsupported file. */
+      /** Compression / decode failure (generic). */
       failed: string;
+      /** Image too large: source dimensions over the decode cap, or size over
+       *  the server limit after compression. Wording stays size/dimension
+       *  agnostic since both triggers share it. */
+      tooLarge: string;
       retry: string;
       /** Folded summary, `{size}` → human bytes. */
       summary: string;
@@ -545,7 +549,8 @@ const zh: Messages = {
       dropzone: "点击选择或拖入照片",
       note: "长边将压到 1920px，转 WebP，去 EXIF",
       progress: "压缩中... {percent}%",
-      failed: "这张图过大了，挑一张小于 10MB 的试试",
+      failed: "这张图处理不了，试试换一张或换种格式",
+      tooLarge: "这张图太大了，换一张小一点的试试",
       retry: "换一张",
       summary: "photo.webp · {size}",
     },
