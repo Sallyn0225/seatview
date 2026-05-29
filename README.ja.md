@@ -17,7 +17,50 @@
 
 公開サイト 👉 **[seat.genchi.top](https://seat.genchi.top)**
 
-[機能](#機能) · [技術スタック](#技術スタック) · [クイックスタート](#クイックスタート) · [デプロイ](#cloudflare-へのデプロイ) · [仕組み](#仕組み) · [プロジェクト構成](#プロジェクト構成) · [コントリビュート](#コントリビュート)
+[プレビュー](#プレビュー) · [機能](#機能) · [技術スタック](#技術スタック) · [クイックスタート](#クイックスタート) · [デプロイ](#cloudflare-へのデプロイ) · [仕組み](#仕組み) · [プロジェクト構成](#プロジェクト構成) · [コントリビュート](#コントリビュート)
+
+## プレビュー
+
+> 以下のスクリーンショットは公開サイト **[seat.genchi.top](https://seat.genchi.top)**（簡体字中国語 · ライトテーマ）から取得したものです。
+
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="SeatView トップページ" width="88%">
+</p>
+
+コア体験はたった二段階——**座席表で席をタップ → その席のリアルな視界を見る**：
+
+<table>
+  <tr>
+    <th width="50%">① 座席表のマーカー</th>
+    <th width="50%">② リアルビュー Lightbox</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/seatmap.png" alt="会場の座席表とマーカー" width="100%"></td>
+    <td><img src="docs/screenshots/lightbox.jpg" alt="座席のリアルビュー Lightbox" width="100%"></td>
+  </tr>
+  <tr>
+    <td>会場公式の座席表（複数レイヤー / 複数エリアの切り替え対応）上で、他ユーザーがマークした座席ポイントを表示。隣接するポイントは自動で集約し件数を表示します。</td>
+    <td>マーカーやサムネイルをクリックすると、その席の実写 + 座席番号 / テキスト説明を Lightbox で表示します。</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <th width="40%">③ 会場の全投稿（ウォーターフォール）</th>
+    <th width="32%">見たい会場（クラウドソーシング一時置き場）</th>
+    <th width="28%">ダークテーマ</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/album.jpg" alt="会場投稿のウォーターフォール" width="100%"></td>
+    <td><img src="docs/screenshots/staging.png" alt="見たい会場の一時置き場" width="100%"></td>
+    <td><img src="docs/screenshots/seatmap-dark.png" alt="ダークテーマの座席表" width="100%"></td>
+  </tr>
+  <tr>
+    <td>座席表の下に、その会場のリアルビュー投稿の全件を masonry ウォーターフォールで表示します。</td>
+    <td>見たい会場がない？名前を書けば、他のユーザーが +1 で賛同できます。</td>
+    <td>ライト / ダーク / システム追従の三段階テーマ切り替え。</td>
+  </tr>
+</table>
 
 ## 機能
 
