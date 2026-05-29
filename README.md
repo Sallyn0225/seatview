@@ -17,7 +17,50 @@
 
 线上站点 👉 **[seat.genchi.top](https://seat.genchi.top)**
 
-[功能特性](#功能特性) · [技术栈](#技术栈) · [快速开始](#快速开始) · [部署](#部署到-cloudflare) · [工作原理](#工作原理) · [项目结构](#项目结构) · [贡献](#贡献)
+[预览](#预览) · [功能特性](#功能特性) · [技术栈](#技术栈) · [快速开始](#快速开始) · [部署](#部署到-cloudflare) · [工作原理](#工作原理) · [项目结构](#项目结构) · [贡献](#贡献)
+
+## 预览
+
+> 以下截图取自线上站点 **[seat.genchi.top](https://seat.genchi.top)**（简体中文 · 亮色主题）。
+
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="SeatView 首页" width="88%">
+</p>
+
+核心体验只有两步——**在坐席图上点一个座位 → 看那个座位实拍的现场**：
+
+<table>
+  <tr>
+    <th width="50%">① 坐席图标注点</th>
+    <th width="50%">② 真实视角 Lightbox</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/seatmap.png" alt="场馆坐席图与标注点" width="100%"></td>
+    <td><img src="docs/screenshots/lightbox.jpg" alt="座位真实视角 Lightbox" width="100%"></td>
+  </tr>
+  <tr>
+    <td>在场馆官方坐席图（支持多层 / 多分区切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。</td>
+    <td>点标注点或缩略图，在 Lightbox 里查看该座位的实拍现场 + 座位号 / 文字描述。</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <th width="40%">③ 场馆全部投稿（瀑布流）</th>
+    <th width="32%">想看的场馆（众包暂存区）</th>
+    <th width="28%">暗色主题</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/album.jpg" alt="场馆投稿瀑布流" width="100%"></td>
+    <td><img src="docs/screenshots/staging.png" alt="想看的场馆暂存区" width="100%"></td>
+    <td><img src="docs/screenshots/seatmap-dark.png" alt="暗色主题坐席图" width="100%"></td>
+  </tr>
+  <tr>
+    <td>坐席图下方以 masonry 瀑布流展示该场馆的全部真实视角投稿。</td>
+    <td>没有想看的场馆？写下名字，其他人可 +1 附议。</td>
+    <td>亮 / 暗 / 跟随系统三档主题切换。</td>
+  </tr>
+</table>
 
 ## 功能特性
 
