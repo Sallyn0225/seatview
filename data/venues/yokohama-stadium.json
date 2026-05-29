@@ -1,0 +1,21 @@
+{
+  "id": "yokohama-stadium",
+  "name_zh": "横滨体育场",
+  "name_jp": "横浜スタジアム",
+  "name_romaji": "Yokohama Stadium",
+  "prefecture": "kanagawa",
+  "city": "横浜市中区",
+  "aliases": [
+    "ハマスタ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/yokohama-stadium/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
