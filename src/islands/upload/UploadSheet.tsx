@@ -367,7 +367,7 @@ export default function UploadSheet({
         case "network":
           return { msg: t.uploadSheet.step5.networkError, retryable: true };
         case "image_too_large":
-          return { msg: t.uploadSheet.step2.failed, retryable: false };
+          return { msg: t.uploadSheet.step2.tooLarge, retryable: false };
         default:
           return { msg: t.uploadSheet.step5.serverError, retryable: true };
       }

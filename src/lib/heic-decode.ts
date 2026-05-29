@@ -11,7 +11,7 @@ export function isHeic(file: File): boolean {
   return ext === "heic" || ext === "heif";
 }
 
-/** Dimension cap to prevent OOM from maliciously large HEIC files. */
+/** Dimension cap — canvas output is scaled down to this. */
 const MAX_DIMENSION = 4096;
 
 /**
@@ -53,6 +53,8 @@ export async function heicToBlob(
 
   // libheif-js display() fills pixelData.data in-place, then calls callback
   // with the same object. The pre-allocation is required by the API.
+  // Allocate at the ORIGINAL dimensions — libheif decodes at full resolution,
+  // and we use createImageBitmap + drawImage to scale down afterward.
   const pixelData = { data: new Uint8ClampedArray(srcW * srcH * 4) };
   await new Promise<void>((resolve, reject) => {
     signal?.addEventListener("abort", () => reject(signal.reason), {
