@@ -14,9 +14,13 @@ export function isHeic(file: File): boolean {
 /** Output dimension cap for browser canvas conversion. */
 const MAX_OUTPUT_DIMENSION = 4096;
 const MAX_SOURCE_DIMENSION = 16384;
-const MAX_SOURCE_PIXELS = MAX_OUTPUT_DIMENSION * MAX_OUTPUT_DIMENSION;
+/** Source pixel cap before RGBA allocation; must still allow 48MP phone HEICs. */
+const MAX_SOURCE_PIXELS = 64_000_000;
 
-function assertSafeSourceDimensions(width: number, height: number): void {
+export function assertSafeHeicSourceDimensions(
+  width: number,
+  height: number,
+): void {
   if (
     !Number.isSafeInteger(width) ||
     !Number.isSafeInteger(height) ||
@@ -57,7 +61,7 @@ export async function heicToBlob(
   try {
     const srcW = img.get_width();
     const srcH = img.get_height();
-    assertSafeSourceDimensions(srcW, srcH);
+    assertSafeHeicSourceDimensions(srcW, srcH);
 
     // Scale down if either dimension exceeds the cap (preserve aspect ratio).
     let width = srcW;
