@@ -85,12 +85,28 @@ export async function heicToBlob(
     // and we use createImageBitmap + drawImage to scale down afterward.
     const pixelData = { data: new Uint8ClampedArray(srcW * srcH * 4) };
     await new Promise<void>((resolve, reject) => {
+      // display() decodes at full resolution and can take several seconds for a
+      // 48MP source. Honor abort during that window instead of only before/after
+      // (the throwIfAborted on either side would otherwise let a cancelled
+      // decode run to completion before bailing).
+      const onAbort = () =>
+        reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
+      if (signal?.aborted) {
+        onAbort();
+        return;
+      }
+      signal?.addEventListener("abort", onAbort, { once: true });
+      const settle = (run: () => void) => {
+        signal?.removeEventListener("abort", onAbort);
+        run();
+      };
+
       img.display(pixelData, (result: { data: Uint8ClampedArray } | null) => {
         // Fallback: some libheif-js versions may return null here but fill
         // pixelData.data directly.
         const data = result?.data ?? pixelData.data;
         if (!data || data.length === 0) {
-          reject(new Error("HEIC display failed"));
+          settle(() => reject(new Error("HEIC display failed")));
           return;
         }
         const imageData = new ImageData(
@@ -100,14 +116,17 @@ export async function heicToBlob(
         );
         // If we need to resize, drawImage handles the scaling.
         if (width !== srcW || height !== srcH) {
-          createImageBitmap(imageData).then((bmp) => {
-            ctx.drawImage(bmp, 0, 0, width, height);
-            bmp.close();
-            resolve();
-          }, reject);
+          createImageBitmap(imageData).then(
+            (bmp) => {
+              ctx.drawImage(bmp, 0, 0, width, height);
+              bmp.close();
+              settle(resolve);
+            },
+            (err) => settle(() => reject(err)),
+          );
         } else {
           ctx.putImageData(imageData, 0, 0);
-          resolve();
+          settle(resolve);
         }
       });
     });

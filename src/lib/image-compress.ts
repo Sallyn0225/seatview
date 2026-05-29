@@ -82,11 +82,13 @@ export async function compressToWebp(
   signal?: AbortSignal,
 ): Promise<CompressResult> {
   // HEIC/HEIF is not supported by browser Canvas — convert via WASM first.
+  // The intermediate name is irrelevant: the final `.webp` name below is
+  // derived from `source.name`, and imageCompression keys off the explicit
+  // `fileType` option, not the input extension.
   let input = source;
   if (isHeic(source)) {
     const blob = await heicToBlob(source, signal);
-    const baseName = source.name.replace(/\.[^./\\]+$/, "") || "photo";
-    input = new File([blob], `${baseName}.webp`, {
+    input = new File([blob], "source.webp", {
       type: "image/webp",
       lastModified: Date.now(),
     });
