@@ -89,12 +89,14 @@ export async function heicToBlob(
     assertSafeHeicSourceDimensions(srcW, srcH);
 
     // Scale down if either dimension exceeds the cap (preserve aspect ratio).
+    const needsResize =
+      srcW > MAX_OUTPUT_DIMENSION || srcH > MAX_OUTPUT_DIMENSION;
     let width = srcW;
     let height = srcH;
-    if (width > MAX_OUTPUT_DIMENSION || height > MAX_OUTPUT_DIMENSION) {
-      const scale = MAX_OUTPUT_DIMENSION / Math.max(width, height);
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
+    if (needsResize) {
+      const scale = MAX_OUTPUT_DIMENSION / Math.max(srcW, srcH);
+      width = Math.round(srcW * scale);
+      height = Math.round(srcH * scale);
     }
 
     const canvas = document.createElement("canvas");
@@ -144,7 +146,7 @@ export async function heicToBlob(
         // bitmap (the full-res RGBA buffer above is already unavoidable —
         // libheif decodes at native resolution), keeping peak memory near one
         // source buffer instead of two on large phone HEICs.
-        if (width !== srcW || height !== srcH) {
+        if (needsResize) {
           createImageBitmap(imageData, {
             resizeWidth: width,
             resizeHeight: height,
