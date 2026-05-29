@@ -49,8 +49,12 @@ export async function heicToBlob(
 ): Promise<Blob> {
   signal?.throwIfAborted();
 
-  const buffer = await file.arrayBuffer();
-  const libheif = await import("libheif-js/wasm-bundle");
+  // Reading the file and loading the (large) WASM bundle are independent —
+  // run them concurrently so the module download/parse overlaps the file read.
+  const [buffer, libheif] = await Promise.all([
+    file.arrayBuffer(),
+    import("libheif-js/wasm-bundle"),
+  ]);
   const decoder = new libheif.HeifDecoder();
   const images = decoder.decode(buffer);
   if (!images || images.length === 0) {
