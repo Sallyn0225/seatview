@@ -107,7 +107,8 @@ const ko: Messages = {
       dropzone: "클릭해서 고르거나 사진을 끌어다 놓으세요",
       note: "긴 변을 1920px로 압축, WebP로 변환, EXIF 제거",
       progress: "압축 중... {percent}%",
-      failed: "이 이미지는 처리할 수 없어요. 다른 파일이나 형식으로 다시 시도해 주세요.",
+      failed:
+        "이 이미지는 처리할 수 없어요. 다른 파일이나 형식으로 다시 시도해 주세요.",
       tooLarge: "압축 후에도 3MB를 초과해요. 더 작은 이미지를 골라 주세요.",
       retry: "다른 파일",
       summary: "photo.webp · {size}",
