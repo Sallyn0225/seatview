@@ -66,7 +66,11 @@ export async function heicToBlob(
         reject(new Error("HEIC display failed"));
         return;
       }
-      const imageData = new ImageData(data, srcW, srcH);
+      const imageData = new ImageData(
+        data as Uint8ClampedArray<ArrayBuffer>,
+        srcW,
+        srcH,
+      );
       // If we need to resize, drawImage handles the scaling.
       if (width !== srcW || height !== srcH) {
         createImageBitmap(imageData).then((bmp) => {
