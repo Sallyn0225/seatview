@@ -17,7 +17,50 @@ Both browsing and uploading require **no registration**; abuse is prevented with
 
 Live site 👉 **[seat.genchi.top](https://seat.genchi.top)**
 
-[Features](#features) · [Tech Stack](#tech-stack) · [Quick Start](#quick-start) · [Deploy](#deploy-to-cloudflare) · [How It Works](#how-it-works) · [Project Structure](#project-structure) · [Contributing](#contributing)
+[Preview](#preview) · [Features](#features) · [Tech Stack](#tech-stack) · [Quick Start](#quick-start) · [Deploy](#deploy-to-cloudflare) · [How It Works](#how-it-works) · [Project Structure](#project-structure) · [Contributing](#contributing)
+
+## Preview
+
+> Screenshots from the live site **[seat.genchi.top](https://seat.genchi.top)** (Simplified Chinese · light theme).
+
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="SeatView home page" width="88%">
+</p>
+
+The core experience is just two steps — **tap a seat on the seating chart → see the real view from that seat**:
+
+<table>
+  <tr>
+    <th width="50%">① Seating-chart markers</th>
+    <th width="50%">② Real-view Lightbox</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/seatmap.png" alt="Venue seating chart with markers" width="100%"></td>
+    <td><img src="docs/screenshots/lightbox.jpg" alt="Seat real-view Lightbox" width="100%"></td>
+  </tr>
+  <tr>
+    <td>View seat markers placed by other users on the venue's official seating chart (with multi-layer / multi-zone switching); adjacent markers auto-cluster and show a count.</td>
+    <td>Click a marker or thumbnail to see that seat's actual photo + seat number / text description in the Lightbox.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <th width="40%">③ All submissions for a venue (masonry)</th>
+    <th width="32%">Venues you want to see (crowdsourced staging)</th>
+    <th width="28%">Dark theme</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/album.jpg" alt="Venue submission masonry feed" width="100%"></td>
+    <td><img src="docs/screenshots/staging.png" alt="Venues you want to see staging area" width="100%"></td>
+    <td><img src="docs/screenshots/seatmap-dark.png" alt="Dark-theme seating chart" width="100%"></td>
+  </tr>
+  <tr>
+    <td>Below the seating chart, a masonry feed shows every real-view submission for that venue.</td>
+    <td>Don't see the venue you want? Write down its name and others can +1 to second it.</td>
+    <td>Light / dark / follow-system theme switching.</td>
+  </tr>
+</table>
 
 ## Features
 

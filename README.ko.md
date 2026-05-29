@@ -17,7 +17,50 @@
 
 라이브 사이트 👉 **[seat.genchi.top](https://seat.genchi.top)**
 
-[기능](#기능) · [기술 스택](#기술-스택) · [빠른 시작](#빠른-시작) · [배포](#cloudflare-배포) · [작동 원리](#작동-원리) · [프로젝트 구조](#프로젝트-구조) · [기여](#기여)
+[미리보기](#미리보기) · [기능](#기능) · [기술 스택](#기술-스택) · [빠른 시작](#빠른-시작) · [배포](#cloudflare-배포) · [작동 원리](#작동-원리) · [프로젝트 구조](#프로젝트-구조) · [기여](#기여)
+
+## 미리보기
+
+> 아래 스크린샷은 라이브 사이트 **[seat.genchi.top](https://seat.genchi.top)**(간체 중국어 · 라이트 테마)에서 가져온 것입니다.
+
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="SeatView 홈페이지" width="88%">
+</p>
+
+핵심 경험은 단 두 단계——**좌석도에서 좌석을 탭 → 그 좌석의 실제 시야 확인**:
+
+<table>
+  <tr>
+    <th width="50%">① 좌석도 마커</th>
+    <th width="50%">② 실제 시야 Lightbox</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/seatmap.png" alt="공연장 좌석도와 마커" width="100%"></td>
+    <td><img src="docs/screenshots/lightbox.jpg" alt="좌석 실제 시야 Lightbox" width="100%"></td>
+  </tr>
+  <tr>
+    <td>공연장 공식 좌석도(다중 레이어 / 다중 구역 전환 지원) 위에서 다른 사용자가 표시한 좌석 포인트를 확인하고, 인접한 포인트는 자동으로 묶여 개수가 표시됩니다.</td>
+    <td>마커나 썸네일을 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 Lightbox 에서 볼 수 있습니다.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <th width="40%">③ 공연장의 모든 투고(워터폴)</th>
+    <th width="32%">보고 싶은 공연장(크라우드소싱 임시 보관)</th>
+    <th width="28%">다크 테마</th>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/album.jpg" alt="공연장 투고 워터폴" width="100%"></td>
+    <td><img src="docs/screenshots/staging.png" alt="보고 싶은 공연장 임시 보관 영역" width="100%"></td>
+    <td><img src="docs/screenshots/seatmap-dark.png" alt="다크 테마 좌석도" width="100%"></td>
+  </tr>
+  <tr>
+    <td>좌석도 아래에 해당 공연장의 모든 실제 시야 투고를 masonry 워터폴로 표시합니다.</td>
+    <td>보고 싶은 공연장이 없나요? 이름을 적으면 다른 사람들이 +1 로 찬성할 수 있습니다.</td>
+    <td>라이트 / 다크 / 시스템 따름 3단계 테마 전환.</td>
+  </tr>
+</table>
 
 ## 기능
 
