@@ -110,7 +110,7 @@ const en: Messages = {
       note: "Long edge compressed to 1920px, converted to WebP, EXIF stripped",
       progress: "Compressing... {percent}%",
       failed: "This image could not be processed. Try another file or format.",
-      tooLarge: "Still exceeds 3 MB after compression. Try a smaller image.",
+      tooLarge: "This image is too large. Try a smaller one.",
       retry: "Choose another",
       summary: "photo.webp · {size}",
     },

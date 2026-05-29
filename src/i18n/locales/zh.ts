@@ -121,7 +121,9 @@ export interface Messages {
       progress: string;
       /** Compression / decode failure (generic). */
       failed: string;
-      /** Server rejected: file exceeds size limit after compression. */
+      /** Image too large: source dimensions over the decode cap, or size over
+       *  the server limit after compression. Wording stays size/dimension
+       *  agnostic since both triggers share it. */
       tooLarge: string;
       retry: string;
       /** Folded summary, `{size}` → human bytes. */
@@ -548,7 +550,7 @@ const zh: Messages = {
       note: "长边将压到 1920px，转 WebP，去 EXIF",
       progress: "压缩中... {percent}%",
       failed: "这张图处理不了，试试换一张或换种格式",
-      tooLarge: "压缩后仍然超过 3MB，换一张小一点的试试",
+      tooLarge: "这张图太大了，换一张小一点的试试",
       retry: "换一张",
       summary: "photo.webp · {size}",
     },

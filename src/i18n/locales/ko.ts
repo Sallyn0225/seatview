@@ -109,7 +109,7 @@ const ko: Messages = {
       progress: "압축 중... {percent}%",
       failed:
         "이 이미지는 처리할 수 없어요. 다른 파일이나 형식으로 다시 시도해 주세요.",
-      tooLarge: "압축 후에도 3MB를 초과해요. 더 작은 이미지를 골라 주세요.",
+      tooLarge: "이미지가 너무 커요. 더 작은 이미지를 골라 주세요.",
       retry: "다른 파일",
       summary: "photo.webp · {size}",
     },

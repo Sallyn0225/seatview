@@ -105,7 +105,7 @@ const ja: Messages = {
       progress: "圧縮中... {percent}%",
       failed:
         "この画像は処理できません。別のファイルまたは形式をお試しください",
-      tooLarge: "圧縮後も 3MB を超えています。より小さい画像をお選びください",
+      tooLarge: "画像が大きすぎます。より小さい画像をお選びください",
       retry: "別のファイル",
       summary: "photo.webp · {size}",
     },

@@ -51,6 +51,15 @@ export function assertSafeHeicSourceDimensions(
   }
 }
 
+// libheif-js' HeifDecoder has no free(): the native heif_context it allocates
+// (heif_context_alloc, in the WASM heap) is only released at the START of the
+// SAME decoder's next decode() — JS GC of the wrapper never frees it. A fresh
+// decoder per call therefore leaks one context per HEIC for the page lifetime.
+// Uploads are strictly sequential (one file at a time), so a shared singleton
+// is safe and bounds the leak to at most one outstanding context: every decode
+// frees the previous one.
+let sharedDecoder: import("libheif-js").HeifDecoder | null = null;
+
 /**
  * Decode a HEIC/HEIF file via libheif-js (WASM) and return a WebP Blob.
  * Runs entirely in the browser — no server round-trip.
@@ -67,8 +76,8 @@ export async function heicToBlob(
     file.arrayBuffer(),
     import("libheif-js/wasm-bundle"),
   ]);
-  const decoder = new libheif.HeifDecoder();
-  const images = decoder.decode(buffer);
+  sharedDecoder ??= new libheif.HeifDecoder();
+  const images = sharedDecoder.decode(buffer);
   if (!images || images.length === 0) {
     throw new Error("HEIC decode failed: no images found");
   }
