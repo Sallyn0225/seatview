@@ -1,0 +1,21 @@
+{
+  "id": "fukuoka-international-center",
+  "name_zh": "福冈国际中心",
+  "name_jp": "福岡国際センター",
+  "name_romaji": "Fukuoka International Center",
+  "prefecture": "fukuoka",
+  "city": "福岡市博多区",
+  "aliases": [
+    "Fukuoka Kokusai Center"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/fukuoka-international-center/default.webp",
+      "width": 1707,
+      "height": 2048
+    }
+  ]
+}
