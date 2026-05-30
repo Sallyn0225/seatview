@@ -1,0 +1,23 @@
+{
+  "id": "mori-unyu-arena",
+  "name_zh": "盛运输体育馆",
+  "name_jp": "盛運輸アリーナ",
+  "name_romaji": "Mori Unyu Arena",
+  "prefecture": "aomori",
+  "city": "青森市",
+  "aliases": [
+    "青森県営スケート場",
+    "Aomori Prefectural Skating Rink",
+    "盛アリ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/mori-unyu-arena/default.webp",
+      "width": 2048,
+      "height": 1722
+    }
+  ]
+}
