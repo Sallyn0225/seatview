@@ -1,0 +1,31 @@
+{
+  "id": "miyagi-sekisui-heim-super-arena",
+  "name_zh": "宫城积水海姆超级竞技场",
+  "name_jp": "宮城セキスイハイムスーパーアリーナ",
+  "name_romaji": "Miyagi Sekisui Heim Super Arena",
+  "prefecture": "miyagi",
+  "city": "宮城郡利府町",
+  "aliases": [
+    "セキスイハイムスーパーアリーナ",
+    "グランディ・21",
+    "宮城県総合体育館"
+  ],
+  "subMaps": [
+    {
+      "id": "mode-1",
+      "label_zh": "主场馆",
+      "label_jp": "メインアリーナ",
+      "imageUrl": "/seatmaps/miyagi-sekisui-heim-super-arena/mode-1.webp",
+      "width": 1761,
+      "height": 2048
+    },
+    {
+      "id": "mode-2",
+      "label_zh": "Arena 席",
+      "label_jp": "アリーナ席",
+      "imageUrl": "/seatmaps/miyagi-sekisui-heim-super-arena/mode-2.webp",
+      "width": 1831,
+      "height": 2048
+    }
+  ]
+}
