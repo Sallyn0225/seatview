@@ -1,0 +1,22 @@
+{
+  "id": "line-cube-shibuya",
+  "name_zh": "LINE CUBE SHIBUYA",
+  "name_jp": "LINE CUBE SHIBUYA",
+  "name_romaji": "LINE CUBE SHIBUYA",
+  "prefecture": "tokyo",
+  "city": "渋谷区",
+  "aliases": [
+    "渋谷公会堂",
+    "Shibuya Public Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/line-cube-shibuya/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
