@@ -1,0 +1,22 @@
+{
+  "id": "intex-osaka",
+  "name_zh": "Intex 大阪",
+  "name_jp": "インテックス大阪",
+  "name_romaji": "Intex Osaka",
+  "prefecture": "osaka",
+  "city": "大阪市住之江区",
+  "aliases": [
+    "大阪国際見本市会場",
+    "大阪国际展览中心"
+  ],
+  "subMaps": [
+    {
+      "id": "hall-5",
+      "label_zh": "5号馆",
+      "label_jp": "5号館",
+      "imageUrl": "/seatmaps/intex-osaka/hall-5.webp",
+      "width": 2048,
+      "height": 1782
+    }
+  ]
+}
