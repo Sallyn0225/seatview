@@ -1,0 +1,22 @@
+{
+  "id": "cool-japan-park-osaka",
+  "name_zh": "Cool Japan Park 大阪",
+  "name_jp": "クールジャパンパーク大阪",
+  "name_romaji": "Cool Japan Park Osaka",
+  "prefecture": "osaka",
+  "city": "大阪市中央区",
+  "aliases": [
+    "COOL JAPAN PARK OSAKA",
+    "大阪城公園劇場"
+  ],
+  "subMaps": [
+    {
+      "id": "ww-hall",
+      "label_zh": "WW Hall",
+      "label_jp": "WWホール",
+      "imageUrl": "/seatmaps/cool-japan-park-osaka/ww-hall.webp",
+      "width": 1472,
+      "height": 2048
+    }
+  ]
+}
