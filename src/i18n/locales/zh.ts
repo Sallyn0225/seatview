@@ -557,7 +557,7 @@ const zh: Messages = {
     step3: {
       title: "3. 元数据",
       seatLabel: "座位号",
-      seatPlaceholder: "例: 1F E-23",
+      seatPlaceholder: "例: 1F E 20~25号（保护账号隐私）",
       seatRequired: "座位号是必填的。",
       performanceDate: "演出日期 任意",
       datePlaceholder: "YYYY-MM-DD",

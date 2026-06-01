@@ -116,7 +116,7 @@ const ko: Messages = {
     step3: {
       title: "3. 세부 정보",
       seatLabel: "좌석 번호",
-      seatPlaceholder: "예: 1F E-23",
+      seatPlaceholder: "예: 1F E 20~25번 (개인정보 보호)",
       seatRequired: "좌석 번호는 필수예요.",
       performanceDate: "공연 날짜 선택",
       datePlaceholder: "YYYY-MM-DD",
