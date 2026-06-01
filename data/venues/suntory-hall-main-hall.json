@@ -1,0 +1,25 @@
+{
+  "id": "suntory-hall-main-hall",
+  "name_zh": "三得利厅 大厅",
+  "name_jp": "サントリーホール 大ホール",
+  "name_romaji": "Suntory Hall Main Hall",
+  "prefecture": "tokyo",
+  "city": "港区",
+  "aliases": [
+    "三得利音乐厅",
+    "三得利音樂廳",
+    "Suntory Hall",
+    "サントリーホール",
+    "サントリーホール大ホール"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/suntory-hall-main-hall/default.webp",
+      "width": 1482,
+      "height": 2048
+    }
+  ]
+}
