@@ -34,6 +34,9 @@ import LoadFailure from "@/components/LoadFailure";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 6;
+// react-zoom-pan-pinch v4 removed v3's separate wheel.smoothStep; 0.001 keeps
+// one mouse-wheel notch near the old gradual zoom while leaving buttons intact.
+const WHEEL_ZOOM_STEP = 0.001;
 const FRAME_FALLBACK_WIDTH = 1.5;
 const FRAME_FALLBACK_HEIGHT = 1;
 /** Zoom multiplier applied when a cluster is clicked (shape §7: ×2). */
@@ -218,7 +221,7 @@ export default function Seatmap({
           centerOnInit
           limitToBounds
           doubleClick={{ disabled: true }}
-          wheel={{ step: 0.15 }}
+          wheel={{ step: WHEEL_ZOOM_STEP }}
           panning={{ velocityDisabled: reducedMotion }}
           onTransform={(_ref, state) => setScale(state.scale)}
           onPanningStart={() => {
