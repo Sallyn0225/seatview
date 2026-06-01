@@ -90,7 +90,7 @@ The core experience is just two steps — **tap a seat on the seating chart → 
 | Image processing | `browser-image-compression` | long edge 1920px / WebP / EXIF stripped / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | Masonry | `react-photo-album` (masonry) | |
-| Seating-chart zoom | **`react-zoom-pan-pinch` v3.7** | programmatic zoom via `setTransform` / `resetTransform` |
+| Seating-chart zoom | **`react-zoom-pan-pinch` v4.0** | programmatic zoom via `setTransform` / `resetTransform` |
 | i18n | **Astro built-in i18n routing** | `/zh` `/ja` `/en` `/ko` four prefixes, bare root 302 |
 | ULID | **self-implemented** (`src/server/id.ts`) | not the `ulid` package (its `detectPrng()` throws on import under workerd) |
 
@@ -227,7 +227,7 @@ Soft delete: when a maintainer deletes a photo in `/admin`, D1 sets `deleted_at`
 2. **Uploads are "direct binding writes"** (the client sends the compressed WebP to the Worker, which writes to R2 via the `BUCKET` binding), with a two-stage sign + commit HMAC ticket preventing forgery — **not** client-side direct upload to R2 via presigned URLs.
 3. **Astro v6** reads bindings via `import { env } from "cloudflare:workers"`, not `Astro.locals.runtime.env`.
 4. **Tailwind v4 Vite plugin**, no standalone config, tokens in `src/styles/global.css`.
-5. **`react-zoom-pan-pinch` v3.7**, using `setTransform` / `resetTransform` (v3.7 has no `zoomTo` like v4).
+5. **`react-zoom-pan-pinch` v4.0**, still using `setTransform` / `resetTransform` to keep cluster-centering math explicit.
 6. **ULID self-implemented** (`crypto.getRandomValues`), not the `ulid` package.
 7. The R2 binding is named **`BUCKET`**, the rate-limit KV is **`RATE_LIMIT`**, plus a **`SESSION`** KV (required by the adapter's auto-enabled session API; SeatView has no account system and doesn't actually write sessions, but the binding must resolve); admin uses **Cloudflare Access** (the `Cf-Access-Authenticated-User-Email` header), mocked locally via `DEV_ADMIN_EMAIL` in `.dev.vars`.
 

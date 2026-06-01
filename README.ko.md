@@ -90,7 +90,7 @@
 | 이미지 처리 | `browser-image-compression` | 긴 변 1920px / WebP / EXIF 제거 / 약 500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | 워터폴 | `react-photo-album`(masonry) | |
-| 좌석도 줌 | **`react-zoom-pan-pinch` v3.7** | `setTransform` / `resetTransform` 으로 프로그래밍 방식 줌 |
+| 좌석도 줌 | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` 으로 프로그래밍 방식 줌 |
 | i18n | **Astro 내장 i18n 라우팅** | `/zh` `/ja` `/en` `/ko` 4개 프리픽스, 루트 직하는 302 |
 | ULID | **자체 구현**(`src/server/id.ts`) | `ulid` 패키지는 사용하지 않음(import 시 `detectPrng()` 가 workerd 에서 예외를 던지기 때문) |
 
@@ -227,7 +227,7 @@ presigned URL 을 통한 클라이언트 직접 업로드가 아니라 **sign + 
 2. **업로드는 「바인딩 직접 쓰기」**(클라이언트가 압축한 WebP 를 Worker 에 보내고, Worker 가 `BUCKET` 바인딩으로 R2 에 기록)이며, HMAC ticket 의 sign + commit 2단계로 위조를 방지합니다 —— presigned URL 을 통한 클라이언트의 R2 직접 업로드가 **아닙니다**.
 3. **Astro v6** 은 바인딩 읽기에 `import { env } from "cloudflare:workers"` 를 사용하며, `Astro.locals.runtime.env` 가 아닙니다.
 4. **Tailwind v4 Vite 플러그인**, 독립 config 없음, 토큰은 `src/styles/global.css` 에 있습니다.
-5. **`react-zoom-pan-pinch` v3.7**, `setTransform` / `resetTransform` 사용(v3.7 에는 v4 의 `zoomTo` 가 없습니다).
+5. **`react-zoom-pan-pinch` v4.0**, 클러스터 중심 계산을 명확하게 유지하기 위해 `setTransform` / `resetTransform` 사용.
 6. **ULID 자체 구현**(`crypto.getRandomValues`)으로, `ulid` 패키지는 사용하지 않습니다.
 7. R2 바인딩 이름은 **`BUCKET`**, 요청 빈도 제한 KV 는 **`RATE_LIMIT`**, 그리고 **`SESSION`** KV 가 있습니다(어댑터가 자동으로 활성화하는 session API 에 필요. SeatView 는 계정 시스템이 없어 session 을 실제로 쓰지 않지만, 바인딩은 해석 가능해야 합니다). admin 은 **Cloudflare Access**(`Cf-Access-Authenticated-User-Email` 헤더)를 사용하며, 로컬에서는 `.dev.vars` 의 `DEV_ADMIN_EMAIL` 로 mock 합니다.
 
