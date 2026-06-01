@@ -67,6 +67,7 @@ const SELECTED_GRACE_MS = 1500;
 /** FLIP / fade timings (shape §11). reduced-motion shortens fade. */
 const FADE_MS = 250;
 const SWIPE_MS = 150;
+const ZOOM_MS = 180;
 
 /** A slide carrying its source DTO so render fns reach the metadata. */
 interface SeatSlide extends Slide {
@@ -220,6 +221,7 @@ export default function SeatViewLightbox({
         fade: fadeMs,
         swipe: reducedMotion ? 0 : SWIPE_MS,
         navigation: reducedMotion ? 0 : SWIPE_MS,
+        zoom: reducedMotion ? 0 : ZOOM_MS,
       }}
       zoom={{
         maxZoomPixelRatio: 4,
