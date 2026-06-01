@@ -90,7 +90,7 @@
 | 图片处理 | `browser-image-compression` | 长边 1920px / WebP / 去 EXIF / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | 瀑布流 | `react-photo-album`（masonry） | |
-| 坐席图缩放 | **`react-zoom-pan-pinch` v3.7** | 用 `setTransform` / `resetTransform` 程序化缩放 |
+| 坐席图缩放 | **`react-zoom-pan-pinch` v4.0** | 用 `setTransform` / `resetTransform` 程序化缩放 |
 | i18n | **Astro 内置 i18n 路由** | `/zh` `/ja` `/en` `/ko` 四前缀，裸根 302 |
 | ULID | **自实现**（`src/server/id.ts`） | 不用 `ulid` 包（它 import 时 `detectPrng()` 在 workerd 抛错） |
 
@@ -227,7 +227,7 @@ npm run deploy
 2. **上传是「绑定直写」**（客户端把压好的 WebP 发给 Worker，Worker 用 `BUCKET` 绑定写 R2），用 HMAC ticket 的 sign + commit 两段式防伪——**不是** presigned URL 客户端直传 R2。
 3. **Astro v6** 读绑定用 `import { env } from "cloudflare:workers"`，不是 `Astro.locals.runtime.env`。
 4. **Tailwind v4 Vite 插件**，无独立 config，token 在 `src/styles/global.css`。
-5. **`react-zoom-pan-pinch` v3.7**，用 `setTransform` / `resetTransform`（v3.7 没有 v4 的 `zoomTo`）。
+5. **`react-zoom-pan-pinch` v4.0**，继续用 `setTransform` / `resetTransform` 保持聚合点居中计算可控。
 6. **ULID 自实现**（`crypto.getRandomValues`），不用 `ulid` 包。
 7. R2 绑定名是 **`BUCKET`**、限频 KV 是 **`RATE_LIMIT`**，另有 **`SESSION`** KV（适配器自动启用 session API 所需，SeatView 无账号系统、不实际写 session，但绑定需可解析）；admin 用 **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` 头），本地用 `.dev.vars` 的 `DEV_ADMIN_EMAIL` mock。
 

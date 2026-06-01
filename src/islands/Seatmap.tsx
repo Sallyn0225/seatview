@@ -28,10 +28,9 @@ import LoadFailure from "@/components/LoadFailure";
 // clicking a single pin emits the cross-island selected-photo signal and the
 // onOpenLightbox mount-point for step 5.
 //
-// ⚠️ react-zoom-pan-pinch v3.7 (installed) has no `zoomTo(x,y,scale)` (that is a
-// v4 API the brief assumed). We use the v3 equivalents instead: `setTransform`
-// for programmatic cluster zoom (computing the target position so the cluster
-// centroid lands at the viewport center) and `resetTransform` for the ⟲ button.
+// react-zoom-pan-pinch v4 exposes `setTransform` / `resetTransform` for
+// programmatic cluster zoom and reset. We compute the target position manually
+// so the cluster centroid lands at the viewport center.
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 6;
@@ -90,7 +89,7 @@ export default function Seatmap({
     [observeWrapper],
   );
 
-  // Live transform state, driven by onTransformed. Drives clustering threshold,
+  // Live transform state, driven by onTransform. Drives clustering threshold,
   // counter-scaling, and the scale indicator.
   const [scale, setScale] = useState(MIN_SCALE);
   const [isTransforming, setIsTransforming] = useState(false);
@@ -221,7 +220,7 @@ export default function Seatmap({
           doubleClick={{ disabled: true }}
           wheel={{ step: 0.15 }}
           panning={{ velocityDisabled: reducedMotion }}
-          onTransformed={(_ref, state) => setScale(state.scale)}
+          onTransform={(_ref, state) => setScale(state.scale)}
           onPanningStart={() => {
             setIsTransforming(true);
             wakeControls();

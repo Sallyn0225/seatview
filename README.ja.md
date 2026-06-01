@@ -90,7 +90,7 @@
 | 画像処理 | `browser-image-compression` | 長辺 1920px / WebP / EXIF 除去 / 約 500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | ウォーターフォール | `react-photo-album`（masonry） | |
-| 座席表のズーム | **`react-zoom-pan-pinch` v3.7** | `setTransform` / `resetTransform` でプログラム的にズーム |
+| 座席表のズーム | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` でプログラム的にズーム |
 | i18n | **Astro 組み込み i18n ルーティング** | `/zh` `/ja` `/en` `/ko` の 4 プレフィックス、ルート直下は 302 |
 | ULID | **自前実装**（`src/server/id.ts`） | `ulid` パッケージは不使用（import 時に `detectPrng()` が workerd で例外を投げるため） |
 
@@ -227,7 +227,7 @@ presigned URL によるクライアント直接アップロードではなく、
 2. **アップロードは「バインディング直接書き込み」**（クライアントが圧縮済み WebP を Worker に送り、Worker が `BUCKET` バインディングで R2 に書き込む）で、HMAC ticket の sign + commit 二段階で偽造を防ぎます——presigned URL によるクライアントの R2 直接アップロード**ではありません**。
 3. **Astro v6** はバインディングの読み取りに `import { env } from "cloudflare:workers"` を使い、`Astro.locals.runtime.env` ではありません。
 4. **Tailwind v4 Vite プラグイン**、独立した config はなく、トークンは `src/styles/global.css`。
-5. **`react-zoom-pan-pinch` v3.7**、`setTransform` / `resetTransform` を使用（v3.7 には v4 の `zoomTo` がありません）。
+5. **`react-zoom-pan-pinch` v4.0**、集約点の中心合わせを明示的に保つため `setTransform` / `resetTransform` を使用。
 6. **ULID は自前実装**（`crypto.getRandomValues`）で、`ulid` パッケージは不使用。
 7. R2 バインディング名は **`BUCKET`**、レート制限 KV は **`RATE_LIMIT`**、さらに **`SESSION`** KV があります（アダプターが自動で有効化する session API に必要。SeatView はアカウントシステムを持たず session を実際には書きませんが、バインディングは解決可能である必要があります）。admin は **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` ヘッダー）を使用し、ローカルでは `.dev.vars` の `DEV_ADMIN_EMAIL` で mock します。
 
