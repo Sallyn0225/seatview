@@ -112,7 +112,7 @@ const ja: Messages = {
     step3: {
       title: "3. 詳細",
       seatLabel: "座席番号",
-      seatPlaceholder: "例: 1F E-23",
+      seatPlaceholder: "例: 1F E 20〜25番（プライバシー保護）",
       seatRequired: "座席番号を入力してください。",
       performanceDate: "公演日 任意",
       datePlaceholder: "YYYY-MM-DD",

@@ -117,7 +117,7 @@ const en: Messages = {
     step3: {
       title: "3. Details",
       seatLabel: "Seat number",
-      seatPlaceholder: "e.g. 1F E-23",
+      seatPlaceholder: "e.g. 1F E 20-25 (for privacy)",
       seatRequired: "Seat number is required.",
       performanceDate: "Performance date (optional)",
       datePlaceholder: "YYYY-MM-DD",
