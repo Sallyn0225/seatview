@@ -234,6 +234,10 @@ const en: Messages = {
         body: "Seat views on the site are personal records by contributors. The actual sightline varies with seat, gear, performance, and height. Content is for reference only; we don't guarantee its accuracy, completeness, or fitness for your seating decision.",
       },
       {
+        heading: "Unofficial fan project",
+        body: "SeatView is not an official site for any venue, organizer, ticketing service, or artist. It is a fan-made reference project; content on the site does not represent official positions or announcements.",
+      },
+      {
         heading: "Submission rules",
         body: "Only upload photos you took yourself and have the right to share publicly. No infringing, illegal, or privacy-violating content. Submitting means you agree to publish under CC-BY-NC 4.0 (Attribution · NonCommercial).",
       },
@@ -283,6 +287,8 @@ const en: Messages = {
     uploadTitleAlt: "",
     rule1: "It must be a photo you took yourself.",
     rule2: "Please mask others' faces and identifiable personal information.",
+    rule4:
+      "Do not upload photos taken during a performance unless official rules allow it.",
     rule3: "Content is shared under the {license} license",
     license: "CC BY-NC 4.0 ↗",
     limitNote:
@@ -297,7 +303,7 @@ const en: Messages = {
     submit: "Submit",
     submitting: "Submitting…",
     transparency:
-      "Just the venue name is enough. Seating charts and data are added by maintainers via GitHub.",
+      "Just the venue name is enough. Seating charts and data are added by maintainers via GitHub. For now, we don't collect livehouses with no fixed seats, or venues that are mostly standing-room for performances.",
     turnstileNote: "This step keeps bots from mass-submitting.",
     limitNote: "Up to 5 per person per day, to avoid flooding.",
     matchRegionLabel: "Similar venue hints",

@@ -304,6 +304,8 @@ export interface Messages {
     uploadTitleAlt: string;
     rule1: string;
     rule2: string;
+    /** Performance photo boundary. */
+    rule4: string;
     /** `{license}` slot for the CC link. */
     rule3: string;
     license: string;
@@ -671,6 +673,10 @@ const zh: Messages = {
         body: "站内座席视角均为投稿者的个人记录，实际视野因座位、设备、场次与身高而异。内容仅供参考，我们不保证其准确、完整或适用于你的观演判断。",
       },
       {
+        heading: "非官方项目",
+        body: "SeatView 不是任何场馆、主办方、票务平台或艺人的官方网站，而是由粉丝维护的二创资料页面。站内内容不代表相关官方立场，也不构成官方信息发布。",
+      },
+      {
         heading: "投稿规则",
         body: "请只上传你本人拍摄、且有权公开分享的照片，不得包含侵权、违法或侵犯他人隐私的内容。投稿即表示你同意以 CC-BY-NC 4.0（署名·非商业）授权公开。",
       },
@@ -715,6 +721,7 @@ const zh: Messages = {
     uploadTitleAlt: "投稿について",
     rule1: "必须是你本人拍摄的照片。",
     rule2: "请遮蔽他人面部和可识别个人信息。",
+    rule4: "除非官方明确允许，不要上传演出进行中的照片。",
     rule3: "内容以 {license} 协议分享",
     license: "CC BY-NC 4.0 ↗",
     limitNote: "一天每人最多上传 10 张。这样能让所有人看到的内容质量保持稳定。",
@@ -728,7 +735,7 @@ const zh: Messages = {
     submit: "提交",
     submitting: "提交中…",
     transparency:
-      "只要告诉我们场馆名就够了。坐席图和资料由维护者通过 GitHub 整理后加入。",
+      "只要告诉我们场馆名就够了。坐席图和资料由维护者通过 GitHub 整理后加入。暂时不收录无固定座席，或大多数时候以站席为主的 livehouse 场馆。",
     turnstileNote: "这一步是为了防止机器人批量提交。",
     limitNote: "每人每天最多提交 5 个，避免重复刷屏。",
     matchRegionLabel: "相似场馆提示",
