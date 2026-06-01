@@ -36,7 +36,7 @@
     "drizzle-orm": "^0.45.0",
     "fuse.js": "^7.4.0",
     "libheif-js": "^1.19.8",
-    "lucide-react": "^0.468.0",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-photo-album": "^3.0.2",
