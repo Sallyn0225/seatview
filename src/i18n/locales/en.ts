@@ -357,6 +357,11 @@ const en: Messages = {
     recycleEmpty: "The recycle bin is empty.",
     end: "You've reached the end.",
     deletePhoto: "Delete",
+    renameSeatLabel: "Rename seat",
+    saveSeatLabel: "Save",
+    seatLabelInput: "Seat label",
+    seatLabelInvalid:
+      "Seat label is required and must be 80 characters or less.",
     confirmDeletePhoto:
       "Deleting removes the photo from every page; you can restore it from the recycle bin.",
     restorePhoto: "Restore",

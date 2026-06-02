@@ -14,6 +14,7 @@ import type {
   AdminPhotoMutationResponse,
   AdminPhotosResponse,
   AdminPhotoVenuesResponse,
+  AdminRenamePhotoSeatRequest,
   AdminRestorePhotoRequest,
   AdminStagingMutationResponse,
   AdminStagingResponse,
@@ -124,6 +125,21 @@ export async function restoreAdminPhoto(
   signal?: AbortSignal,
 ): Promise<AdminPhotoMutationResponse> {
   const body: AdminRestorePhotoRequest = { id };
+  return jsonRequest<AdminPhotoMutationResponse>("/api/admin/photos", {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
+}
+
+/** Rename the user-entered seat label on a live uploaded photo (issue #44). */
+export async function renameAdminPhotoSeat(
+  id: string,
+  seatLabel: string,
+  signal?: AbortSignal,
+): Promise<AdminPhotoMutationResponse> {
+  const body: AdminRenamePhotoSeatRequest = { id, seatLabel };
   return jsonRequest<AdminPhotoMutationResponse>("/api/admin/photos", {
     method: "PATCH",
     headers: { "content-type": "application/json" },
