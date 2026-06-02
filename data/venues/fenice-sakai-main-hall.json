@@ -1,0 +1,25 @@
+{
+  "id": "fenice-sakai-main-hall",
+  "name_zh": "Fenice 堺 大厅",
+  "name_jp": "フェニーチェ堺 大ホール",
+  "name_romaji": "Fenice Sakai Main Hall",
+  "prefecture": "osaka",
+  "city": "堺市堺区",
+  "aliases": [
+    "堺市民艺术文化厅",
+    "堺市民芸術文化ホール",
+    "Sakai Performing Arts Center",
+    "フェニーチェ堺",
+    "フェニーチェ堺メインホール"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "大厅",
+      "label_jp": "大ホール",
+      "imageUrl": "/seatmaps/fenice-sakai-main-hall/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}

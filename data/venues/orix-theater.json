@@ -1,0 +1,25 @@
+{
+  "id": "orix-theater",
+  "name_zh": "Orix 剧场",
+  "name_jp": "オリックス劇場",
+  "name_romaji": "ORIX THEATER",
+  "prefecture": "osaka",
+  "city": "大阪市西区",
+  "aliases": [
+    "欧力士剧场",
+    "歐力士劇場",
+    "オリックスシアター",
+    "大阪厚生年金会館",
+    "大阪厚生年金会館大ホール"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/orix-theater/default.webp",
+      "width": 1792,
+      "height": 2048
+    }
+  ]
+}
