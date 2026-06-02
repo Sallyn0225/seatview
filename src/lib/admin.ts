@@ -90,8 +90,15 @@ export interface AdminRestorePhotoRequest {
   id: string;
 }
 
-/** Result of a photo delete/restore: echoes the affected id so the client can
- *  drop (delete/purge) or move (restore) that row. */
+/** PATCH /api/admin/photos body: update a live photo's user-entered seat label
+ *  from the maintainer console (issue #44). */
+export interface AdminRenamePhotoSeatRequest {
+  id: string;
+  seatLabel: string;
+}
+
+/** Result of a photo delete/restore/rename: echoes the affected id so the client
+ *  can drop (delete/purge), move (restore), or update (rename) that row. */
 export interface AdminPhotoMutationResponse {
   id: string;
 }
@@ -120,6 +127,7 @@ export interface AdminStagingMutationResponse {
 export type AdminErrorCode =
   | "unauthorized" // edge gate failed / no Cf-Access email (defense in depth)
   | "missing_id"
+  | "invalid_seat_label"
   | "not_found"
   | "database_unavailable"
   | "storage_unavailable"

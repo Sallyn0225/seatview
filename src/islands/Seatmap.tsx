@@ -223,7 +223,7 @@ export default function Seatmap({
           doubleClick={{ disabled: true }}
           wheel={{ step: WHEEL_ZOOM_STEP }}
           panning={{ velocityDisabled: reducedMotion }}
-          onTransform={(_ref, state) => setScale(state.scale)}
+          onTransformed={(_ref, state) => setScale(state.scale)}
           onPanningStart={() => {
             setIsTransforming(true);
             wakeControls();

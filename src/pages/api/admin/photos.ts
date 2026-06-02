@@ -14,6 +14,7 @@
 //                                   after purging the R2 object. Irreversible.
 // PATCH   `{id}`                 → restore from the recycle bin (clear
 //                                   `deleted_at` after verifying the R2 object).
+//         `{id, seatLabel}`      → rename a live photo's user-entered seat.
 //
 // User-facing prose stays in i18n (R9); the API only returns stable error codes.
 import type { APIRoute } from "astro";
@@ -28,6 +29,7 @@ import {
   releasePhotoPurgeClaim,
   restorePhoto,
   softDeletePhoto,
+  updatePhotoSeatLabelForAdmin,
 } from "@/server/photos";
 import { deleteImage, imageExists } from "@/server/r2/images";
 import {
@@ -36,8 +38,10 @@ import {
   type AdminErrorCode,
   type AdminPhotoMutationResponse,
   type AdminPhotosResponse,
+  type AdminRenamePhotoSeatRequest,
   type AdminRestorePhotoRequest,
 } from "@/lib/admin";
+import { SEAT_LABEL_MAX } from "@/lib/upload";
 
 export const prerender = false;
 
@@ -239,20 +243,47 @@ export const PATCH: APIRoute = async ({ request }) => {
     return jsonError("database_unavailable", 503);
   }
 
-  let body: Partial<AdminRestorePhotoRequest>;
+  let body: Partial<AdminRestorePhotoRequest & AdminRenamePhotoSeatRequest>;
   try {
-    body = (await request.json()) as Partial<AdminRestorePhotoRequest>;
+    body = (await request.json()) as Partial<
+      AdminRestorePhotoRequest & AdminRenamePhotoSeatRequest
+    >;
   } catch {
     return jsonError("missing_id", 400);
   }
   const id = typeof body.id === "string" ? body.id.trim() : "";
   if (id.length === 0) return jsonError("missing_id", 400);
+
+  const db = getDb(env.DB);
+
+  if ("seatLabel" in body) {
+    const seatLabel =
+      typeof body.seatLabel === "string" ? body.seatLabel.trim() : "";
+    if (seatLabel.length === 0 || seatLabel.length > SEAT_LABEL_MAX) {
+      return jsonError("invalid_seat_label", 400);
+    }
+
+    let updated = false;
+    try {
+      updated = await updatePhotoSeatLabelForAdmin(db, id, seatLabel);
+    } catch (err) {
+      console.error("[admin:photos] seat rename failed", {
+        id,
+        err: String(err),
+      });
+      return jsonError("database_unavailable", 502);
+    }
+    if (!updated) return jsonError("not_found", 404);
+
+    console.info("[admin:photos] photo seat label renamed", { id, by: email });
+    return jsonResponse({ id });
+  }
+
   if (!env.BUCKET) {
     console.error("[admin:photos] BUCKET R2 binding missing");
     return jsonError("storage_unavailable", 503);
   }
 
-  const db = getDb(env.DB);
   let imageKey: string | null;
   try {
     imageKey = await getDeletedPhotoImageKey(db, id);

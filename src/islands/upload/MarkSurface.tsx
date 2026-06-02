@@ -178,7 +178,7 @@ export default function MarkSurface({
         doubleClick={{ disabled: true }}
         wheel={{ step: WHEEL_ZOOM_STEP }}
         panning={{ velocityDisabled: reducedMotion }}
-        onTransform={(_ref, state) => setScale(state.scale)}
+        onTransformed={(_ref, state) => setScale(state.scale)}
       >
         <TransformComponent
           wrapperStyle={{ width: "100%", height: "100%", touchAction: "none" }}
