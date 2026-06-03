@@ -23,8 +23,10 @@ import { SEAT_LABEL_MAX } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import LoadFailure from "@/components/LoadFailure";
 import {
+  ADMIN_PHOTO_CORRECTIONS_BATCH,
   ADMIN_PHOTOS_BATCH,
   ADMIN_STAGING_BATCH,
+  type AdminPhotoCorrectionDto,
   type AdminPhotoDto,
 } from "@/lib/admin";
 import type { StagingVenueDto } from "@/lib/staging";
@@ -32,12 +34,14 @@ import {
   AdminError,
   deleteAdminPhoto,
   deleteAdminStaging,
+  fetchAdminPhotoCorrections,
   fetchAdminPhotos,
   fetchAdminPhotoVenues,
   fetchAdminStaging,
   purgeAdminPhoto,
   renameAdminPhotoSeat,
   restoreAdminPhoto,
+  setAdminPhotoCorrection,
   setAdminStagingProcessed,
 } from "@/lib/admin-client";
 
@@ -59,7 +63,7 @@ interface AdminConsoleProps {
   venueLabels: VenueLabels;
 }
 
-type Tab = "photos" | "staging" | "recycle";
+type Tab = "photos" | "staging" | "corrections" | "recycle";
 
 export default function AdminConsole({
   locale,
@@ -97,6 +101,11 @@ export default function AdminConsole({
           label={t.admin.stagingTab}
         />
         <TabButton
+          active={tab === "corrections"}
+          onClick={() => setTab("corrections")}
+          label={t.admin.correctionsTab}
+        />
+        <TabButton
           active={tab === "recycle"}
           onClick={() => setTab("recycle")}
           label={t.admin.recycleTab}
@@ -111,6 +120,12 @@ export default function AdminConsole({
         />
       ) : tab === "staging" ? (
         <StagingPanel locale={locale} />
+      ) : tab === "corrections" ? (
+        <PhotoCorrectionsPanel
+          locale={locale}
+          r2BaseUrl={r2BaseUrl}
+          venueLabels={venueLabels}
+        />
       ) : (
         <RecycleBinPanel
           locale={locale}
@@ -146,6 +161,277 @@ function TabButton({
     >
       {label}
     </button>
+  );
+}
+
+/* ── Photo corrections panel (issue #83) ─────────────────────────────────── */
+
+function PhotoCorrectionsPanel({
+  locale,
+  r2BaseUrl,
+  venueLabels,
+}: {
+  locale: Locale;
+  r2BaseUrl: string;
+  venueLabels: VenueLabels;
+}) {
+  const { t } = useLocale(locale);
+  const [requests, setRequests] = useState<AdminPhotoCorrectionDto[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const offsetRef = useRef(0);
+  const loadingRef = useRef(false);
+  const requestGenerationRef = useRef(0);
+
+  const loadPage = useCallback(() => {
+    if (loadingRef.current || (!hasMore && loaded)) return;
+    loadingRef.current = true;
+    setError(false);
+    const offset = offsetRef.current;
+    const requestGeneration = requestGenerationRef.current;
+    fetchAdminPhotoCorrections(offset, ADMIN_PHOTO_CORRECTIONS_BATCH)
+      .then(({ requests: next, hasMore: more }) => {
+        if (requestGeneration !== requestGenerationRef.current) return;
+        offsetRef.current = offset + next.length;
+        setHasMore(more);
+        setRequests((prev) => {
+          const ids = new Set(prev.map((r) => r.id));
+          const merged = [...prev];
+          for (const r of next) if (!ids.has(r.id)) merged.push(r);
+          return merged;
+        });
+        setLoaded(true);
+        loadingRef.current = false;
+      })
+      .catch(() => {
+        if (requestGeneration !== requestGenerationRef.current) return;
+        loadingRef.current = false;
+        setError(true);
+      });
+  }, [hasMore, loaded]);
+
+  useEffect(() => {
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onResolved = useCallback(
+    (id: string) => {
+      const wasLoading = loadingRef.current;
+      requestGenerationRef.current += 1;
+      offsetRef.current = Math.max(0, offsetRef.current - 1);
+      loadingRef.current = false;
+      setRequests((prev) => prev.filter((r) => r.id !== id));
+      if (wasLoading && hasMore) loadPage();
+    },
+    [hasMore, loadPage],
+  );
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore || error || !loaded) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) loadPage();
+      },
+      { rootMargin: "600px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [hasMore, error, loaded, loadPage]);
+
+  return (
+    <section aria-label={t.admin.correctionsTab}>
+      {loaded && requests.length === 0 && !error ? (
+        <p className="text-muted-foreground/80 mt-8 text-center text-sm">
+          {t.admin.correctionsEmpty}
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {requests.map((request) => (
+            <PhotoCorrectionRow
+              key={request.id}
+              request={request}
+              locale={locale}
+              r2BaseUrl={r2BaseUrl}
+              venueLabels={venueLabels}
+              onResolved={onResolved}
+            />
+          ))}
+        </ul>
+      )}
+
+      {error ? (
+        <LoadFailure
+          locale={locale}
+          onRetry={() => {
+            loadingRef.current = false;
+            loadPage();
+          }}
+          className="mt-6 rounded-md"
+        />
+      ) : hasMore ? (
+        <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+      ) : requests.length > 0 ? (
+        <p className="text-muted-foreground py-6 text-center text-xs">
+          {t.admin.end}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+function PhotoCorrectionRow({
+  request,
+  locale,
+  r2BaseUrl,
+  venueLabels,
+  onResolved,
+}: {
+  request: AdminPhotoCorrectionDto;
+  locale: Locale;
+  r2BaseUrl: string;
+  venueLabels: VenueLabels;
+  onResolved: (id: string) => void;
+}) {
+  const { t } = useLocale(locale);
+  const [confirming, setConfirming] = useState<"approve" | "reject" | null>(
+    null,
+  );
+  const [working, setWorking] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
+
+  const venue = venueLabels[request.venueId];
+  const venueName = venue?.name ?? request.venueId;
+  const subMapName = venue?.subMaps[request.subMapId] ?? request.subMapId;
+  const thumb = imageKeyToUrl(request.imageKey, r2BaseUrl);
+
+  const handleAction = useCallback(
+    async (action: "approve" | "reject") => {
+      setWorking(true);
+      setRowError(null);
+      try {
+        await setAdminPhotoCorrection(request.id, action);
+        onResolved(request.id);
+      } catch (err) {
+        const code = err instanceof AdminError ? err.code : "server_error";
+        setRowError(
+          code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+        );
+        setWorking(false);
+      }
+    },
+    [onResolved, request.id, t],
+  );
+
+  return (
+    <li className="border-border grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-md border p-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+      <img
+        src={thumb}
+        alt={fillTemplate(t.admin.thumbAlt, {
+          label: request.liveSeatLabel,
+        })}
+        width={56}
+        height={56}
+        loading="lazy"
+        className="bg-card size-14 shrink-0 rounded-sm object-cover"
+      />
+
+      <div className="min-w-0 flex-1">
+        <p className="text-muted-foreground text-xs break-words">
+          {venueName} · {subMapName}
+        </p>
+        <dl className="mt-1 grid gap-1 text-sm sm:grid-cols-[auto_minmax(0,1fr)] sm:gap-x-3">
+          <dt className="text-muted-foreground text-xs">
+            {t.admin.correctionCurrent}
+          </dt>
+          <dd className="text-foreground break-words">
+            {request.currentSeatLabel}
+          </dd>
+          <dt className="text-muted-foreground text-xs">
+            {t.admin.correctionLive}
+          </dt>
+          <dd className="text-foreground break-words">
+            {request.liveSeatLabel}
+          </dd>
+          <dt className="text-muted-foreground text-xs">
+            {t.admin.correctionRequested}
+          </dt>
+          <dd className="text-foreground font-medium break-words">
+            {request.requestedSeatLabel}
+          </dd>
+        </dl>
+        <time
+          dateTime={new Date(request.createdAt).toISOString()}
+          title={absoluteDate(request.createdAt, locale)}
+          className="text-muted-foreground mt-1 block text-xs [font-variant-numeric:tabular-nums]"
+        >
+          {relativeTime(request.createdAt, locale)}
+        </time>
+        {rowError && (
+          <p className="text-destructive mt-1 text-xs" role="alert">
+            {rowError}
+          </p>
+        )}
+      </div>
+
+      {confirming ? (
+        <div className="col-span-2 flex flex-col items-end gap-1 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          <span className="text-muted-foreground max-w-full text-right text-xs leading-snug sm:max-w-48">
+            {confirming === "approve"
+              ? t.admin.confirmApproveCorrection
+              : t.admin.confirmRejectCorrection}
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => handleAction(confirming)}
+              disabled={working}
+              className={cn(
+                "border-foreground text-foreground inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium",
+                "hover:bg-card focus-visible:ring-ring transition-colors focus-visible:ring-2 focus-visible:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                confirming === "reject" &&
+                  "border-destructive text-destructive hover:bg-destructive/10",
+              )}
+            >
+              {working
+                ? t.admin.working
+                : confirming === "approve"
+                  ? t.admin.approveCorrection
+                  : t.admin.rejectCorrection}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(null)}
+              disabled={working}
+              className="border-border text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none"
+            >
+              {t.admin.confirmNo}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="col-span-2 flex flex-wrap justify-end gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">
+          <button
+            type="button"
+            onClick={() => setConfirming("approve")}
+            className="border-border text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {t.admin.approveCorrection}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming("reject")}
+            className="border-border text-muted-foreground hover:text-destructive hover:border-destructive focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {t.admin.rejectCorrection}
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 

@@ -18,6 +18,8 @@ export const ADMIN_PHOTOS_BATCH = 40;
 
 /** Default page size for the admin staging list. */
 export const ADMIN_STAGING_BATCH = 50;
+/** Default page size for admin photo-correction requests. */
+export const ADMIN_PHOTO_CORRECTIONS_BATCH = 40;
 
 /**
  * One photo row as the admin list sees it. The admin UI shows a thumbnail +
@@ -71,6 +73,25 @@ export interface AdminStagingResponse {
   hasMore: boolean;
 }
 
+/** One pending seat-label correction request as the admin console sees it. */
+export interface AdminPhotoCorrectionDto {
+  id: string;
+  photoId: string;
+  venueId: string;
+  subMapId: string;
+  imageKey: string;
+  currentSeatLabel: string;
+  liveSeatLabel: string;
+  requestedSeatLabel: string;
+  createdAt: number;
+}
+
+/** GET /api/admin/photo-corrections body. */
+export interface AdminPhotoCorrectionsResponse {
+  requests: AdminPhotoCorrectionDto[];
+  hasMore: boolean;
+}
+
 /**
  * DELETE /api/admin/photos body (issue #29).
  * - `permanent` absent/false → move the photo to the recycle bin: soft-delete in
@@ -119,6 +140,17 @@ export interface AdminStagingMutationResponse {
   id: string;
 }
 
+/** PATCH /api/admin/photo-corrections body. */
+export interface AdminUpdatePhotoCorrectionRequest {
+  id: string;
+  action: "approve" | "reject";
+}
+
+/** Result of a correction approve/reject action. */
+export interface AdminPhotoCorrectionMutationResponse {
+  id: string;
+}
+
 /**
  * Stable machine error codes returned as `{ error: <code> }`. The CLIENT maps
  * these to localized inline copy (the API never sends user-facing prose, R9).
@@ -127,6 +159,7 @@ export interface AdminStagingMutationResponse {
 export type AdminErrorCode =
   | "unauthorized" // edge gate failed / no Cf-Access email (defense in depth)
   | "missing_id"
+  | "missing_fields"
   | "invalid_seat_label"
   | "not_found"
   | "database_unavailable"
