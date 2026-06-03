@@ -461,6 +461,7 @@ function DetailSheet({
   const description = dto.description?.trim() || null;
   const isLong = description != null && description.length > 120;
   const requestedTrimmed = requestedSeatLabel.trim();
+  const isSameLabel = requestedTrimmed === dto.seatLabel;
 
   useEffect(() => {
     setRequestedSeatLabel(dto.seatLabel);
@@ -529,7 +530,8 @@ function DetailSheet({
       role="dialog"
       aria-modal="false"
       className={cn(
-        "pointer-events-auto absolute inset-x-0 bottom-0 z-20 max-h-[30vh] overflow-y-auto",
+        "pointer-events-auto absolute inset-x-0 bottom-0 z-20 overflow-y-auto",
+        correctionOpen ? "max-h-[80vh]" : "max-h-[30vh]",
         "bg-[oklch(0.16_0.008_75_/_0.96)] px-5 py-4 text-[oklch(0.93_0.006_88)]",
       )}
       // Slide-up; reduced-motion handled by global CSS (transition collapses).
@@ -661,7 +663,8 @@ function DetailSheet({
                   disabled={
                     submitting ||
                     !turnstileToken ||
-                    requestedTrimmed.length === 0
+                    requestedTrimmed.length === 0 ||
+                    isSameLabel
                   }
                   className="inline-flex h-9 items-center rounded-md border border-[oklch(0.8_0.006_86_/_0.35)] px-3 text-xs font-medium text-[oklch(0.93_0.006_88)] transition-colors hover:border-[oklch(0.8_0.006_86_/_0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)] disabled:cursor-not-allowed disabled:opacity-50"
                 >

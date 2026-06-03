@@ -153,7 +153,20 @@ export async function approvePhotoCorrection(
     db
       .update(photos)
       .set({ seatLabel: pendingSeatLabel })
-      .where(and(eq(photos.id, pendingPhotoId), isNull(photos.deletedAt)))
+      .where(
+        and(
+          eq(photos.id, pendingPhotoId),
+          isNull(photos.deletedAt),
+          // Guard against stale approvals: only update if the live label
+          // still matches the current_seat_label captured at request time.
+          sql`exists (
+            select 1
+            from ${photoCorrectionRequests}
+            where ${photoCorrectionRequests.id} = ${id}
+              and ${photoCorrectionRequests.currentSeatLabel} = ${photos.seatLabel}
+          )`,
+        ),
+      )
       .returning({ id: photos.id }),
     db
       .update(photoCorrectionRequests)
@@ -166,12 +179,6 @@ export async function approvePhotoCorrection(
         and(
           eq(photoCorrectionRequests.id, id),
           isNull(photoCorrectionRequests.processedAt),
-          sql`exists (
-            select 1
-            from ${photos}
-            where ${photos.id} = ${photoCorrectionRequests.photoId}
-              and ${photos.deletedAt} is null
-          )`,
         ),
       )
       .returning({ id: photoCorrectionRequests.id }),
