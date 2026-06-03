@@ -444,6 +444,14 @@ export interface Messages {
     end: string;
     /** Delete photo button (+ aria) — moves the photo to the recycle bin. */
     deletePhoto: string;
+    /** Rename photo seat label action (+ aria). */
+    renameSeatLabel: string;
+    /** Save renamed seat label action. */
+    saveSeatLabel: string;
+    /** Accessible label for the seat label edit input. */
+    seatLabelInput: string;
+    /** Inline validation for an empty/too-long seat label. */
+    seatLabelInvalid: string;
     /** Inline confirm bar before moving a photo to the recycle bin. */
     confirmDeletePhoto: string;
     /** Restore a photo from the recycle bin (+ aria). */
@@ -843,6 +851,10 @@ const zh: Messages = {
     correctionsEmpty: "还没有座席名修正请求。",
     end: "已经到底了。",
     deletePhoto: "删除",
+    renameSeatLabel: "重命名座席",
+    saveSeatLabel: "保存",
+    seatLabelInput: "座席",
+    seatLabelInvalid: "座席不能为空，且最多 80 个字符。",
     confirmDeletePhoto: "删除后图片会从所有页面消失，可在回收站恢复。",
     restorePhoto: "恢复",
     purgePhoto: "彻底删除",

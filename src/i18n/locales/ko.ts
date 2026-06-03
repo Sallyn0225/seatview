@@ -377,6 +377,10 @@ const ko: Messages = {
     correctionsEmpty: "아직 좌석명 수정 요청이 없어요.",
     end: "여기까지예요.",
     deletePhoto: "삭제",
+    renameSeatLabel: "좌석명 변경",
+    saveSeatLabel: "저장",
+    seatLabelInput: "좌석명",
+    seatLabelInvalid: "좌석명은 필수이며 80자 이하여야 해요.",
     confirmDeletePhoto:
       "삭제하면 모든 페이지에서 사라지지만 휴지통에서 복구할 수 있어요.",
     restorePhoto: "복구",

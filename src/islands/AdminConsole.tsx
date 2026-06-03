@@ -19,6 +19,7 @@ import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { relativeTime, absoluteDate, fillTemplate } from "@/lib/format";
 import { imageKeyToUrl } from "@/lib/photos";
+import { SEAT_LABEL_MAX } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import LoadFailure from "@/components/LoadFailure";
 import {
@@ -38,6 +39,7 @@ import {
   fetchAdminPhotoVenues,
   fetchAdminStaging,
   purgeAdminPhoto,
+  renameAdminPhotoSeat,
   restoreAdminPhoto,
   setAdminPhotoCorrection,
   setAdminStagingProcessed,
@@ -558,6 +560,11 @@ function PhotosPanel({
     },
     [loadPage, selectedVenue],
   );
+  const onRenamed = useCallback((id: string, seatLabel: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, seatLabel } : p)),
+    );
+  }, []);
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
@@ -629,6 +636,7 @@ function PhotosPanel({
               r2BaseUrl={r2BaseUrl}
               venueLabels={venueLabels}
               onDeleted={onDeleted}
+              onRenamed={onRenamed}
             />
           ))}
         </ul>
@@ -660,15 +668,19 @@ function PhotoRow({
   r2BaseUrl,
   venueLabels,
   onDeleted,
+  onRenamed,
 }: {
   photo: AdminPhotoDto;
   locale: Locale;
   r2BaseUrl: string;
   venueLabels: VenueLabels;
   onDeleted: (id: string, venueId: string) => void;
+  onRenamed: (id: string, seatLabel: string) => void;
 }) {
   const { t } = useLocale(locale);
   const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(photo.seatLabel);
   const [working, setWorking] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
 
@@ -694,6 +706,47 @@ function PhotoRow({
     }
   }, [photo.id, photo.venueId, onDeleted, t]);
 
+  const startEditing = useCallback(() => {
+    setConfirming(false);
+    setDraftLabel(photo.seatLabel);
+    setRowError(null);
+    setEditing(true);
+  }, [photo.seatLabel]);
+
+  const cancelEditing = useCallback(() => {
+    setDraftLabel(photo.seatLabel);
+    setRowError(null);
+    setEditing(false);
+  }, [photo.seatLabel]);
+
+  const doRename = useCallback(async () => {
+    const nextLabel = draftLabel.trim();
+    if (nextLabel.length === 0 || nextLabel.length > SEAT_LABEL_MAX) {
+      setRowError(t.admin.seatLabelInvalid);
+      return;
+    }
+    if (nextLabel === photo.seatLabel) {
+      setEditing(false);
+      setRowError(null);
+      return;
+    }
+
+    setWorking(true);
+    setRowError(null);
+    try {
+      await renameAdminPhotoSeat(photo.id, nextLabel);
+      onRenamed(photo.id, nextLabel);
+      setEditing(false);
+    } catch (err) {
+      const code = err instanceof AdminError ? err.code : "server_error";
+      setRowError(
+        code === "unauthorized" ? t.admin.unauthorized : t.admin.actionError,
+      );
+    } finally {
+      setWorking(false);
+    }
+  }, [draftLabel, onRenamed, photo.id, photo.seatLabel, t]);
+
   return (
     <li className="border-border flex gap-3 rounded-md border p-3">
       {/* Thumbnail: object-cover small box; broken image shows the box (no
@@ -708,9 +761,49 @@ function PhotoRow({
       />
 
       <div className="min-w-0 flex-1">
-        <p className="text-foreground text-sm font-medium break-words">
-          {photo.seatLabel}
-        </p>
+        {editing ? (
+          <div className="flex max-w-md flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={draftLabel}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void doRename();
+                if (e.key === "Escape") cancelEditing();
+              }}
+              maxLength={SEAT_LABEL_MAX}
+              aria-label={t.admin.seatLabelInput}
+              disabled={working}
+              className={cn(
+                "border-border bg-background text-foreground focus-visible:ring-ring h-8 min-w-0 flex-1 rounded-md border px-2 text-sm",
+                "focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            />
+            <button
+              type="button"
+              onClick={doRename}
+              disabled={working}
+              className={cn(
+                "border-border text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs font-medium",
+                "transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {working ? t.admin.working : t.admin.saveSeatLabel}
+            </button>
+            <button
+              type="button"
+              onClick={cancelEditing}
+              disabled={working}
+              className="border-border text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t.admin.confirmNo}
+            </button>
+          </div>
+        ) : (
+          <p className="text-foreground text-sm font-medium break-words">
+            {photo.seatLabel}
+          </p>
+        )}
         <p className="text-muted-foreground text-xs break-words">
           {venueName} · {subMapName}
         </p>
@@ -730,7 +823,7 @@ function PhotoRow({
 
       {/* Delete action = move to recycle bin (issue #29). Inline confirm bar
           (no native confirm, no modal). */}
-      {confirming ? (
+      {editing ? null : confirming ? (
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className="text-muted-foreground max-w-44 text-right text-xs leading-snug">
             {t.admin.confirmDeletePhoto}
@@ -759,14 +852,24 @@ function PhotoRow({
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          aria-label={`${t.admin.deletePhoto} ${photo.seatLabel}`}
-          className="border-border text-muted-foreground hover:text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 shrink-0 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
-        >
-          {t.admin.deletePhoto}
-        </button>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={startEditing}
+            aria-label={`${t.admin.renameSeatLabel} ${photo.seatLabel}`}
+            className="border-border text-muted-foreground hover:text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {t.admin.renameSeatLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label={`${t.admin.deletePhoto} ${photo.seatLabel}`}
+            className="border-border text-muted-foreground hover:text-foreground hover:border-foreground focus-visible:ring-ring inline-flex h-8 items-center rounded-md border px-3 text-xs transition-colors focus-visible:ring-2 focus-visible:outline-none"
+          >
+            {t.admin.deletePhoto}
+          </button>
+        </div>
       )}
     </li>
   );

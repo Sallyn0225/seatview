@@ -371,6 +371,10 @@ const ja: Messages = {
     correctionsEmpty: "座席名の修正依頼はまだありません。",
     end: "ここまでです。",
     deletePhoto: "削除",
+    renameSeatLabel: "座席名を変更",
+    saveSeatLabel: "保存",
+    seatLabelInput: "座席名",
+    seatLabelInvalid: "座席名は必須で、80文字以内にしてください。",
     confirmDeletePhoto:
       "削除すると全ページから消えますが、ゴミ箱から復元できます。",
     restorePhoto: "復元",

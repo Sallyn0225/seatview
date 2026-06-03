@@ -185,6 +185,24 @@ export async function listAdminPhotoVenueFacets(
 }
 
 /**
+ * Update the user-entered seat label for one LIVE photo from the maintainer
+ * admin list (issue #44). Recycle-bin rows are intentionally not renamed here:
+ * the visible moderation surface edits content currently exposed publicly.
+ */
+export async function updatePhotoSeatLabelForAdmin(
+  db: Db,
+  id: string,
+  seatLabel: string,
+): Promise<boolean> {
+  const updated = await db
+    .update(photos)
+    .set({ seatLabel })
+    .where(and(eq(photos.id, id), isNull(photos.deletedAt)))
+    .returning({ id: photos.id });
+  return updated.length > 0;
+}
+
+/**
  * Soft-delete one photo = move it to the recycle bin (ADR-6, revised by issue
  * #29): set `deleted_at` so every public query (`deleted_at IS NULL`)
  * immediately hides it — the seatmap pin and grid card disappear with no
