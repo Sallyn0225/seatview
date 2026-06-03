@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { newId } from "@/server/id";
 import type { AdminPhotoCorrectionDto } from "@/lib/admin";
@@ -134,31 +134,27 @@ export async function approvePhotoCorrection(
   id: string,
   now: number = Date.now(),
 ): Promise<HandlePhotoCorrectionOutcome> {
-  const request = (
-    await db
-      .select({
-        id: photoCorrectionRequests.id,
-        photoId: photoCorrectionRequests.photoId,
-        requestedSeatLabel: photoCorrectionRequests.requestedSeatLabel,
-      })
-      .from(photoCorrectionRequests)
-      .innerJoin(photos, eq(photoCorrectionRequests.photoId, photos.id))
-      .where(
-        and(
-          eq(photoCorrectionRequests.id, id),
-          isNull(photoCorrectionRequests.processedAt),
-          isNull(photos.deletedAt),
-        ),
-      )
-      .limit(1)
-  )[0];
-  if (!request) return { status: "not_found" };
+  const pendingPhotoId = sql<string>`(
+    select ${photoCorrectionRequests.photoId}
+    from ${photoCorrectionRequests}
+    where ${photoCorrectionRequests.id} = ${id}
+      and ${photoCorrectionRequests.processedAt} is null
+    limit 1
+  )`;
+  const pendingSeatLabel = sql<string>`(
+    select ${photoCorrectionRequests.requestedSeatLabel}
+    from ${photoCorrectionRequests}
+    where ${photoCorrectionRequests.id} = ${id}
+      and ${photoCorrectionRequests.processedAt} is null
+    limit 1
+  )`;
 
-  await db.batch([
+  const [updatedPhotos, updatedRequests] = await db.batch([
     db
       .update(photos)
-      .set({ seatLabel: request.requestedSeatLabel })
-      .where(and(eq(photos.id, request.photoId), isNull(photos.deletedAt))),
+      .set({ seatLabel: pendingSeatLabel })
+      .where(and(eq(photos.id, pendingPhotoId), isNull(photos.deletedAt)))
+      .returning({ id: photos.id }),
     db
       .update(photoCorrectionRequests)
       .set({
@@ -170,9 +166,17 @@ export async function approvePhotoCorrection(
         and(
           eq(photoCorrectionRequests.id, id),
           isNull(photoCorrectionRequests.processedAt),
+          sql`exists (
+            select 1
+            from ${photos}
+            where ${photos.id} = ${photoCorrectionRequests.photoId}
+              and ${photos.deletedAt} is null
+          )`,
         ),
-      ),
+      )
+      .returning({ id: photoCorrectionRequests.id }),
   ]);
+  if (!updatedPhotos[0] || !updatedRequests[0]) return { status: "not_found" };
 
   return { status: "approved", id };
 }
