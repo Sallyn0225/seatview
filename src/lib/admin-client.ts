@@ -11,12 +11,15 @@ import type {
   AdminDeletePhotoRequest,
   AdminDeleteStagingRequest,
   AdminErrorCode,
+  AdminPhotoCorrectionMutationResponse,
+  AdminPhotoCorrectionsResponse,
   AdminPhotoMutationResponse,
   AdminPhotosResponse,
   AdminPhotoVenuesResponse,
   AdminRestorePhotoRequest,
   AdminStagingMutationResponse,
   AdminStagingResponse,
+  AdminUpdatePhotoCorrectionRequest,
   AdminUpdateStagingRequest,
 } from "@/lib/admin";
 
@@ -176,4 +179,40 @@ export async function deleteAdminStaging(
     body: JSON.stringify(body),
     signal,
   });
+}
+
+// ── Photo corrections ─────────────────────────────────────────────────────-
+
+/** Fetch one page of pending seat-label correction requests. */
+export async function fetchAdminPhotoCorrections(
+  offset: number,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<AdminPhotoCorrectionsResponse> {
+  const params = new URLSearchParams({
+    offset: String(offset),
+    limit: String(limit),
+  });
+  return jsonRequest<AdminPhotoCorrectionsResponse>(
+    `/api/admin/photo-corrections?${params}`,
+    { signal },
+  );
+}
+
+/** Approve or reject a pending seat-label correction request. */
+export async function setAdminPhotoCorrection(
+  id: string,
+  action: AdminUpdatePhotoCorrectionRequest["action"],
+  signal?: AbortSignal,
+): Promise<AdminPhotoCorrectionMutationResponse> {
+  const body: AdminUpdatePhotoCorrectionRequest = { id, action };
+  return jsonRequest<AdminPhotoCorrectionMutationResponse>(
+    "/api/admin/photo-corrections",
+    {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal,
+    },
+  );
 }

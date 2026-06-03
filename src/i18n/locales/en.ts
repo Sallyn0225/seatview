@@ -189,6 +189,31 @@ const en: Messages = {
     imageError: "This photo can't open right now",
     imageAlt: "View from {label} {date} {event}",
     position: "{n} / {total}",
+    correction: {
+      open: "Request seat-label correction",
+      title: "Seat-label correction",
+      current: "Current",
+      requested: "Change to",
+      placeholder: "Enter the correct seat label",
+      turnstileNote:
+        "Why this check? It keeps bots from flooding correction requests.",
+      limitNote:
+        "Up to 5 correction requests per day, so maintainers can review them carefully.",
+      submit: "Submit request",
+      submitting: "Submitting…",
+      success:
+        "Received. A maintainer will review it before updating the label.",
+      duplicateSuccess:
+        "This request was already received, so it will not be queued twice.",
+      missingFields: "Enter the seat label you want to use.",
+      photoNotFound: "This photo may have been removed.",
+      turnstileError: "Human verification failed. Try again.",
+      limitDaily:
+        "You've used today's correction requests. Try again tomorrow.",
+      networkError: "You're offline. Try again later.",
+      serverError: "The request could not be submitted. Try again later.",
+      cancel: "Collapse",
+    },
   },
   footer: {
     contribute: "Add a new venue? Submit via GitHub",
@@ -350,11 +375,13 @@ const en: Messages = {
     photosTab: "Uploaded photos",
     stagingTab: "Requests",
     recycleTab: "Recycle bin",
+    correctionsTab: "Seat corrections",
     venueFilter: "Filter by venue",
     allVenuesOption: "All ({count})",
     photosEmpty: "No uploaded photos yet.",
     stagingEmpty: "No requests yet.",
     recycleEmpty: "The recycle bin is empty.",
+    correctionsEmpty: "No seat-label correction requests yet.",
     end: "You've reached the end.",
     deletePhoto: "Delete",
     confirmDeletePhoto:
@@ -371,6 +398,15 @@ const en: Messages = {
     markUnprocessed: "Undo collected",
     deleteStaging: "Delete",
     confirmDeleteStaging: "Delete this request? It can't be restored.",
+    approveCorrection: "Approve",
+    rejectCorrection: "Reject",
+    confirmApproveCorrection:
+      "Approving immediately updates this photo's public seat label.",
+    confirmRejectCorrection:
+      "Reject this correction request? The photo will not change.",
+    correctionCurrent: "Submitted as",
+    correctionLive: "Current",
+    correctionRequested: "Requested",
     processed: "Collected",
     thumbAlt: "Uploaded photo of {label}",
     actionError: "That didn't work. Try again.",

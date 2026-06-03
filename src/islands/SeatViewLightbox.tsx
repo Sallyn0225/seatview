@@ -9,6 +9,12 @@ import { ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import TurnstileWidget from "@/islands/upload/TurnstileWidget";
+import { PHOTO_CORRECTION_LABEL_MAX } from "@/lib/photo-corrections";
+import {
+  PhotoCorrectionError,
+  submitPhotoCorrection,
+} from "@/lib/photo-corrections-client";
 import { setSelectedPhoto } from "@/lib/selected-photo";
 import type { PhotoDto } from "@/lib/photos";
 import { imageKeyToUrl } from "@/lib/photos";
@@ -104,6 +110,7 @@ export default function SeatViewLightbox({
   const [currentIndex, setCurrentIndex] = useState(0);
   // Metadata detail sheet open? Esc closes the sheet first (shape §7).
   const [detailOpen, setDetailOpen] = useState(false);
+  const [correctionOpen, setCorrectionOpen] = useState(false);
   const graceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const open = request !== null;
@@ -124,6 +131,7 @@ export default function SeatViewLightbox({
     }
     setCurrentIndex(request.index);
     setDetailOpen(false);
+    setCorrectionOpen(false);
     const startPhoto = request.photos[request.index];
     if (startPhoto) setSelectedPhoto(startPhoto.id);
   }, [request]);
@@ -143,6 +151,7 @@ export default function SeatViewLightbox({
     ({ index }: { index: number }) => {
       setCurrentIndex(index);
       setDetailOpen(false);
+      setCorrectionOpen(false);
       const photo = photos[index];
       if (photo) setSelectedPhoto(photo.id);
     },
@@ -177,24 +186,26 @@ export default function SeatViewLightbox({
       setSelectedPhoto(null);
     }
     setDetailOpen(false);
+    setCorrectionOpen(false);
     onClose();
   }, [photos, currentIndex, mode, reducedMotion, onClose]);
 
   // Esc priority: when the detail sheet is open, Esc closes the SHEET, not the
-  // Lightbox (shape §7). We capture Escape ourselves while the sheet is open and
-  // disable yarl's own closeOnEscape so the two don't both fire.
+  // Lightbox (shape §7). If the correction panel is nested inside it, Esc closes
+  // that panel first.
   useEffect(() => {
     if (!open || !detailOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopPropagation();
         e.preventDefault();
-        setDetailOpen(false);
+        if (correctionOpen) setCorrectionOpen(false);
+        else setDetailOpen(false);
       }
     }
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [open, detailOpen]);
+  }, [open, detailOpen, correctionOpen]);
 
   if (!open) return null;
 
@@ -301,7 +312,10 @@ export default function SeatViewLightbox({
                 collapse: t.lightbox.collapse,
                 expand: t.lightbox.expand,
                 uploadedAt: t.lightbox.uploadedAt,
+                correction: t.lightbox.correction,
               }}
+              correctionOpen={correctionOpen}
+              onCorrectionOpenChange={setCorrectionOpen}
               onClose={() => setDetailOpen(false)}
             />
           ) : null,
@@ -388,7 +402,33 @@ function FooterStrip({
 interface DetailSheetProps {
   dto: PhotoDto;
   locale: Locale;
-  labels: { collapse: string; expand: string; uploadedAt: string };
+  labels: {
+    collapse: string;
+    expand: string;
+    uploadedAt: string;
+    correction: {
+      open: string;
+      title: string;
+      current: string;
+      requested: string;
+      placeholder: string;
+      turnstileNote: string;
+      limitNote: string;
+      submit: string;
+      submitting: string;
+      success: string;
+      duplicateSuccess: string;
+      missingFields: string;
+      photoNotFound: string;
+      turnstileError: string;
+      limitDaily: string;
+      networkError: string;
+      serverError: string;
+      cancel: string;
+    };
+  };
+  correctionOpen: boolean;
+  onCorrectionOpenChange: (open: boolean) => void;
   onClose: () => void;
 }
 
@@ -399,13 +439,90 @@ interface DetailSheetProps {
  * "展开全文 / もっと読む". Esc / re-tap / this close collapses it (not the
  * Lightbox). All text is hairline ash on a deeper ink panel — no vermilion.
  */
-function DetailSheet({ dto, locale, labels, onClose }: DetailSheetProps) {
+function DetailSheet({
+  dto,
+  locale,
+  labels,
+  correctionOpen,
+  onCorrectionOpenChange,
+  onClose,
+}: DetailSheetProps) {
   const [expanded, setExpanded] = useState(false);
+  const [requestedSeatLabel, setRequestedSeatLabel] = useState(dto.seatLabel);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitState, setSubmitState] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
   const date = performanceDate(dto.performanceDate, locale);
   const uploaded = relativeTime(dto.createdAt, locale);
   const uploadedTitle = absoluteDate(dto.createdAt, locale);
   const description = dto.description?.trim() || null;
   const isLong = description != null && description.length > 120;
+  const requestedTrimmed = requestedSeatLabel.trim();
+
+  useEffect(() => {
+    setRequestedSeatLabel(dto.seatLabel);
+    setTurnstileToken(null);
+    setSubmitting(false);
+    setSubmitState(null);
+  }, [dto.id, dto.seatLabel]);
+
+  const correctionErrorMessage = useCallback(
+    (err: unknown): string => {
+      const code =
+        err instanceof PhotoCorrectionError ? err.code : "server_error";
+      switch (code) {
+        case "missing_fields":
+          return labels.correction.missingFields;
+        case "photo_not_found":
+          return labels.correction.photoNotFound;
+        case "turnstile_failed":
+          return labels.correction.turnstileError;
+        case "rate_limited_daily":
+          return labels.correction.limitDaily;
+        case "network":
+          return labels.correction.networkError;
+        case "database_unavailable":
+        case "server_misconfigured":
+        case "server_error":
+        default:
+          return labels.correction.serverError;
+      }
+    },
+    [labels.correction],
+  );
+
+  const submitCorrection = useCallback(async () => {
+    if (!turnstileToken || requestedTrimmed.length === 0) return;
+    setSubmitting(true);
+    setSubmitState(null);
+    try {
+      const result = await submitPhotoCorrection(
+        dto.id,
+        requestedTrimmed.slice(0, PHOTO_CORRECTION_LABEL_MAX),
+        turnstileToken,
+      );
+      setSubmitState({
+        kind: "success",
+        message: result.duplicate
+          ? labels.correction.duplicateSuccess
+          : labels.correction.success,
+      });
+    } catch (err) {
+      setSubmitState({ kind: "error", message: correctionErrorMessage(err) });
+      setTurnstileToken(null);
+    } finally {
+      setSubmitting(false);
+    }
+  }, [
+    correctionErrorMessage,
+    dto.id,
+    labels.correction,
+    requestedTrimmed,
+    turnstileToken,
+  ]);
 
   return (
     <div
@@ -469,6 +586,101 @@ function DetailSheet({ dto, locale, labels, onClose }: DetailSheetProps) {
             {uploaded}
           </time>
         </p>
+        <div className="border-t border-[oklch(0.8_0.006_86_/_0.18)] pt-3">
+          {correctionOpen ? (
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[oklch(0.93_0.006_88)]">
+                    {labels.correction.title}
+                  </p>
+                  <p className="mt-1 text-xs text-[oklch(0.72_0.006_86)]">
+                    {labels.correction.current}:{" "}
+                    <span className="[overflow-wrap:anywhere]">
+                      {dto.seatLabel}
+                    </span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCorrectionOpenChange(false)}
+                  className="shrink-0 rounded px-2 py-0.5 text-xs text-[oklch(0.8_0.006_86)] hover:text-[oklch(0.93_0.006_88)] focus-visible:outline focus-visible:outline-2 focus:outline-none"
+                >
+                  {labels.correction.cancel}
+                </button>
+              </div>
+
+              <label className="block text-xs text-[oklch(0.8_0.006_86)]">
+                {labels.correction.requested}
+                <input
+                  value={requestedSeatLabel}
+                  maxLength={PHOTO_CORRECTION_LABEL_MAX}
+                  onChange={(e) => {
+                    setRequestedSeatLabel(e.currentTarget.value);
+                    setSubmitState(null);
+                  }}
+                  placeholder={labels.correction.placeholder}
+                  className={cn(
+                    "mt-1 h-10 w-full rounded-md border px-3 text-sm",
+                    "border-[oklch(0.8_0.006_86_/_0.28)] bg-[oklch(0.13_0.008_75_/_0.72)] text-[oklch(0.93_0.006_88)]",
+                    "placeholder:text-[oklch(0.72_0.006_86)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)]",
+                  )}
+                />
+              </label>
+
+              {!submitState || submitState.kind === "error" ? (
+                <>
+                  <TurnstileWidget onToken={setTurnstileToken} theme="auto" />
+                  <p className="text-xs leading-relaxed text-[oklch(0.72_0.006_86)]">
+                    {labels.correction.turnstileNote}
+                  </p>
+                  <p className="text-xs leading-relaxed text-[oklch(0.72_0.006_86)]">
+                    {labels.correction.limitNote}
+                  </p>
+                </>
+              ) : null}
+
+              {submitState && (
+                <p
+                  role="status"
+                  className={cn(
+                    "text-xs leading-relaxed",
+                    submitState.kind === "success"
+                      ? "text-[oklch(0.82_0.03_145)]"
+                      : "text-[oklch(0.72_0.15_32)]",
+                  )}
+                >
+                  {submitState.message}
+                </p>
+              )}
+
+              {submitState?.kind !== "success" && (
+                <button
+                  type="button"
+                  onClick={submitCorrection}
+                  disabled={
+                    submitting ||
+                    !turnstileToken ||
+                    requestedTrimmed.length === 0
+                  }
+                  className="inline-flex h-9 items-center rounded-md border border-[oklch(0.8_0.006_86_/_0.35)] px-3 text-xs font-medium text-[oklch(0.93_0.006_88)] transition-colors hover:border-[oklch(0.8_0.006_86_/_0.6)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitting
+                    ? labels.correction.submitting
+                    : labels.correction.submit}
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onCorrectionOpenChange(true)}
+              className="rounded text-xs text-[oklch(0.8_0.006_86)] underline underline-offset-4 hover:text-[oklch(0.93_0.006_88)] focus-visible:outline focus-visible:outline-2 focus:outline-none"
+            >
+              {labels.correction.open}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

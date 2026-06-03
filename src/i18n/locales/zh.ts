@@ -226,6 +226,27 @@ export interface Messages {
     imageAlt: string;
     /** `{n}` / `{total}` → 1-based position and count (sequence mode). */
     position: string;
+    /** Anonymous seat-label correction request, shown inside the detail sheet. */
+    correction: {
+      open: string;
+      title: string;
+      current: string;
+      requested: string;
+      placeholder: string;
+      turnstileNote: string;
+      limitNote: string;
+      submit: string;
+      submitting: string;
+      success: string;
+      duplicateSuccess: string;
+      missingFields: string;
+      photoNotFound: string;
+      turnstileError: string;
+      limitDaily: string;
+      networkError: string;
+      serverError: string;
+      cancel: string;
+    };
   };
   footer: {
     contribute: string;
@@ -405,6 +426,8 @@ export interface Messages {
     stagingTab: string;
     /** Tab: recycle bin — deleted photos awaiting restore / permanent delete. */
     recycleTab: string;
+    /** Tab: pending seat-label correction requests. */
+    correctionsTab: string;
     /** Accessible label for the venue filter dropdown (issue #28). */
     venueFilter: string;
     /** "All venues" option in the filter, `{count}` → total live photo count. */
@@ -415,6 +438,8 @@ export interface Messages {
     stagingEmpty: string;
     /** Empty recycle bin. */
     recycleEmpty: string;
+    /** Empty correction queue. */
+    correctionsEmpty: string;
     /** End-of-list full stop. */
     end: string;
     /** Delete photo button (+ aria) — moves the photo to the recycle bin. */
@@ -438,6 +463,14 @@ export interface Messages {
     /** Delete staging suggestion (+ confirm bar). */
     deleteStaging: string;
     confirmDeleteStaging: string;
+    /** Seat-label correction review actions. */
+    approveCorrection: string;
+    rejectCorrection: string;
+    confirmApproveCorrection: string;
+    confirmRejectCorrection: string;
+    correctionCurrent: string;
+    correctionLive: string;
+    correctionRequested: string;
     /** Processed marker (mirrors public staging copy). */
     processed: string;
     /** SR alt for a photo thumbnail, `{label}` → seat label. */
@@ -628,6 +661,26 @@ const zh: Messages = {
     imageError: "这张照片暂时打不开",
     imageAlt: "{label} {date} {event} 的视角",
     position: "{n} / {total}",
+    correction: {
+      open: "提交座席名修改请求",
+      title: "座席名修改",
+      current: "当前",
+      requested: "希望改为",
+      placeholder: "输入正确的座席名",
+      turnstileNote: "为什么要校验？这样可以避免修正请求被机器人刷屏。",
+      limitNote: "每天最多提交 5 次修正请求，方便维护者认真审核。",
+      submit: "提交请求",
+      submitting: "提交中…",
+      success: "已收到。维护者审核后会更新座席名。",
+      duplicateSuccess: "这条请求已经收到过了，不会重复进入后台。",
+      missingFields: "请填写想修改成的座席名。",
+      photoNotFound: "这张照片可能已经被移除。",
+      turnstileError: "人机校验没通过，请再试一次。",
+      limitDaily: "今天的修正请求次数已用完，明天再试。",
+      networkError: "网络没有连上，请稍后再试。",
+      serverError: "提交没成功，请稍后再试。",
+      cancel: "收起",
+    },
   },
   footer: {
     contribute: "想贡献新场馆？通过 GitHub 提交",
@@ -781,11 +834,13 @@ const zh: Messages = {
     photosTab: "上传图片",
     stagingTab: "暂存区",
     recycleTab: "回收站",
+    correctionsTab: "座席名修正",
     venueFilter: "按场馆筛选",
     allVenuesOption: "全部 ({count})",
     photosEmpty: "还没有上传图片。",
     stagingEmpty: "暂存区还没有提交。",
     recycleEmpty: "回收站是空的。",
+    correctionsEmpty: "还没有座席名修正请求。",
     end: "已经到底了。",
     deletePhoto: "删除",
     confirmDeletePhoto: "删除后图片会从所有页面消失，可在回收站恢复。",
@@ -799,6 +854,13 @@ const zh: Messages = {
     markUnprocessed: "撤销收录",
     deleteStaging: "删除",
     confirmDeleteStaging: "删除这条提交？无法恢复。",
+    approveCorrection: "通过",
+    rejectCorrection: "拒绝",
+    confirmApproveCorrection: "通过后会立即更新这张照片的公开座席名。",
+    confirmRejectCorrection: "拒绝这条修正请求？照片信息不会改变。",
+    correctionCurrent: "提交时",
+    correctionLive: "当前",
+    correctionRequested: "希望改为",
     processed: "已收录",
     thumbAlt: "{label} 的上传图片",
     actionError: "操作没成功，再试一次。",

@@ -187,6 +187,30 @@ const ko: Messages = {
     imageError: "이 사진은 지금 열 수 없어요",
     imageAlt: "{label} {date} {event}의 시점",
     position: "{n} / {total}",
+    correction: {
+      open: "좌석명 수정 요청",
+      title: "좌석명 수정",
+      current: "현재",
+      requested: "바꿀 이름",
+      placeholder: "올바른 좌석명을 입력",
+      turnstileNote:
+        "왜 확인하나요? 수정 요청이 자동으로 대량 제출되는 일을 막기 위해서예요.",
+      limitNote:
+        "수정 요청은 하루 5건까지예요. 관리자가 차분히 확인할 수 있도록 제한해요.",
+      submit: "요청 제출",
+      submitting: "제출 중…",
+      success: "접수했어요. 관리자가 확인한 뒤 좌석명을 업데이트해요.",
+      duplicateSuccess:
+        "같은 요청은 이미 접수되어 관리자 화면에 중복으로 들어가지 않아요.",
+      missingFields: "바꿀 좌석명을 입력해 주세요.",
+      photoNotFound: "이 사진은 삭제되었을 수 있어요.",
+      turnstileError: "사람 확인에 실패했어요. 다시 시도해 주세요.",
+      limitDaily:
+        "오늘 수정 요청 횟수를 모두 사용했어요. 내일 다시 시도해 주세요.",
+      networkError: "네트워크가 연결되지 않았어요. 나중에 다시 시도해 주세요.",
+      serverError: "제출하지 못했어요. 나중에 다시 시도해 주세요.",
+      cancel: "접기",
+    },
   },
   footer: {
     contribute: "새 회장을 제안할까요? GitHub로 제출",
@@ -344,11 +368,13 @@ const ko: Messages = {
     photosTab: "업로드 이미지",
     stagingTab: "요청",
     recycleTab: "휴지통",
+    correctionsTab: "좌석명 수정",
     venueFilter: "회장으로 필터",
     allVenuesOption: "전체 ({count})",
     photosEmpty: "아직 업로드된 이미지가 없어요.",
     stagingEmpty: "아직 제출이 없어요.",
     recycleEmpty: "휴지통이 비어 있어요.",
+    correctionsEmpty: "아직 좌석명 수정 요청이 없어요.",
     end: "여기까지예요.",
     deletePhoto: "삭제",
     confirmDeletePhoto:
@@ -365,6 +391,15 @@ const ko: Messages = {
     markUnprocessed: "수록 취소",
     deleteStaging: "삭제",
     confirmDeleteStaging: "이 제출을 삭제할까요? 복구할 수 없어요.",
+    approveCorrection: "승인",
+    rejectCorrection: "거절",
+    confirmApproveCorrection:
+      "승인하면 이 사진의 공개 좌석명이 바로 업데이트돼요.",
+    confirmRejectCorrection:
+      "이 수정 요청을 거절할까요? 사진 정보는 바뀌지 않아요.",
+    correctionCurrent: "제출 당시",
+    correctionLive: "현재",
+    correctionRequested: "요청",
     processed: "수록됨",
     thumbAlt: "{label}의 업로드 이미지",
     actionError: "처리하지 못했어요. 다시 시도해 주세요.",

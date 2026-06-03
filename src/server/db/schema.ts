@@ -84,9 +84,39 @@ export const stagingVotes = sqliteTable(
   ],
 );
 
+/** Anonymous request to correct one uploaded photo's seat label. */
+export const photoCorrectionRequests = sqliteTable(
+  "photo_correction_requests",
+  {
+    id: text("id").primaryKey(), // ulid
+    photoId: text("photo_id").notNull(),
+    currentSeatLabel: text("current_seat_label").notNull(),
+    requestedSeatLabel: text("requested_seat_label").notNull(),
+    ipHash: text("ip_hash").notNull(),
+    // Pending-only uniqueness guard. Set to a stable key while pending, then
+    // cleared on approval/rejection so a future correction can be submitted.
+    activeDedupKey: text("active_dedup_key"),
+    createdAt: integer("created_at").notNull(),
+    processedAt: integer("processed_at"),
+    approvedAt: integer("approved_at"),
+  },
+  (table) => [
+    uniqueIndex("idx_photo_corrections_active_dedup").on(table.activeDedupKey),
+    index("idx_photo_corrections_pending").on(
+      table.processedAt,
+      table.createdAt,
+    ),
+    index("idx_photo_corrections_photo").on(table.photoId),
+  ],
+);
+
 export type PhotoRow = typeof photos.$inferSelect;
 export type NewPhotoRow = typeof photos.$inferInsert;
 export type StagingVenueRow = typeof stagingVenues.$inferSelect;
 export type NewStagingVenueRow = typeof stagingVenues.$inferInsert;
 export type StagingVoteRow = typeof stagingVotes.$inferSelect;
 export type NewStagingVoteRow = typeof stagingVotes.$inferInsert;
+export type PhotoCorrectionRequestRow =
+  typeof photoCorrectionRequests.$inferSelect;
+export type NewPhotoCorrectionRequestRow =
+  typeof photoCorrectionRequests.$inferInsert;

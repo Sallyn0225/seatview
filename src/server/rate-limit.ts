@@ -17,8 +17,8 @@
 
 import type { KVNamespace } from "@cloudflare/workers-types";
 
-/** A day-scoped quota scope. New scopes (staging) reuse the same machinery. */
-export type RateScope = "upload" | "staging";
+/** A day-scoped quota scope. New scopes reuse the same machinery. */
+export type RateScope = "upload" | "staging" | "photo_correction";
 
 export interface DailyLimitResult {
   /** Whether the current count is still under the limit. */
