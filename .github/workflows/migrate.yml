@@ -1,0 +1,23 @@
+name: Run D1 Migrations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Apply D1 migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run db:migrate:prod
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
