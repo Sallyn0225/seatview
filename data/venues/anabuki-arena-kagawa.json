@@ -1,0 +1,22 @@
+{
+  "id": "anabuki-arena-kagawa",
+  "name_zh": "穴吹竞技场香川",
+  "name_jp": "あなぶきアリーナ香川",
+  "name_romaji": "Anabuki Arena Kagawa",
+  "prefecture": "kagawa",
+  "city": "高松市",
+  "aliases": [
+    "香川県立アリーナ",
+    "香川县立竞技场"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/anabuki-arena-kagawa/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
