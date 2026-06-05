@@ -1,0 +1,30 @@
+{
+  "id": "tokyo-international-forum",
+  "name_zh": "东京国际论坛",
+  "name_jp": "東京国際フォーラム",
+  "name_romaji": "Tokyo International Forum",
+  "prefecture": "tokyo",
+  "city": "千代田区",
+  "aliases": [
+    "国際フォーラム",
+    "TIF"
+  ],
+  "subMaps": [
+    {
+      "id": "hall-a",
+      "label_zh": "Hall A",
+      "label_jp": "ホールA",
+      "imageUrl": "/seatmaps/tokyo-international-forum/hall-a.webp",
+      "width": 1604,
+      "height": 2048
+    },
+    {
+      "id": "hall-c",
+      "label_zh": "Hall C",
+      "label_jp": "ホールC",
+      "imageUrl": "/seatmaps/tokyo-international-forum/hall-c.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
