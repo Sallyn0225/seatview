@@ -1,0 +1,22 @@
+{
+  "id": "shizuoka-ecopa-arena",
+  "name_zh": "静冈 Ecopa Arena",
+  "name_jp": "静岡エコパアリーナ",
+  "name_romaji": "Shizuoka Ecopa Arena",
+  "prefecture": "shizuoka",
+  "city": "袋井市",
+  "aliases": [
+    "エコパアリーナ",
+    "Ecopa Arena"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/shizuoka-ecopa-arena/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}

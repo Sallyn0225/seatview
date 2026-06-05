@@ -1,0 +1,22 @@
+{
+  "id": "umeda-arts-theater",
+  "name_zh": "梅田艺术剧场",
+  "name_jp": "梅田芸術劇場",
+  "name_romaji": "Umeda Arts Theater",
+  "prefecture": "osaka",
+  "city": "大阪市北区",
+  "aliases": [
+    "梅田芸術劇場メインホール",
+    "Umeda Arts Theater Main Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/umeda-arts-theater/default.webp",
+      "width": 1658,
+      "height": 2048
+    }
+  ]
+}
