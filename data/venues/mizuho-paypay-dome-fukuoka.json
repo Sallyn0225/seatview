@@ -1,0 +1,24 @@
+{
+  "id": "mizuho-paypay-dome-fukuoka",
+  "name_zh": "Mizuho PayPay Dome 福冈",
+  "name_jp": "みずほPayPayドーム福岡",
+  "name_romaji": "Mizuho PayPay Dome Fukuoka",
+  "prefecture": "fukuoka",
+  "city": "福岡市中央区",
+  "aliases": [
+    "福岡ドーム",
+    "PayPayドーム",
+    "Fukuoka Dome",
+    "福冈巨蛋"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/mizuho-paypay-dome-fukuoka/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}

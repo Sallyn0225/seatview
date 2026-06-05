@@ -1,0 +1,63 @@
+{
+  "id": "asiaworld-expo",
+  "name_zh": "亚洲国际博览馆",
+  "name_jp": "アジアワールド・エキスポ",
+  "name_romaji": "AsiaWorld-Expo",
+  "prefecture": "overseas",
+  "city": "Hong Kong",
+  "aliases": [
+    "AsiaWorld Expo",
+    "AWE",
+    "亞洲國際博覽館"
+  ],
+  "subMaps": [
+    {
+      "id": "hall-1-full",
+      "label_zh": "1号馆 全场",
+      "label_jp": "1号館 全体",
+      "imageUrl": "/seatmaps/asiaworld-expo/hall-1-full.webp",
+      "width": 1920,
+      "height": 1344
+    },
+    {
+      "id": "hall-1-half",
+      "label_zh": "1号馆 半场",
+      "label_jp": "1号館 半面",
+      "imageUrl": "/seatmaps/asiaworld-expo/hall-1-half.webp",
+      "width": 1920,
+      "height": 1344
+    },
+    {
+      "id": "hall-2",
+      "label_zh": "2号馆",
+      "label_jp": "2号館",
+      "imageUrl": "/seatmaps/asiaworld-expo/hall-2.webp",
+      "width": 1920,
+      "height": 1243
+    },
+    {
+      "id": "halls-6-8-10",
+      "label_zh": "6/8/10号馆",
+      "label_jp": "6/8/10号館",
+      "imageUrl": "/seatmaps/asiaworld-expo/halls-6-8-10.webp",
+      "width": 1920,
+      "height": 965
+    },
+    {
+      "id": "halls-8-10",
+      "label_zh": "8/10号馆",
+      "label_jp": "8/10号館",
+      "imageUrl": "/seatmaps/asiaworld-expo/halls-8-10.webp",
+      "width": 1920,
+      "height": 1344
+    },
+    {
+      "id": "hall-11",
+      "label_zh": "11号馆",
+      "label_jp": "11号館",
+      "imageUrl": "/seatmaps/asiaworld-expo/hall-11.webp",
+      "width": 1920,
+      "height": 1344
+    }
+  ]
+}

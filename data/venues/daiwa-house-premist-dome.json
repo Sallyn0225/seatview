@@ -1,0 +1,23 @@
+{
+  "id": "daiwa-house-premist-dome",
+  "name_zh": "Daiwa House Premist Dome",
+  "name_jp": "大和ハウス プレミストドーム",
+  "name_romaji": "Daiwa House Premist Dome",
+  "prefecture": "hokkaido",
+  "city": "札幌市豊平区",
+  "aliases": [
+    "札幌ドーム",
+    "Sapporo Dome",
+    "札幌巨蛋"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/daiwa-house-premist-dome/default.webp",
+      "width": 1898,
+      "height": 2048
+    }
+  ]
+}
