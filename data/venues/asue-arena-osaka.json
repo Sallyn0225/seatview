@@ -1,0 +1,24 @@
+{
+  "id": "asue-arena-osaka",
+  "name_zh": "Asue Arena 大阪",
+  "name_jp": "Asueアリーナ大阪",
+  "name_romaji": "Asue Arena Osaka",
+  "prefecture": "osaka",
+  "city": "大阪市港区",
+  "aliases": [
+    "大阪市中央体育館",
+    "丸善インテックアリーナ大阪",
+    "Osaka Municipal Central Gymnasium",
+    "Asue大阪竞技馆"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/asue-arena-osaka/default.webp",
+      "width": 1911,
+      "height": 2048
+    }
+  ]
+}
