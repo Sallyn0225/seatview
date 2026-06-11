@@ -29,6 +29,13 @@
       "when": 1780483734454,
       "tag": "0004_steep_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1781133934814,
+      "tag": "0005_venue_ratings",
+      "breakpoints": true
     }
   ]
 }

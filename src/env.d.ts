@@ -20,6 +20,14 @@ interface CloudflareEnv {
   // stored `image_key` is appended to this to build a fetchable URL
   // (src/lib/photos.ts imageKeyToUrl). Empty/absent → same-origin /r2/ fallback.
   PUBLIC_R2_BASE_URL?: string;
+  // giscus venue comments (task 06-10-giscus). Non-secret resource identifiers;
+  // the client reads the build-time copies from .env* — these are the runtime
+  // parity copies (wrangler.jsonc `vars`). CATEGORY_ID is empty until the
+  // GitHub-side setup is done (research/giscus-setup-steps.md).
+  PUBLIC_GISCUS_REPO?: string;
+  PUBLIC_GISCUS_REPO_ID?: string;
+  PUBLIC_GISCUS_CATEGORY?: string;
+  PUBLIC_GISCUS_CATEGORY_ID?: string;
   // Secrets (set via `wrangler secret put` / .dev.vars; optional at type level
   // because they are absent until configured).
   TURNSTILE_SECRET_KEY?: string;
@@ -56,6 +64,10 @@ interface ImportMetaEnv {
   readonly PUBLIC_TURNSTILE_SITE_KEY: string;
   readonly PUBLIC_SITE_URL: string;
   readonly PUBLIC_R2_BASE_URL?: string;
+  readonly PUBLIC_GISCUS_REPO?: string;
+  readonly PUBLIC_GISCUS_REPO_ID?: string;
+  readonly PUBLIC_GISCUS_CATEGORY?: string;
+  readonly PUBLIC_GISCUS_CATEGORY_ID?: string;
 }
 
 interface ImportMeta {

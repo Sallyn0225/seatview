@@ -84,6 +84,45 @@ export const stagingVotes = sqliteTable(
   ],
 );
 
+/**
+ * One anonymous 1..5-star rating of a collected venue (task 06-10-giscus).
+ * The rated venue is a STATIC venue id (data/venues/*.json, ADR-1), validated
+ * against the bundled set at the API layer — D1 has no venues table to FK.
+ *
+ * `UNIQUE(venue_id, ip_hash)` makes the rating per-IP-per-venue: a repeat
+ * submission is a score CHANGE (UPSERT), never a second row, so one IP can
+ * never inflate the count. `ip_hash` is the salted hash (server/ip.ts), never
+ * the raw IP, and is never sent to clients.
+ */
+export const venueRatings = sqliteTable(
+  "venue_ratings",
+  {
+    id: text("id").primaryKey(), // ulid
+    venueId: text("venue_id").notNull(),
+    score: integer("score").notNull(), // 1..5, validated at the API layer
+    ipHash: text("ip_hash").notNull(),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at"), // last score change, null = never changed
+  },
+  (table) => [
+    uniqueIndex("idx_venue_ratings_dedup").on(table.venueId, table.ipHash),
+  ],
+);
+
+/**
+ * Denormalized rating aggregate, 1 row per rated venue. The display path (venue
+ * page SSR) reads exactly this row — never `AVG()` over `venue_ratings` (D1
+ * bills rows read; same reasoning as `stagingVenues.voteCount`). Kept in sync
+ * with `venue_ratings` in the SAME `db.batch` as every rating write (atomic).
+ * `rating_sum` is an integer so `avg = sum / count` avoids stored floats.
+ */
+export const venueRatingAgg = sqliteTable("venue_rating_agg", {
+  venueId: text("venue_id").primaryKey(),
+  ratingCount: integer("rating_count").notNull().default(0),
+  ratingSum: integer("rating_sum").notNull().default(0),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /** Anonymous request to correct one uploaded photo's seat label. */
 export const photoCorrectionRequests = sqliteTable(
   "photo_correction_requests",
@@ -120,3 +159,6 @@ export type PhotoCorrectionRequestRow =
   typeof photoCorrectionRequests.$inferSelect;
 export type NewPhotoCorrectionRequestRow =
   typeof photoCorrectionRequests.$inferInsert;
+export type VenueRatingRow = typeof venueRatings.$inferSelect;
+export type NewVenueRatingRow = typeof venueRatings.$inferInsert;
+export type VenueRatingAggRow = typeof venueRatingAgg.$inferSelect;

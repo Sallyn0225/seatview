@@ -215,6 +215,30 @@ const en: Messages = {
       cancel: "Collapse",
     },
   },
+  venueComments: {
+    entryLabel: "Open comments and ratings",
+    entrySummary: "{avg} · {count} ratings",
+    entryEmpty: "No ratings yet",
+    entryComments: "Comments",
+    title: "Comments & ratings",
+    close: "Close",
+    ratingTitle: "Rate this venue",
+    starLabel: "Rate {n} out of 5",
+    ratingSummary: "Average {avg} · {count} ratings",
+    ratingEmpty: "No ratings yet. Want to be the first?",
+    yourScore: "You rated {score}. Tap another star to change it.",
+    ratingNote:
+      "No sign-in needed to rate. For de-duplication we keep only a salted hash of your IP, never the raw IP.",
+    ratingSaved: "Saved.",
+    ratingLimit: "You've rated 10 venues today. Come back tomorrow.",
+    ratingNetworkError: "The connection seems shaky. Try again?",
+    ratingServerError: "That didn't save. Try again later.",
+    commentsTitle: "Comments",
+    commentsNote:
+      "Commenting uses your GitHub account. Reading needs no sign-in.",
+    commentsUnavailable: "Comments aren't open yet.",
+    commentsLoading: "Loading comments…",
+  },
   footer: {
     contribute: "Add a new venue? Submit via GitHub",
     about: "About",
@@ -246,6 +270,10 @@ const en: Messages = {
         body: "Submissions and seconding use Cloudflare Turnstile for human verification. That step is governed by Cloudflare's privacy policy.",
       },
       {
+        heading: "Comments and ratings",
+        body: "Venue comments are provided by the third-party service giscus, loaded as an embedded frame, and stored in the Discussions of our public GitHub repository. Posting a comment requires signing in to GitHub and authorizing giscus; that step is governed by the GitHub and giscus privacy policies. Reading needs no account. Venue ratings need no sign-in either: as with vote de-duplication, we keep only a salted hash of your IP, never the raw IP.",
+      },
+      {
         heading: "Local storage",
         body: "We keep only a few preferences in your browser (light/dark theme, last venue visited, tree expansion state). This data stays on your device and is never sent to us.",
       },
@@ -269,6 +297,10 @@ const en: Messages = {
       {
         heading: "Content moderation",
         body: "We may remove inappropriate, rule-breaking, or disputed submissions without prior notice.",
+      },
+      {
+        heading: "Comments and ratings",
+        body: "Venue comments are stored in GitHub Discussions and are subject to GitHub's terms of service and community guidelines. We may delete, minimize, or lock inappropriate comments and block the accounts involved. Anonymous ratings are for reference only; we may adjust or remove rating data if manipulation is found.",
       },
       {
         heading: "Disclaimer",
