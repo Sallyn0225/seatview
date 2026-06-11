@@ -248,6 +248,49 @@ export interface Messages {
       cancel: string;
     };
   };
+  /** Venue comments + anonymous rating (task 06-10-giscus). */
+  venueComments: {
+    /** Title-area entry chip aria-label. */
+    entryLabel: string;
+    /** Chip rating summary, `{avg}` → 1-decimal average, `{count}` → raters. */
+    entrySummary: string;
+    /** Chip zero state (no ratings yet) — quiet, demoted. */
+    entryEmpty: string;
+    /** Chip trailing word: the comments entry. */
+    entryComments: string;
+    /** Drawer title. */
+    title: string;
+    /** ✕ close button aria-label. */
+    close: string;
+    /** Rating block heading. */
+    ratingTitle: string;
+    /** Star button aria-label, `{n}` → 1..5. */
+    starLabel: string;
+    /** Aggregate line under the stars, `{avg}` + `{count}`. */
+    ratingSummary: string;
+    /** Zero ratings (gentle 缝隙时刻). */
+    ratingEmpty: string;
+    /** Your current score line, `{score}`. */
+    yourScore: string;
+    /** Transparency one-liner: no login, salted IP hash only. */
+    ratingNote: string;
+    /** Inline saved confirmation. */
+    ratingSaved: string;
+    /** Daily cap reached (RATING_DAILY_LIMIT venues). */
+    ratingLimit: string;
+    /** Network failure (inline, rolled back). */
+    ratingNetworkError: string;
+    /** Generic server failure (inline, rolled back). */
+    ratingServerError: string;
+    /** Comments block heading. */
+    commentsTitle: string;
+    /** GitHub-login transparency line above the giscus frame. */
+    commentsNote: string;
+    /** categoryId not configured yet → quiet degraded state. */
+    commentsUnavailable: string;
+    /** SR/status text while the giscus bundle loads. */
+    commentsLoading: string;
+  };
   footer: {
     contribute: string;
     about: string;
@@ -690,6 +733,29 @@ const zh: Messages = {
       cancel: "收起",
     },
   },
+  venueComments: {
+    entryLabel: "打开评论与评分",
+    entrySummary: "{avg} · {count} 人评分",
+    entryEmpty: "暂无评分",
+    entryComments: "评论",
+    title: "评论与评分",
+    close: "关闭",
+    ratingTitle: "给这个场馆打分",
+    starLabel: "{n} 星",
+    ratingSummary: "平均 {avg} · {count} 人评分",
+    ratingEmpty: "还没有人打分。第一个，由你来。",
+    yourScore: "你打了 {score} 星。点其他星可以改分。",
+    ratingNote:
+      "打分无需登录。为了去重，我们只保存加盐哈希后的 IP，不存原 IP。",
+    ratingSaved: "已记录。",
+    ratingLimit: "你今天已经给 10 个场馆打过分了。明天再来。",
+    ratingNetworkError: "网络似乎不稳，再试一次？",
+    ratingServerError: "没记上，稍后再试。",
+    commentsTitle: "评论",
+    commentsNote: "发评论需要 GitHub 账号，只看不用登录。",
+    commentsUnavailable: "评论区暂未开通。",
+    commentsLoading: "评论加载中…",
+  },
   footer: {
     contribute: "想贡献新场馆？通过 GitHub 提交",
     about: "关于",
@@ -721,6 +787,10 @@ const zh: Messages = {
         body: "投稿与附议时使用 Cloudflare Turnstile 进行人机校验，这一环节受 Cloudflare 隐私政策约束。",
       },
       {
+        heading: "评论与评分",
+        body: "场馆评论由第三方服务 giscus 提供，以内嵌页面加载，内容存储在我们公开 GitHub 仓库的 Discussions 中；发表评论需要登录 GitHub 并授权 giscus，这一环节受 GitHub 与 giscus 的隐私政策约束，仅浏览无需登录。场馆评分无需登录，与投票去重相同，我们只保存加盐哈希后的 IP，不存原 IP。",
+      },
+      {
         heading: "本地存储",
         body: "我们仅在你的浏览器本地保存少量偏好（深浅色主题、上次浏览的场馆、目录展开状态）。这些数据只留在你的设备上，不会发送给我们。",
       },
@@ -744,6 +814,10 @@ const zh: Messages = {
       {
         heading: "内容治理",
         body: "我们可在不事先通知的情况下，移除不当、违规或涉及投诉的投稿。",
+      },
+      {
+        heading: "评论与评分",
+        body: "场馆评论存储在 GitHub Discussions 中，需遵守 GitHub 的服务条款与社区准则。我们可以删除、折叠或锁定不当评论，并屏蔽相关账号。匿名评分仅供参考，发现刷分时我们可以调整或清除相关数据。",
       },
       {
         heading: "免责声明",

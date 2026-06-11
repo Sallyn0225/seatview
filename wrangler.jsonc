@@ -120,6 +120,14 @@
     "PUBLIC_SITE_URL": "https://seat.genchi.top",
     // Public-read base URL for uploaded R2 images (custom domain / r2.dev).
     // image_key is appended to build the fetchable URL (src/lib/photos.ts).
-    "PUBLIC_R2_BASE_URL": "https://img.genchi.top"
+    "PUBLIC_R2_BASE_URL": "https://img.genchi.top",
+    // giscus venue comments (task 06-10-giscus) — runtime parity copy of the
+    // .env.production values (islands read the BUILD-time copy; keep in sync).
+    // categoryId confirmed via GraphQL after the maintainer completed the
+    // GitHub-side setup (see research/giscus-setup-steps.md in the task dir).
+    "PUBLIC_GISCUS_REPO": "Sallyn0225/seatview",
+    "PUBLIC_GISCUS_REPO_ID": "R_kgDOSmjr3g",
+    "PUBLIC_GISCUS_CATEGORY": "Venue Comments",
+    "PUBLIC_GISCUS_CATEGORY_ID": "DIC_kwDOSmjr3s4C-6z6"
   }
 }

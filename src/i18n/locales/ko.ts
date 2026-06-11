@@ -212,6 +212,30 @@ const ko: Messages = {
       cancel: "접기",
     },
   },
+  venueComments: {
+    entryLabel: "댓글과 평점 열기",
+    entrySummary: "{avg} · {count}명이 평가",
+    entryEmpty: "아직 평점이 없어요",
+    entryComments: "댓글",
+    title: "댓글과 평점",
+    close: "닫기",
+    ratingTitle: "이 회장을 평가하기",
+    starLabel: "별 {n}개",
+    ratingSummary: "평균 {avg} · {count}명이 평가",
+    ratingEmpty: "아직 평점이 없어요. 첫 번째가 되어 볼까요?",
+    yourScore: "별 {score}개를 주셨어요. 다른 별을 탭하면 바꿀 수 있어요.",
+    ratingNote:
+      "평가에 로그인은 필요 없어요. 중복 방지를 위해 솔트 해시 처리한 IP만 저장하고 원본 IP는 저장하지 않아요.",
+    ratingSaved: "기록했어요.",
+    ratingLimit: "오늘 10개 회장을 평가했어요. 내일 다시 와 주세요.",
+    ratingNetworkError: "연결이 불안정한 것 같아요. 다시 해 볼까요?",
+    ratingServerError: "기록하지 못했어요. 나중에 다시 시도해 주세요.",
+    commentsTitle: "댓글",
+    commentsNote:
+      "댓글 작성에는 GitHub 계정이 필요해요. 읽기만 할 때는 로그인이 필요 없어요.",
+    commentsUnavailable: "댓글란은 아직 준비 중이에요.",
+    commentsLoading: "댓글을 불러오는 중…",
+  },
   footer: {
     contribute: "새 회장을 제안할까요? GitHub로 제출",
     about: "소개",
@@ -243,6 +267,10 @@ const ko: Messages = {
         body: "투고와 동의 시 Cloudflare Turnstile로 사람 여부를 확인해요. 이 단계는 Cloudflare 개인정보 처리방침의 적용을 받아요.",
       },
       {
+        heading: "댓글과 평점",
+        body: "회장 댓글은 제3자 서비스 giscus를 통해 내장 프레임으로 제공되며, 내용은 공개 GitHub 저장소의 Discussions에 저장돼요. 댓글을 쓰려면 GitHub에 로그인하고 giscus를 승인해야 하며, 이 단계에는 GitHub와 giscus의 개인정보 처리방침이 적용돼요. 읽기만 할 때는 로그인이 필요 없어요. 회장 평점도 로그인 없이 가능하며, 투표 중복 방지와 마찬가지로 솔트 해시 처리한 IP만 저장하고 원본 IP는 저장하지 않아요.",
+      },
+      {
         heading: "로컬 저장소",
         body: "테마(라이트/다크), 마지막으로 본 회장, 트리 펼침 상태 등 약간의 설정만 브라우저 로컬에 저장해요. 이 데이터는 기기에만 남고 저희에게 전송되지 않아요.",
       },
@@ -266,6 +294,10 @@ const ko: Messages = {
       {
         heading: "콘텐츠 관리",
         body: "부적절하거나 약관을 위반하거나 신고된 투고는 사전 통지 없이 삭제할 수 있어요.",
+      },
+      {
+        heading: "댓글과 평점",
+        body: "회장 댓글은 GitHub Discussions에 저장되며 GitHub의 이용약관과 커뮤니티 가이드라인이 적용돼요. 부적절한 댓글은 삭제·접기·잠금 처리하고 관련 계정을 차단할 수 있어요. 익명 평점은 참고용이며, 조작이 확인되면 해당 데이터를 조정하거나 삭제할 수 있어요.",
       },
       {
         heading: "면책 조항",

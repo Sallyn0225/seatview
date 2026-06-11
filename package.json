@@ -29,6 +29,7 @@
   "dependencies": {
     "@astrojs/cloudflare": "^13.6.1",
     "@astrojs/react": "^5.0.7",
+    "@giscus/react": "^3.1.0",
     "astro": "^6.4.4",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",

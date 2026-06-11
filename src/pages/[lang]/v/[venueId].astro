@@ -13,6 +13,7 @@ import VenueTreeDrawer from "@/islands/VenueTreeDrawer.tsx";
 import VenueSearch from "@/islands/VenueSearch.tsx";
 import SubMapTabs from "@/islands/SubMapTabs.tsx";
 import VenueMain from "@/islands/VenueMain.tsx";
+import VenueComments from "@/islands/VenueComments.tsx";
 import { asLocale } from "@/i18n/config";
 import { getMessages, venueName } from "@/i18n";
 import { getVenue } from "@/data/venues";
@@ -20,9 +21,12 @@ import { getPrefecture, prefectureName } from "@/data/prefectures";
 import { readSubMapFromUrl, resolveInitialSubMapId } from "@/lib/submap";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { env } from "cloudflare:workers";
+import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
 import { listSubMapPhotos } from "@/server/photos";
+import { getRatingSummary } from "@/server/ratings";
 import type { PhotoDto } from "@/lib/photos";
+import type { VenueRatingSummaryDto } from "@/lib/venue-rating";
 
 export const prerender = false;
 
@@ -62,9 +66,42 @@ if (venue && initialSubMapId && env.DB) {
 
 const prefecture = venue ? getPrefecture(venue.prefecture) : undefined;
 const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
+
+// SSR-read the venue rating aggregate (ONE `venue_rating_agg` row — never an
+// AVG over rating rows) + this viewer's own score (by salted ip_hash, same
+// privacy model as staging votedByMe). Fails soft to a zero summary so a D1
+// hiccup never 500s the page; the entry chip then shows its zero state.
+let ratingSummary: VenueRatingSummaryDto = { count: 0, sum: 0, yourScore: null };
+if (venue && env.DB) {
+  try {
+    const viewerIpHash = env.TURNSTILE_SECRET_KEY
+      ? await hashIp(clientIp(Astro.request), env.TURNSTILE_SECRET_KEY)
+      : undefined;
+    ratingSummary = await getRatingSummary(
+      getDb(env.DB),
+      venue.id,
+      viewerIpHash,
+    );
+  } catch {
+    ratingSummary = { count: 0, sum: 0, yourScore: null };
+  }
+}
+
+// Canonical per-language venue URL for the giscus Discussion backlink. Without
+// this meta, giscus records whatever URL (incl. ?tab=) first triggered the
+// Discussion creation (research giscus-deep-dive §1).
+const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? Astro.url.origin;
+const giscusBacklink = venue
+  ? new URL(`/${locale}/v/${venue.id}`, siteUrl).href
+  : undefined;
 ---
 
 <Layout locale={locale} title={title}>
+  {
+    venue && giscusBacklink ? (
+      <meta slot="head" name="giscus:backlink" content={giscusBacklink} />
+    ) : null
+  }
   {
     venue ? (
       <Fragment>
@@ -266,6 +303,17 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
               <p class="text-muted-foreground mt-1 text-sm">
                 {venue.name_romaji}
               </p>
+
+              {/* Comments + rating entry (task 06-10-giscus): a quiet demoted
+                  chip, never a big star bar. Opens the drawer island. */}
+              <div class="mt-1">
+                <VenueComments
+                  locale={locale}
+                  venueId={venue.id}
+                  initialRating={ratingSummary}
+                  client:idle
+                />
+              </div>
 
               <div class="border-border mt-4 border-b pb-1">
                 <SubMapTabs

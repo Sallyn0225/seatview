@@ -67,6 +67,8 @@ const canonical = new URL(Astro.url.pathname, siteUrl).href;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={t.meta.tagline} />
     <meta name="twitter:image" content={ogImage} />
+    <!-- Page-specific head extras (e.g. the venue page's giscus:backlink). -->
+    <slot name="head" />
     <!-- Apply persisted theme before paint to avoid flash (R12). -->
     <script is:inline>
       (() => {

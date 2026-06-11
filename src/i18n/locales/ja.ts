@@ -205,6 +205,31 @@ const ja: Messages = {
       cancel: "閉じる",
     },
   },
+  venueComments: {
+    entryLabel: "コメントと評価を開く",
+    entrySummary: "{avg} · {count} 件の評価",
+    entryEmpty: "評価はまだありません",
+    entryComments: "コメント",
+    title: "コメントと評価",
+    close: "閉じる",
+    ratingTitle: "この会場を評価する",
+    starLabel: "星 {n} つ",
+    ratingSummary: "平均 {avg} · {count} 件の評価",
+    ratingEmpty: "まだ評価がありません。最初の一人に、あなたが。",
+    yourScore:
+      "あなたの評価は星 {score} つ。他の星をタップすると変更できます。",
+    ratingNote:
+      "評価にログインは不要です。重複防止のため、ソルト付きでハッシュ化した IP のみを保存し、生の IP は保存しません。",
+    ratingSaved: "記録しました。",
+    ratingLimit: "本日の評価は上限（10会場）に達しました。",
+    ratingNetworkError: "通信が不安定なようです。もう一度試しますか？",
+    ratingServerError: "記録できませんでした。後でお試しください。",
+    commentsTitle: "コメント",
+    commentsNote:
+      "コメントの投稿には GitHub アカウントが必要です。読むだけならログインは不要です。",
+    commentsUnavailable: "コメント欄はまだ準備中です。",
+    commentsLoading: "コメントを読み込み中…",
+  },
   footer: {
     contribute: "新しい会場を提案する？GitHub から",
     about: "このサイトについて",
@@ -236,6 +261,10 @@ const ja: Messages = {
         body: "投稿・賛同の際に Cloudflare Turnstile を使用します。この処理には Cloudflare のプライバシーポリシーが適用されます。",
       },
       {
+        heading: "コメントと評価",
+        body: "会場コメントは第三者サービス giscus を埋め込みで利用し、内容は公開 GitHub リポジトリの Discussions に保存されます。コメントの投稿には GitHub へのログインと giscus の認可が必要で、この処理には GitHub および giscus のプライバシーポリシーが適用されます。閲覧だけならログインは不要です。会場の評価にもログインは不要で、投票の重複防止と同じく、ソルト付きでハッシュ化した IP のみを保存し、生の IP は保存しません。",
+      },
+      {
         heading: "ローカルストレージ",
         body: "テーマ（ライト／ダーク）、最後に見た会場、ツリーの開閉状態など、わずかな設定のみをブラウザのローカルに保存します。これらはお使いの端末内にとどまり、当方へ送信されることはありません。",
       },
@@ -259,6 +288,10 @@ const ja: Messages = {
       {
         heading: "コンテンツの管理",
         body: "不適切・規約違反、または申し立てのあった投稿は、事前の通知なく削除する場合があります。",
+      },
+      {
+        heading: "コメントと評価",
+        body: "会場コメントは GitHub Discussions に保存され、GitHub の利用規約とコミュニティガイドラインが適用されます。不適切なコメントは削除・非表示・ロックし、関連アカウントをブロックすることがあります。匿名の評価は参考情報であり、不正な操作を確認した場合は該当データを調整・削除することがあります。",
       },
       {
         heading: "免責事項",
