@@ -13,7 +13,7 @@
 
 **SeatView** 聚合日本（含部分海外）演唱会场馆的**真实座位视角照片**。用户在场馆官方坐席图上标注自己的座位、上传该位置的实拍照片；其他人点击坐席图上的标注点，就能在 Lightbox 里预览那个座位的真实视角——在抽选、抢票或开演前确认座位时做出更明智的决定。
 
-浏览与上传**均无需注册**，靠 IP 限频 + Cloudflare Turnstile 防滥用。全栈只跑在 Cloudflare 一家：Workers（SSR + 静态资源）+ D1 + KV + R2。
+浏览、上传和匿名评分**均无需 SeatView 注册**。上传靠 IP 限频 + Cloudflare Turnstile 防滥用；评分按场馆 + 盐化 IP hash 去重并限流；评论通过 giscus 接入 GitHub Discussions。全栈只跑在 Cloudflare 一家：Workers（SSR + 静态资源）+ D1 + KV + R2。
 
 线上站点 👉 **[seat.genchi.top](https://seat.genchi.top)**
 
@@ -67,6 +67,7 @@
 - **按都道府县浏览** —— 左侧场馆树按日本行政区划分组、可折叠；Fuse.js 客户端模糊搜索，中文 / 日文 / 罗马字别名都能命中。
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
 - **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；下方瀑布流展示该场馆的全部投稿。
+- **场馆评论与评分** —— 场馆页标题区的轻量入口显示平均分 / 评分数并打开右侧抽屉：上方是匿名 1–5 星评分（再次评分会改分），下方是按 `venue:<id>` 严格映射的 giscus 评论，跨语言与子坐席图共享同一讨论。
 - **免注册上传** —— 标点（可进全屏放大精修）→ 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交；未完成步骤有行内引导，全程 IP 限频 + Turnstile 防滥用。
 - **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
 - **场馆众包** —— 站内「想看的场馆」暂存区可 +1 附议（公开票数 + 每日限流 + 同名去重），或通过 GitHub PR 直接提交场馆 JSON。
@@ -83,10 +84,12 @@
 | UI 组件 | **全部手写**（按 `DESIGN.md` token） | `components.json` 虽在，但 UI 并非 shadcn/ui 生成 |
 | 图标 | `lucide-react` | |
 | 搜索 | **Fuse.js**（客户端全量） | 场馆 ≤ 200，bundle 内全量搜索零延迟 |
-| 数据库 | **Cloudflare D1 + Drizzle ORM** | schema 见 `src/server/db/schema.ts`；迁移用 `drizzle-kit generate` |
-| 限频 | **Cloudflare KV**（`RATE_LIMIT`） | 每日计数 + 30s 冷却，带 TTL 自动过期 |
+| 数据库 | **Cloudflare D1 + Drizzle ORM** | photos / staging / photo corrections / venue ratings；schema 见 `src/server/db/schema.ts`；迁移用 `drizzle-kit generate` |
+| 限频 | **Cloudflare KV**（`RATE_LIMIT`） | 上传、暂存区、座位号纠错、评分的每日计数与冷却，带 TTL 自动过期 |
 | 图片存储 | **Cloudflare R2**（`BUCKET`） | **绑定直写**，不是 presigned URL |
 | 防机器人 | **Cloudflare Turnstile** | 两步：前端 token → 后端 siteverify |
+| 评论 | **giscus** + `@giscus/react` | GitHub Discussions 承载；评论抽屉首次打开才懒加载，主题跟随站点亮 / 暗模式 |
+| 匿名评分 | **D1 聚合表** + React island | 1–5 星评分；`venue_id + ip_hash` 去重，`venue_rating_agg` 读聚合 |
 | 图片处理 | `browser-image-compression` | 长边 1920px / WebP / 去 EXIF / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | 瀑布流 | `react-photo-album`（masonry） | |
@@ -138,6 +141,7 @@ npm run preview    # 全功能（含绑定 + API，走 miniflare）
 | `npm run dev` | `astro dev`，页面热更新 |
 | `npm run build` | `astro build`，产出 Workers bundle 到 `dist/` |
 | `npm run preview` | `astro build` 后 `wrangler dev -c dist/server/wrangler.json`，本地跑构建产物 + 绑定 |
+| `npm test` | `node --test`，运行纯逻辑单测 |
 | `npm run typecheck` | `astro check`，类型检查 |
 | `npm run format` / `format:check` | Prettier 格式化 / 校验（CI 用 `format:check`） |
 | `npm run db:generate` | `drizzle-kit generate`，从 schema 生成迁移 |
@@ -171,7 +175,12 @@ npm run db:migrate:prod
 wrangler secret put TURNSTILE_SECRET_KEY
 #    site key 填进 .env.production 的 PUBLIC_TURNSTILE_SITE_KEY（并同步 wrangler.jsonc vars）
 
-# 5. 部署
+# 5. 配置 giscus 评论（公开资源 id，不是密钥）
+#    在 GitHub repo 开启 Discussions、安装 giscus App、创建 "Venue Comments" category，
+#    然后把 PUBLIC_GISCUS_REPO / REPO_ID / CATEGORY / CATEGORY_ID 填进
+#    .env.production，并同步 wrangler.jsonc vars
+
+# 6. 部署
 npm run deploy
 ```
 
@@ -205,18 +214,25 @@ npm run deploy
 
 | 名称 | 类型 | 用途 | 本地 | 生产 |
 |---|---|---|---|---|
-| `DB` | D1 | photos + staging_venues | miniflare 自动 | `wrangler.jsonc` 填真实 `database_id` |
+| `DB` | D1 | photos + staging_venues + photo_correction_requests + venue_ratings / venue_rating_agg | miniflare 自动 | `wrangler.jsonc` 填真实 `database_id` |
 | `BUCKET` | R2 | 上传图片存储（绑定直写） | miniflare 自动 | `wrangler.jsonc`（`bucket_name`） |
-| `RATE_LIMIT` | KV | IP 限频计数 + 冷却（TTL） | miniflare 自动 | `wrangler.jsonc` 填真实 KV id |
+| `RATE_LIMIT` | KV | IP 限频计数 + 冷却（TTL），含上传 / 暂存 / 座位号纠错 / 评分 | miniflare 自动 | `wrangler.jsonc` 填真实 KV id |
 | `SESSION` | KV | Astro CF 适配器 session API 要求的绑定（不实际写） | miniflare 自动 | `wrangler.jsonc` 填真实 KV id |
-| `TURNSTILE_SECRET_KEY` | 密钥 | 后端 siteverify | `.dev.vars`（测试 secret） | `wrangler secret put` |
+| `TURNSTILE_SECRET_KEY` | 密钥 | 后端 siteverify / HMAC ticket / IP-hash salt | `.dev.vars`（测试 secret） | `wrangler secret put` |
 | `PUBLIC_TURNSTILE_SITE_KEY` | 公共 var | 前端 Turnstile widget | `.env.development` | `.env.production`（+ `wrangler.jsonc` vars 运行时副本） |
 | `PUBLIC_R2_BASE_URL` | 公共 var | 拼接上传图片 URL；空 → 同源 `/r2/<key>` 兜底 | `.env.development`（空） | `.env.production`（r2.dev / 自定义域名） |
 | `PUBLIC_SITE_URL` | 公共 var | 站点基址 | `http://localhost:4321` | 生产域名 |
+| `PUBLIC_GISCUS_REPO` / `PUBLIC_GISCUS_REPO_ID` / `PUBLIC_GISCUS_CATEGORY` / `PUBLIC_GISCUS_CATEGORY_ID` | 公共 var | giscus 场馆评论配置；缺必填值时评论区显示未开放且不加载第三方资源 | `.env.development` | `.env.production`（+ `wrangler.jsonc` vars 运行时副本） |
 | `DEV_ADMIN_EMAIL` | 仅本地 | mock 维护者身份（无 Access 边缘时） | `.dev.vars`（任意邮箱） | **绝不设置**（用 Cloudflare Access） |
 
 > [!NOTE]
-> `PUBLIC_*` 由 Vite 在**构建期**从 `.env*` 内联进客户端 bundle（islands 通过 `import.meta.env.PUBLIC_*` 读取）——**不**来自 `wrangler.jsonc` 的 `vars`（那只到 Worker 运行时）。两套机制、两份文件，记得保持同步。R2 上传**不需要** S3 presigned 凭证（`R2_ACCESS_KEY_ID` 等），Worker 经 `BUCKET` 绑定直写。
+> `PUBLIC_*` 由 Vite 在**构建期**从 `.env*` 内联进客户端 bundle（islands 通过 `import.meta.env.PUBLIC_*` 读取）——**不**来自 `wrangler.jsonc` 的 `vars`（那只到 Worker 运行时）。两套机制、两份文件，Turnstile / R2 / giscus 这类公共值都要保持同步。R2 上传**不需要** S3 presigned 凭证（`R2_ACCESS_KEY_ID` 等），Worker 经 `BUCKET` 绑定直写。
+
+### 场馆评论与匿名评分
+
+场馆页标题区挂载 `VenueComments` island，默认只显示一个降权的小入口（平均分 / 评分数 / 评论）。首次打开抽屉时才动态加载 `@giscus/react`；关闭抽屉时隐藏而不是卸载，因此 giscus iframe 不会反复重载。giscus 使用 `mapping="specific"` + `term="venue:<id>"`，同一场馆在不同语言路径、不同子坐席图 tab 下共享同一条 GitHub Discussions 讨论；主题跟随站点的 `html.dark` 类，而不是系统主题。若 `PUBLIC_GISCUS_CATEGORY_ID` 等配置为空，评论区只显示“暂未开放”状态，不加载任何第三方脚本或 iframe。
+
+匿名评分走 `POST /api/rating`，只接受 1–5 星与静态场馆 `venue.id`。它不跑 Turnstile（单次点击不应弹挑战），但仍使用 `TURNSTILE_SECRET_KEY` 作为 IP-hash salt；D1 中 `venue_ratings` 通过 `venue_id + ip_hash` 唯一索引去重，同一人再次评分会改分而不是新增一票。`venue_rating_agg` 保存 count / sum 聚合，写入与聚合更新在同一个 `db.batch` 中完成；场馆页 SSR 只读这一行聚合，失败时降级为空评分，不影响页面打开。KV 只限制“每天新增评分的不同场馆数”，改已有分数不消耗配额。
 
 ### 关键实现取舍
 
@@ -230,6 +246,8 @@ npm run deploy
 5. **`react-zoom-pan-pinch` v4.0**，继续用 `setTransform` / `resetTransform` 保持聚合点居中计算可控。
 6. **ULID 自实现**（`crypto.getRandomValues`），不用 `ulid` 包。
 7. R2 绑定名是 **`BUCKET`**、限频 KV 是 **`RATE_LIMIT`**，另有 **`SESSION`** KV（适配器自动启用 session API 所需，SeatView 无账号系统、不实际写 session，但绑定需可解析）；admin 用 **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` 头），本地用 `.dev.vars` 的 `DEV_ADMIN_EMAIL` mock。
+8. **giscus 评论是可选公共配置**：缺 `PUBLIC_GISCUS_*` 时不加载第三方资源；配置齐全后，评论按 `venue:<id>` 映射到 GitHub Discussions。
+9. **场馆评分是匿名 D1 聚合**：`venue_ratings` 存每个 `venue_id + ip_hash` 的当前分数，`venue_rating_agg` 存展示聚合；不是 GitHub reaction，也不是社交点赞。
 
 </details>
 
@@ -243,7 +261,7 @@ seatmap-real/
 ├── data/
 │   ├── venues/<id>.json      # 静态场馆元数据，构建时打进 bundle
 │   └── _venue-template.json  # 贡献者样板（在 venues/ 之外，不进 bundle / 种子）
-├── migrations/               # D1 迁移：初始 schema + photos 尺寸 + 暂存附议（staging_votes）
+├── migrations/               # D1 迁移：photos / staging_votes / photo_corrections / venue_ratings
 ├── seeds/0001_demo_photos.sql# 本地 demo 标注点（脚本生成，仅本地）
 ├── scripts/                  # 占位坐席图 / demo 种子 / 坐标迁移脚本
 ├── public/seatmaps/<id>/...  # 维护者上传的坐席图 WebP（非官方版权图）
@@ -253,9 +271,9 @@ seatmap-real/
     ├── i18n/                 # locale 配置 + 文案
     ├── data/                 # 场馆树 + 47 都道府县
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 单一真源
-    ├── lib/                  # 跨层契约 + 客户端工具
-    ├── server/               # Worker 侧：db / photos / staging / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/（upload·staging·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）
+    ├── lib/                  # 跨层契约 + 客户端工具（含 upload / staging / venue-rating）
+    ├── server/               # Worker 侧：db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
+    ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）
     └── styles/global.css     # Tailwind v4 + 设计 token（OKLCH 中性色 + 朱赤 accent）
 ```
 
