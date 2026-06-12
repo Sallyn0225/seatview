@@ -1,0 +1,25 @@
+{
+  "id": "zozo-marine-stadium",
+  "name_zh": "ZOZO Marine Stadium",
+  "name_jp": "ZOZOマリンスタジアム",
+  "name_romaji": "ZOZO Marine Stadium",
+  "prefecture": "chiba",
+  "city": "千葉市美浜区",
+  "aliases": [
+    "ZOZOマリン",
+    "千葉マリンスタジアム",
+    "QVCマリンフィールド",
+    "Chiba Marine Stadium",
+    "千叶海洋球场"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/zozo-marine-stadium/default.webp",
+      "width": 2048,
+      "height": 2048
+    }
+  ]
+}
