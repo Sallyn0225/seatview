@@ -27,10 +27,10 @@
     "gen:seed": "node scripts/gen-demo-seed.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.6.1",
+    "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/react": "^5.0.7",
     "@giscus/react": "^3.1.0",
-    "astro": "^6.4.4",
+    "astro": "^6.4.6",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@cloudflare/workers-types": "^4.20260607.1",
+    "@cloudflare/workers-types": "^4.20260613.1",
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^22.19.19",
     "@types/react": "^19.2.17",
@@ -58,7 +58,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
-    "wrangler": "^4.98.0"
+    "wrangler": "^4.100.0"
   },
   "overrides": {
     "vite": "^7.3.2",
