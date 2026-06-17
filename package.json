@@ -49,14 +49,14 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^4.20260613.1",
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^22.19.19",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.0.0",
     "drizzle-kit": "^0.31.0",
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "wrangler": "^4.100.0"
   },
