@@ -1,0 +1,23 @@
+{
+  "id": "honda-theater",
+  "name_zh": "本多剧场",
+  "name_jp": "本多劇場",
+  "name_romaji": "Honda Theater",
+  "prefecture": "tokyo",
+  "city": "世田谷区",
+  "aliases": [
+    "下北沢 本多劇場",
+    "Honda Gekijo",
+    "Honda Theatre"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "剧场",
+      "label_jp": "劇場",
+      "imageUrl": "/seatmaps/honda-theater/default.webp",
+      "width": 1355,
+      "height": 1896
+    }
+  ]
+}

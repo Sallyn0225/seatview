@@ -1,0 +1,23 @@
+{
+  "id": "hakuhinkan-theater",
+  "name_zh": "博品馆剧场",
+  "name_jp": "博品館劇場",
+  "name_romaji": "Hakuhinkan Theater",
+  "prefecture": "tokyo",
+  "city": "中央区",
+  "aliases": [
+    "銀座 博品館劇場",
+    "Ginza Hakuhinkan Theater",
+    "Hakuhinkan Theatre"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "剧场",
+      "label_jp": "劇場",
+      "imageUrl": "/seatmaps/hakuhinkan-theater/default.webp",
+      "width": 1375,
+      "height": 1917
+    }
+  ]
+}
