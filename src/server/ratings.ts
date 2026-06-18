@@ -213,11 +213,11 @@ async function completeLegacyRating(
   ipHash: string,
   scores: RatingDimensionScores,
   now: number,
-): Promise<void> {
+): Promise<boolean> {
   const oldScore = sql`(select ${venueRatings.score} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
   const score = legacyMeanScore(scores);
 
-  await db.batch([
+  const [updatedAgg, updatedRating] = await db.batch([
     db
       .update(venueRatingAgg)
       .set({
@@ -234,7 +234,8 @@ async function completeLegacyRating(
           eq(venueRatingAgg.venueId, venueId),
           sql`exists (select 1 from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash} and not (${hasCompleteDimensionScores}))`,
         ),
-      ),
+      )
+      .returning({ venueId: venueRatingAgg.venueId }),
     db
       .update(venueRatings)
       .set({
@@ -246,9 +247,40 @@ async function completeLegacyRating(
         updatedAt: now,
       })
       .where(
-        and(eq(venueRatings.venueId, venueId), eq(venueRatings.ipHash, ipHash)),
-      ),
+        and(
+          eq(venueRatings.venueId, venueId),
+          eq(venueRatings.ipHash, ipHash),
+          sql`not (${hasCompleteDimensionScores})`,
+          sql`exists (select 1 from ${venueRatingAgg} where ${venueRatingAgg.venueId} = ${venueId})`,
+        ),
+      )
+      .returning({ id: venueRatings.id }),
   ]);
+
+  return updatedAgg.length > 0 && updatedRating.length > 0;
+}
+
+async function completeLegacyOrApplyFreshChange(
+  db: Db,
+  venueId: string,
+  ipHash: string,
+  scores: RatingDimensionScores,
+  now: number,
+): Promise<"updated" | "unchanged"> {
+  if (await completeLegacyRating(db, venueId, ipHash, scores, now)) {
+    return "updated";
+  }
+
+  const freshScores = await getViewerScores(db, venueId, ipHash);
+  if (!freshScores) {
+    throw new Error("legacy rating completion lost its guarded write");
+  }
+  if (sameScores(freshScores, scores)) {
+    return "unchanged";
+  }
+
+  await applyDimensionChange(db, venueId, ipHash, scores, now);
+  return "updated";
 }
 
 /**
@@ -317,16 +349,29 @@ export async function rateVenue(
       }
       if (freshScores) {
         await applyDimensionChange(db, venueId, ipHash, scores, now);
+        return { status: "updated", ...(await readAgg(db, venueId)) };
       } else {
-        await completeLegacyRating(db, venueId, ipHash, scores, now);
+        const status = await completeLegacyOrApplyFreshChange(
+          db,
+          venueId,
+          ipHash,
+          scores,
+          now,
+        );
+        return { status, ...(await readAgg(db, venueId)) };
       }
-      return { status: "updated", ...(await readAgg(db, venueId)) };
     }
   }
 
   if (!existingScores) {
-    await completeLegacyRating(db, venueId, ipHash, scores, now);
-    return { status: "updated", ...(await readAgg(db, venueId)) };
+    const status = await completeLegacyOrApplyFreshChange(
+      db,
+      venueId,
+      ipHash,
+      scores,
+      now,
+    );
+    return { status, ...(await readAgg(db, venueId)) };
   }
 
   if (sameScores(existingScores, scores)) {
