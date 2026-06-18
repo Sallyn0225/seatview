@@ -134,39 +134,40 @@ export function ratingOverallAverage(
 }
 
 /**
+ * Whether two dimension-score sets are identical. The single equality used by
+ * the client's optimistic gate, the server's no-op detection AND the
+ * optimistic-apply below, so those three layers cannot drift. `null` (no
+ * rating yet) compares by identity — it equals only another `null`.
+ */
+export function sameRatingScores(
+  left: RatingDimensionScores | null,
+  right: RatingDimensionScores | null,
+): boolean {
+  if (left === null || right === null) return left === right;
+  return RATING_DIMENSIONS.every(
+    (dimension) => left[dimension] === right[dimension],
+  );
+}
+
+/**
  * Pure optimistic-apply for the rating control: the same transition the server
- * performs in D1 (new rating → count+1, sum+score; score change → count stays,
- * sum moves by the delta; same score → no-op). Keeping this in the shared
- * contract means the client's optimistic state can never disagree with the
- * server's batch math.
+ * performs in D1. A first rating is the score-change case with the previous
+ * scores treated as zero and count+1, so both share one reduce — keeping this
+ * in the shared contract means the client's optimistic state can never disagree
+ * with the server's batch math.
  */
 export function applyOptimisticRating(
   summary: VenueRatingSummaryDto,
   scores: RatingDimensionScores,
 ): VenueRatingSummaryDto {
-  if (summary.yourScores === null) {
-    return {
-      count: summary.count + 1,
-      sums: RATING_DIMENSIONS.reduce<RatingDimensionScores>(
-        (next, dimension) => {
-          next[dimension] = summary.sums[dimension] + scores[dimension];
-          return next;
-        },
-        emptyRatingSums(),
-      ),
-      yourScores: { ...scores },
-    };
-  }
-  const unchanged = RATING_DIMENSIONS.every(
-    (dimension) => summary.yourScores?.[dimension] === scores[dimension],
-  );
-  if (unchanged) return summary;
+  if (sameRatingScores(summary.yourScores, scores)) return summary;
+  const previous = summary.yourScores;
   return {
-    count: summary.count,
+    count: summary.count + (previous === null ? 1 : 0),
     sums: RATING_DIMENSIONS.reduce<RatingDimensionScores>((next, dimension) => {
       next[dimension] =
         summary.sums[dimension] -
-        (summary.yourScores?.[dimension] ?? 0) +
+        (previous?.[dimension] ?? 0) +
         scores[dimension];
       return next;
     }, emptyRatingSums()),

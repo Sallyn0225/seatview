@@ -5,10 +5,12 @@
 // dimension values.
 
 import { and, eq, sql } from "drizzle-orm";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import type { Db } from "@/server/db";
 import {
   emptyRatingSums,
   isValidRatingScores,
+  sameRatingScores,
   type RatingDimensionScores,
   type VenueRatingSummaryDto,
 } from "@/lib/venue-rating";
@@ -23,7 +25,7 @@ export type RateVenueOutcome = {
   ratingSums: RatingDimensionScores;
 };
 
-type ViewerRatingRow = {
+export type ViewerRatingRow = {
   score: number;
   viewScore: number | null;
   soundScore: number | null;
@@ -50,19 +52,62 @@ function legacyMeanScore(scores: RatingDimensionScores): number {
   );
 }
 
-function sameScores(
-  left: RatingDimensionScores,
-  right: RatingDimensionScores,
-): boolean {
-  return (
-    left.view === right.view &&
-    left.sound === right.sound &&
-    left.amenities === right.amenities &&
-    left.transit === right.transit
-  );
+// A per-(venue, viewer) scalar subquery: reads ONE rating column's pre-update
+// value from inside the same write batch, so a change never relies on a stale
+// pre-read (the "no stale pre-read" rule). One helper instead of a hand-copied
+// SELECT per column.
+function viewerColumn(
+  column: AnySQLiteColumn,
+  venueId: string,
+  ipHash: string,
+) {
+  return sql`(select ${column} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
 }
 
-async function getViewerRatingRow(
+// agg SET fragment — add each dimension's new score as a fresh contribution.
+function aggSumAdd(scores: RatingDimensionScores) {
+  return {
+    viewRatingSum: sql`${venueRatingAgg.viewRatingSum} + ${scores.view}`,
+    soundRatingSum: sql`${venueRatingAgg.soundRatingSum} + ${scores.sound}`,
+    amenitiesRatingSum: sql`${venueRatingAgg.amenitiesRatingSum} + ${scores.amenities}`,
+    transitRatingSum: sql`${venueRatingAgg.transitRatingSum} + ${scores.transit}`,
+  };
+}
+
+// agg SET fragment — move each dimension by (new - old) where old is read from
+// the rating row inside the batch (subquery), so the tally cannot drift.
+function aggSumDelta(
+  scores: RatingDimensionScores,
+  venueId: string,
+  ipHash: string,
+) {
+  return {
+    viewRatingSum: sql`${venueRatingAgg.viewRatingSum} + ${scores.view} - ${viewerColumn(venueRatings.viewScore, venueId, ipHash)}`,
+    soundRatingSum: sql`${venueRatingAgg.soundRatingSum} + ${scores.sound} - ${viewerColumn(venueRatings.soundScore, venueId, ipHash)}`,
+    amenitiesRatingSum: sql`${venueRatingAgg.amenitiesRatingSum} + ${scores.amenities} - ${viewerColumn(venueRatings.amenitiesScore, venueId, ipHash)}`,
+    transitRatingSum: sql`${venueRatingAgg.transitRatingSum} + ${scores.transit} - ${viewerColumn(venueRatings.transitScore, venueId, ipHash)}`,
+  };
+}
+
+// venue_ratings SET fragment — the dimensional scores plus the rounded legacy
+// mean (kept NOT NULL for rollback/export) and the change timestamp.
+function rowScoreSet(scores: RatingDimensionScores, now: number) {
+  return {
+    score: legacyMeanScore(scores),
+    viewScore: scores.view,
+    soundScore: scores.sound,
+    amenitiesScore: scores.amenities,
+    transitScore: scores.transit,
+    updatedAt: now,
+  };
+}
+
+/**
+ * This viewer's rating row (legacy or dimensional), or undefined when absent.
+ * The endpoint reads it ONCE to gate the daily cap, then hands it to
+ * {@link rateVenue} so the write path does not re-read the same row.
+ */
+export async function getViewerRatingRow(
   db: Db,
   venueId: string,
   ipHash: string,
@@ -82,15 +127,6 @@ async function getViewerRatingRow(
       )
       .limit(1)
   )[0];
-}
-
-/** Whether this viewer already has any rating row, legacy or dimensional. */
-export async function hasViewerRating(
-  db: Db,
-  venueId: string,
-  ipHash: string,
-): Promise<boolean> {
-  return (await getViewerRatingRow(db, venueId, ipHash)) !== undefined;
 }
 
 /** This viewer's complete dimensional score set, or null when absent/legacy. */
@@ -167,11 +203,7 @@ async function applyDimensionChange(
   scores: RatingDimensionScores,
   now: number,
 ): Promise<void> {
-  const oldView = sql`(select ${venueRatings.viewScore} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
-  const oldSound = sql`(select ${venueRatings.soundScore} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
-  const oldAmenities = sql`(select ${venueRatings.amenitiesScore} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
-  const oldTransit = sql`(select ${venueRatings.transitScore} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
-  const oldScore = sql`(select ${venueRatings.score} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
+  const oldScore = viewerColumn(venueRatings.score, venueId, ipHash);
   const score = legacyMeanScore(scores);
 
   await db.batch([
@@ -179,10 +211,7 @@ async function applyDimensionChange(
       .update(venueRatingAgg)
       .set({
         ratingSum: sql`${venueRatingAgg.ratingSum} + ${score} - ${oldScore}`,
-        viewRatingSum: sql`${venueRatingAgg.viewRatingSum} + ${scores.view} - ${oldView}`,
-        soundRatingSum: sql`${venueRatingAgg.soundRatingSum} + ${scores.sound} - ${oldSound}`,
-        amenitiesRatingSum: sql`${venueRatingAgg.amenitiesRatingSum} + ${scores.amenities} - ${oldAmenities}`,
-        transitRatingSum: sql`${venueRatingAgg.transitRatingSum} + ${scores.transit} - ${oldTransit}`,
+        ...aggSumDelta(scores, venueId, ipHash),
         updatedAt: now,
       })
       .where(
@@ -193,14 +222,7 @@ async function applyDimensionChange(
       ),
     db
       .update(venueRatings)
-      .set({
-        score,
-        viewScore: scores.view,
-        soundScore: scores.sound,
-        amenitiesScore: scores.amenities,
-        transitScore: scores.transit,
-        updatedAt: now,
-      })
+      .set(rowScoreSet(scores, now))
       .where(
         and(eq(venueRatings.venueId, venueId), eq(venueRatings.ipHash, ipHash)),
       ),
@@ -214,7 +236,7 @@ async function completeLegacyRating(
   scores: RatingDimensionScores,
   now: number,
 ): Promise<boolean> {
-  const oldScore = sql`(select ${venueRatings.score} from ${venueRatings} where ${venueRatings.venueId} = ${venueId} and ${venueRatings.ipHash} = ${ipHash})`;
+  const oldScore = viewerColumn(venueRatings.score, venueId, ipHash);
   const score = legacyMeanScore(scores);
 
   const [updatedAgg, updatedRating] = await db.batch([
@@ -223,10 +245,7 @@ async function completeLegacyRating(
       .set({
         ratingSum: sql`${venueRatingAgg.ratingSum} + ${score} - ${oldScore}`,
         dimensionRatingCount: sql`${venueRatingAgg.dimensionRatingCount} + 1`,
-        viewRatingSum: sql`${venueRatingAgg.viewRatingSum} + ${scores.view}`,
-        soundRatingSum: sql`${venueRatingAgg.soundRatingSum} + ${scores.sound}`,
-        amenitiesRatingSum: sql`${venueRatingAgg.amenitiesRatingSum} + ${scores.amenities}`,
-        transitRatingSum: sql`${venueRatingAgg.transitRatingSum} + ${scores.transit}`,
+        ...aggSumAdd(scores),
         updatedAt: now,
       })
       .where(
@@ -238,14 +257,7 @@ async function completeLegacyRating(
       .returning({ venueId: venueRatingAgg.venueId }),
     db
       .update(venueRatings)
-      .set({
-        score,
-        viewScore: scores.view,
-        soundScore: scores.sound,
-        amenitiesScore: scores.amenities,
-        transitScore: scores.transit,
-        updatedAt: now,
-      })
+      .set(rowScoreSet(scores, now))
       .where(
         and(
           eq(venueRatings.venueId, venueId),
@@ -275,12 +287,36 @@ async function completeLegacyOrApplyFreshChange(
   if (!freshScores) {
     throw new Error("legacy rating completion lost its guarded write");
   }
-  if (sameScores(freshScores, scores)) {
+  if (sameRatingScores(freshScores, scores)) {
     return "unchanged";
   }
 
   await applyDimensionChange(db, venueId, ipHash, scores, now);
   return "updated";
+}
+
+/**
+ * Dispatch for a viewer who ALREADY has a rating row, given their current
+ * scores (already read by the caller — no extra round trip). One path shared by
+ * the normal change flow and the UNIQUE-collision retry:
+ *   • complete dimensional & identical → idempotent no-op (`unchanged`)
+ *   • complete dimensional & different → delta change (`updated`)
+ *   • legacy (no dimensions)           → complete it / retry (`updated`/`unchanged`)
+ */
+async function changeExistingRating(
+  db: Db,
+  venueId: string,
+  ipHash: string,
+  scores: RatingDimensionScores,
+  existingScores: RatingDimensionScores | null,
+  now: number,
+): Promise<"updated" | "unchanged"> {
+  if (existingScores) {
+    if (sameRatingScores(existingScores, scores)) return "unchanged";
+    await applyDimensionChange(db, venueId, ipHash, scores, now);
+    return "updated";
+  }
+  return completeLegacyOrApplyFreshChange(db, venueId, ipHash, scores, now);
 }
 
 /**
@@ -293,9 +329,16 @@ export async function rateVenue(
   venueId: string,
   ipHash: string,
   scores: RatingDimensionScores,
-  now: number = Date.now(),
+  options: { now?: number; existingRow?: ViewerRatingRow } = {},
 ): Promise<RateVenueOutcome> {
-  const existing = await getViewerRatingRow(db, venueId, ipHash);
+  const now = options.now ?? Date.now();
+  // The endpoint already read this row to gate the daily cap; reuse it instead
+  // of a second SELECT of the same (venue_id, ip_hash). `"existingRow" in opts`
+  // distinguishes "caller knows there is no row" from "caller didn't read".
+  const existing =
+    "existingRow" in options
+      ? options.existingRow
+      : await getViewerRatingRow(db, venueId, ipHash);
   const existingScores = rowToScores(existing);
   const score = legacyMeanScore(scores);
 
@@ -332,52 +375,36 @@ export async function rateVenue(
               ratingCount: sql`${venueRatingAgg.ratingCount} + 1`,
               ratingSum: sql`${venueRatingAgg.ratingSum} + ${score}`,
               dimensionRatingCount: sql`${venueRatingAgg.dimensionRatingCount} + 1`,
-              viewRatingSum: sql`${venueRatingAgg.viewRatingSum} + ${scores.view}`,
-              soundRatingSum: sql`${venueRatingAgg.soundRatingSum} + ${scores.sound}`,
-              amenitiesRatingSum: sql`${venueRatingAgg.amenitiesRatingSum} + ${scores.amenities}`,
-              transitRatingSum: sql`${venueRatingAgg.transitRatingSum} + ${scores.transit}`,
+              ...aggSumAdd(scores),
               updatedAt: now,
             },
           }),
       ]);
       return { status: "created", ...(await readAgg(db, venueId)) };
     } catch (err) {
+      // Only a UNIQUE collision (a concurrent first rating from the same
+      // ip_hash) falls through to the change path; real D1 failures re-throw.
       if (!String(err).includes("UNIQUE")) throw err;
       const freshScores = await getViewerScores(db, venueId, ipHash);
-      if (freshScores && sameScores(freshScores, scores)) {
-        return { status: "unchanged", ...(await readAgg(db, venueId)) };
-      }
-      if (freshScores) {
-        await applyDimensionChange(db, venueId, ipHash, scores, now);
-        return { status: "updated", ...(await readAgg(db, venueId)) };
-      } else {
-        const status = await completeLegacyOrApplyFreshChange(
-          db,
-          venueId,
-          ipHash,
-          scores,
-          now,
-        );
-        return { status, ...(await readAgg(db, venueId)) };
-      }
+      const status = await changeExistingRating(
+        db,
+        venueId,
+        ipHash,
+        scores,
+        freshScores,
+        now,
+      );
+      return { status, ...(await readAgg(db, venueId)) };
     }
   }
 
-  if (!existingScores) {
-    const status = await completeLegacyOrApplyFreshChange(
-      db,
-      venueId,
-      ipHash,
-      scores,
-      now,
-    );
-    return { status, ...(await readAgg(db, venueId)) };
-  }
-
-  if (sameScores(existingScores, scores)) {
-    return { status: "unchanged", ...(await readAgg(db, venueId)) };
-  }
-
-  await applyDimensionChange(db, venueId, ipHash, scores, now);
-  return { status: "updated", ...(await readAgg(db, venueId)) };
+  const status = await changeExistingRating(
+    db,
+    venueId,
+    ipHash,
+    scores,
+    existingScores,
+    now,
+  );
+  return { status, ...(await readAgg(db, venueId)) };
 }

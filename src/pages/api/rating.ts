@@ -12,7 +12,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
-import { hasViewerRating, rateVenue } from "@/server/ratings";
+import { getViewerRatingRow, rateVenue } from "@/server/ratings";
 import { checkDailyLimit, incrementDaily } from "@/server/rate-limit";
 import { getVenue } from "@/data/venues";
 import {
@@ -72,9 +72,11 @@ export const POST: APIRoute = async ({ request }) => {
     const db = getDb(env.DB);
 
     // The daily cap only guards NEW venues rated today; changing an existing
-    // score must keep working even at the cap (it creates nothing new).
-    const existing = await hasViewerRating(db, venueId, ipHash);
-    if (!existing) {
+    // score must keep working even at the cap (it creates nothing new). Read the
+    // viewer's row ONCE here and hand it to rateVenue so the write path does not
+    // re-SELECT the same (venue_id, ip_hash) (D1 bills rows read).
+    const existingRow = await getViewerRatingRow(db, venueId, ipHash);
+    if (!existingRow) {
       const limit = await checkDailyLimit(
         env.RATE_LIMIT,
         "rating",
@@ -87,7 +89,9 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    const outcome = await rateVenue(db, venueId, ipHash, scores);
+    const outcome = await rateVenue(db, venueId, ipHash, scores, {
+      existingRow,
+    });
 
     // Quota is consumed only after the protected write succeeds (rate-limit
     // contract), and only for a genuinely new rating. Best-effort, matching

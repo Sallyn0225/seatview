@@ -41,6 +41,7 @@ import {
   RATING_DIMENSIONS,
   RATING_MAX,
   RATING_MIN,
+  sameRatingScores,
   type RatingDimension,
   type RatingDimensionScores,
   type VenueRatingSummaryDto,
@@ -88,16 +89,6 @@ const SHEET_ANIM_MS = 250;
 
 type RatingErrorKey = "limit" | "network" | "server";
 type RatingDraft = Partial<RatingDimensionScores>;
-
-function scoresEqual(
-  left: RatingDimensionScores | null,
-  right: RatingDimensionScores | null,
-): boolean {
-  if (left === null || right === null) return left === right;
-  return RATING_DIMENSIONS.every(
-    (dimension) => left[dimension] === right[dimension],
-  );
-}
 
 function isCompleteDraft(draft: RatingDraft): draft is RatingDimensionScores {
   return RATING_DIMENSIONS.every((dimension) => draft[dimension] !== undefined);
@@ -197,7 +188,7 @@ export default function VenueComments({
 
   const saveRating = useCallback(() => {
     if (ratingPending || !isCompleteDraft(draft)) return;
-    if (scoresEqual(summary.yourScores, draft)) return;
+    if (sameRatingScores(summary.yourScores, draft)) return;
     const previous = summary;
     const previousDraft = draft;
 
@@ -267,7 +258,7 @@ export default function VenueComments({
   const saveDisabled =
     ratingPending ||
     completeDraft === null ||
-    scoresEqual(summary.yourScores, completeDraft);
+    sameRatingScores(summary.yourScores, completeDraft);
   const ratingErrorText =
     ratingError === "limit"
       ? t.venueComments.ratingLimit
