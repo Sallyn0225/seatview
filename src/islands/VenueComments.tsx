@@ -36,9 +36,13 @@ import LoadFailure from "@/components/LoadFailure";
 import { fillTemplate } from "@/lib/format";
 import {
   applyOptimisticRating,
-  ratingAverage,
+  ratingDimensionAverage,
+  ratingOverallAverage,
+  RATING_DIMENSIONS,
   RATING_MAX,
   RATING_MIN,
+  type RatingDimension,
+  type RatingDimensionScores,
   type VenueRatingSummaryDto,
 } from "@/lib/venue-rating";
 import { RatingError, submitRating } from "@/lib/venue-rating-client";
@@ -83,6 +87,25 @@ const STARS = Array.from(
 const SHEET_ANIM_MS = 250;
 
 type RatingErrorKey = "limit" | "network" | "server";
+type RatingDraft = Partial<RatingDimensionScores>;
+
+function scoresEqual(
+  left: RatingDimensionScores | null,
+  right: RatingDimensionScores | null,
+): boolean {
+  if (left === null || right === null) return left === right;
+  return RATING_DIMENSIONS.every(
+    (dimension) => left[dimension] === right[dimension],
+  );
+}
+
+function isCompleteDraft(draft: RatingDraft): draft is RatingDimensionScores {
+  return RATING_DIMENSIONS.every((dimension) => draft[dimension] !== undefined);
+}
+
+function draftFromSummary(summary: VenueRatingSummaryDto): RatingDraft {
+  return summary.yourScores ? { ...summary.yourScores } : {};
+}
 
 /**
  * The site's resolved light/dark theme, kept in sync with the `dark` class on
@@ -155,45 +178,59 @@ export default function VenueComments({
 
   // ── Rating state (optimistic with rollback) ────────────────────────────────
   const [summary, setSummary] = useState<VenueRatingSummaryDto>(initialRating);
+  const [draft, setDraft] = useState<RatingDraft>(() =>
+    draftFromSummary(initialRating),
+  );
   const [ratingPending, setRatingPending] = useState(false);
   const [ratingError, setRatingError] = useState<RatingErrorKey | null>(null);
   const [ratingSaved, setRatingSaved] = useState(false);
 
-  const rate = useCallback(
-    (score: number) => {
-      if (ratingPending || summary.yourScore === score) return;
-      const previous = summary;
-
-      setSummary(applyOptimisticRating(previous, score));
-      setRatingPending(true);
+  const setDraftScore = useCallback(
+    (dimension: RatingDimension, score: number) => {
+      if (ratingPending) return;
+      setDraft((current) => ({ ...current, [dimension]: score }));
       setRatingError(null);
       setRatingSaved(false);
-
-      submitRating(venueId, score)
-        .then((res) => {
-          // Reconcile to the authoritative aggregate.
-          setSummary({
-            count: res.ratingCount,
-            sum: res.ratingSum,
-            yourScore: res.yourScore,
-          });
-          setRatingSaved(true);
-        })
-        .catch((err: unknown) => {
-          setSummary(previous); // roll back the optimistic state
-          const code = err instanceof RatingError ? err.code : "server_error";
-          setRatingError(
-            code === "rate_limited_daily"
-              ? "limit"
-              : code === "network"
-                ? "network"
-                : "server",
-          );
-        })
-        .finally(() => setRatingPending(false));
     },
-    [ratingPending, summary, venueId],
+    [ratingPending],
   );
+
+  const saveRating = useCallback(() => {
+    if (ratingPending || !isCompleteDraft(draft)) return;
+    if (scoresEqual(summary.yourScores, draft)) return;
+    const previous = summary;
+    const previousDraft = draft;
+
+    setSummary(applyOptimisticRating(previous, draft));
+    setRatingPending(true);
+    setRatingError(null);
+    setRatingSaved(false);
+
+    submitRating(venueId, draft)
+      .then((res) => {
+        // Reconcile to the authoritative aggregate.
+        setSummary({
+          count: res.ratingCount,
+          sums: res.ratingSums,
+          yourScores: res.yourScores,
+        });
+        setDraft({ ...res.yourScores });
+        setRatingSaved(true);
+      })
+      .catch((err: unknown) => {
+        setSummary(previous); // roll back the optimistic state
+        setDraft(previousDraft);
+        const code = err instanceof RatingError ? err.code : "server_error";
+        setRatingError(
+          code === "rate_limited_daily"
+            ? "limit"
+            : code === "network"
+              ? "network"
+              : "server",
+        );
+      })
+      .finally(() => setRatingPending(false));
+  }, [draft, ratingPending, summary, venueId]);
 
   // ── giscus lazy load (first open only) ─────────────────────────────────────
   const [Giscus, setGiscus] = useState<ComponentType<GiscusProps> | null>(null);
@@ -225,7 +262,12 @@ export default function VenueComments({
   }, [open, loadGiscus]);
 
   // ── Derived display ────────────────────────────────────────────────────────
-  const average = ratingAverage(summary.count, summary.sum);
+  const average = ratingOverallAverage(summary);
+  const completeDraft = isCompleteDraft(draft) ? draft : null;
+  const saveDisabled =
+    ratingPending ||
+    completeDraft === null ||
+    scoresEqual(summary.yourScores, completeDraft);
   const ratingErrorText =
     ratingError === "limit"
       ? t.venueComments.ratingLimit
@@ -327,60 +369,134 @@ export default function VenueComments({
                 <h3 className="text-foreground text-sm font-medium">
                   {t.venueComments.ratingTitle}
                 </h3>
-                <div
-                  role="radiogroup"
-                  aria-label={t.venueComments.ratingTitle}
-                  className="mt-2 flex items-center"
-                >
-                  {STARS.map((n) => {
-                    const filled =
-                      summary.yourScore !== null && n <= summary.yourScore;
+                <div className="mt-3 border-border border-y py-3">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <span className="text-muted-foreground text-xs">
+                      {t.venueComments.overallLabel}
+                    </span>
+                    <span className="text-foreground text-xl font-medium tabular-nums">
+                      {average !== null ? average.toFixed(1) : "—"}
+                    </span>
+                  </div>
+                  {average !== null ? (
+                    <p className="text-muted-foreground mt-1 text-[13px]">
+                      {fillTemplate(t.venueComments.ratingSummary, {
+                        avg: average.toFixed(1),
+                        count: String(summary.count),
+                      })}
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground mt-1 text-[13px]">
+                      {t.venueComments.ratingEmpty}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {RATING_DIMENSIONS.map((dimension) => {
+                    const dimensionAverage = ratingDimensionAverage(
+                      summary.count,
+                      summary.sums,
+                      dimension,
+                    );
                     return (
-                      <button
-                        key={n}
-                        type="button"
-                        role="radio"
-                        aria-checked={summary.yourScore === n}
-                        aria-label={fillTemplate(t.venueComments.starLabel, {
-                          n: String(n),
-                        })}
-                        disabled={ratingPending}
-                        onClick={() => rate(n)}
-                        className={cn(
-                          "grid size-11 place-items-center rounded-md",
-                          "transition-colors duration-150",
-                          "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
-                          "disabled:cursor-not-allowed disabled:opacity-60",
-                          filled
-                            ? "text-foreground"
-                            : "text-muted-foreground hover:text-foreground",
-                        )}
+                      <div
+                        key={dimension}
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-sm"
                       >
-                        <Star
-                          className="size-6"
-                          aria-hidden="true"
-                          fill={filled ? "currentColor" : "none"}
-                        />
-                      </button>
+                        <span className="text-foreground">
+                          {t.venueComments.dimensions[dimension]}
+                        </span>
+                        <span className="text-muted-foreground tabular-nums">
+                          {dimensionAverage !== null
+                            ? dimensionAverage.toFixed(1)
+                            : "—"}
+                        </span>
+                      </div>
                     );
                   })}
                 </div>
 
-                <p className="text-muted-foreground mt-2 text-[13px]">
-                  {average !== null
-                    ? fillTemplate(t.venueComments.ratingSummary, {
-                        avg: average.toFixed(1),
-                        count: String(summary.count),
-                      })
-                    : t.venueComments.ratingEmpty}
-                </p>
-                {summary.yourScore !== null ? (
-                  <p className="text-muted-foreground mt-1 text-[13px]">
-                    {fillTemplate(t.venueComments.yourScore, {
-                      score: String(summary.yourScore),
-                    })}
+                <h4 className="text-foreground mt-5 text-sm font-medium">
+                  {t.venueComments.yourRatingTitle}
+                </h4>
+                <div className="mt-2 space-y-3">
+                  {RATING_DIMENSIONS.map((dimension) => (
+                    <div
+                      key={dimension}
+                      className="grid gap-1.5 sm:grid-cols-[minmax(0,8rem)_1fr] sm:items-center"
+                    >
+                      <span className="text-muted-foreground text-[13px]">
+                        {t.venueComments.dimensions[dimension]}
+                      </span>
+                      <div
+                        role="radiogroup"
+                        aria-label={fillTemplate(
+                          t.venueComments.dimensionGroupLabel,
+                          { dimension: t.venueComments.dimensions[dimension] },
+                        )}
+                        className="flex items-center"
+                      >
+                        {STARS.map((n) => {
+                          const filled = (draft[dimension] ?? 0) >= n;
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              role="radio"
+                              aria-checked={draft[dimension] === n}
+                              aria-label={fillTemplate(
+                                t.venueComments.starLabel,
+                                {
+                                  dimension:
+                                    t.venueComments.dimensions[dimension],
+                                  n: String(n),
+                                },
+                              )}
+                              disabled={ratingPending}
+                              onClick={() => setDraftScore(dimension, n)}
+                              className={cn(
+                                "grid size-11 place-items-center rounded-md",
+                                "transition-colors duration-150",
+                                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
+                                "disabled:cursor-not-allowed disabled:opacity-60",
+                                filled
+                                  ? "text-foreground"
+                                  : "text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              <Star
+                                className="size-5"
+                                aria-hidden="true"
+                                fill={filled ? "currentColor" : "none"}
+                              />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {completeDraft === null ? (
+                  <p className="text-muted-foreground mt-2 text-[13px]">
+                    {t.venueComments.ratingIncomplete}
                   </p>
                 ) : null}
+
+                <button
+                  type="button"
+                  disabled={saveDisabled}
+                  onClick={saveRating}
+                  className={cn(
+                    "border-foreground text-foreground hover:bg-secondary focus-visible:ring-ring mt-4 inline-flex h-11 items-center rounded-md border px-4 text-sm font-medium",
+                    "focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-55",
+                  )}
+                >
+                  {ratingPending
+                    ? t.venueComments.ratingSaving
+                    : t.venueComments.ratingSave}
+                </button>
 
                 {/* Inline status: error (rolled back) or saved. */}
                 {ratingErrorText ? (

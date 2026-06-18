@@ -26,7 +26,7 @@ import { getDb } from "@/server/db";
 import { listSubMapPhotos } from "@/server/photos";
 import { getRatingSummary } from "@/server/ratings";
 import type { PhotoDto } from "@/lib/photos";
-import type { VenueRatingSummaryDto } from "@/lib/venue-rating";
+import { emptyRatingSums, type VenueRatingSummaryDto } from "@/lib/venue-rating";
 
 export const prerender = false;
 
@@ -71,7 +71,11 @@ const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
 // AVG over rating rows) + this viewer's own score (by salted ip_hash, same
 // privacy model as staging votedByMe). Fails soft to a zero summary so a D1
 // hiccup never 500s the page; the entry chip then shows its zero state.
-let ratingSummary: VenueRatingSummaryDto = { count: 0, sum: 0, yourScore: null };
+let ratingSummary: VenueRatingSummaryDto = {
+  count: 0,
+  sums: emptyRatingSums(),
+  yourScores: null,
+};
 if (venue && env.DB) {
   try {
     const viewerIpHash = env.TURNSTILE_SECRET_KEY
@@ -83,7 +87,11 @@ if (venue && env.DB) {
       viewerIpHash,
     );
   } catch {
-    ratingSummary = { count: 0, sum: 0, yourScore: null };
+    ratingSummary = {
+      count: 0,
+      sums: emptyRatingSums(),
+      yourScores: null,
+    };
   }
 }
 

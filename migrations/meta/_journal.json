@@ -36,6 +36,13 @@
       "when": 1781133934814,
       "tag": "0005_venue_ratings",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1781801157645,
+      "tag": "0006_split_venue_rating_dimensions",
+      "breakpoints": true
     }
   ]
 }

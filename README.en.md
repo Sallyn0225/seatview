@@ -67,7 +67,7 @@ The core experience is just two steps — **tap a seat on the seating chart → 
 - **Browse by prefecture** — the venue tree on the left is grouped and collapsible by Japanese administrative divisions; Fuse.js client-side fuzzy search matches Chinese / Japanese / romaji aliases.
 - **Seating-chart markers** — view seat markers placed by other users on the venue's official seating chart (supports multi-layer / multi-zone tag switching); adjacent markers auto-cluster and show a count.
 - **Real-view Lightbox** — click a marker to see that seat's actual photo + seat number / text description; the masonry feed below shows every submission for that venue.
-- **Venue comments and ratings** — a quiet entry in the venue title area shows the average / rating count and opens a right drawer: anonymous 1–5-star rating on top (rating again changes your score), giscus comments below, strictly mapped to `venue:<id>` and shared across locales and seating-chart tabs.
+- **Venue comments and ratings** — a quiet entry in the venue title area shows the overall score / rating count and opens a right drawer: anonymous four-dimension 1–5-star ratings on top (view, sound, amenities, transit; rating again changes your scores), giscus comments below, strictly mapped to `venue:<id>` and shared across locales and seating-chart tabs.
 - **Registration-free uploads** — mark (with an optional full-screen zoom mode for precise placement) → pick image → compress to WebP client-side (EXIF stripped) → two-stage HMAC-ticket submission; in-line guidance nudges you through unfinished steps, with IP rate limiting + Turnstile guarding the whole flow.
 - **Multilingual i18n** — `/zh` `/ja` `/en` `/ko` four-prefix routing; the bare root `/` auto-redirects by `Accept-Language` (zh / ja are equal tracks, while en / ko are an accessibility translation layer).
 - **Venue crowdsourcing** — +1 a venue in the in-site "venues you want to see" staging area (public vote count + daily rate limit + name dedup), or submit venue JSON directly via a GitHub PR.
@@ -89,7 +89,7 @@ The core experience is just two steps — **tap a seat on the seating chart → 
 | Image storage | **Cloudflare R2** (`BUCKET`) | **direct binding writes**, not presigned URLs |
 | Bot defense | **Cloudflare Turnstile** | two steps: frontend token → backend siteverify |
 | Comments | **giscus** + `@giscus/react` | GitHub Discussions-backed comments; the drawer lazy-loads on first open and follows the site light / dark theme |
-| Anonymous ratings | **D1 aggregate table** + React island | 1–5-star ratings; `venue_id + ip_hash` dedupe, `venue_rating_agg` aggregate reads |
+| Anonymous ratings | **D1 aggregate table** + React island | Four-dimension 1–5-star ratings; `venue_id + ip_hash` dedupe, `venue_rating_agg` dimensional aggregate reads |
 | Image processing | `browser-image-compression` | long edge 1920px / WebP / EXIF stripped / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | Masonry | `react-photo-album` (masonry) | |
@@ -232,7 +232,7 @@ Soft delete: when a maintainer deletes a photo in `/admin`, D1 sets `deleted_at`
 
 The venue title area mounts the `VenueComments` island, which starts as a demoted entry chip (average / rating count / comments). `@giscus/react` is dynamically imported only when the drawer first opens; closing the drawer hides it instead of unmounting it, so the giscus iframe is not reloaded on reopen. giscus uses `mapping="specific"` + `term="venue:<id>"`, so the same venue shares one GitHub Discussions thread across locale paths and seating-chart tabs. Its theme follows the site's `html.dark` class instead of the system theme. If `PUBLIC_GISCUS_CATEGORY_ID` or another required value is empty, the comments block renders a "not available yet" state and loads no third-party script or iframe.
 
-Anonymous ratings go through `POST /api/rating`, accepting only 1–5 stars and a static venue `venue.id`. They intentionally skip Turnstile (a single click should not trigger a challenge), but still use `TURNSTILE_SECRET_KEY` as the IP-hash salt. D1 stores one `venue_ratings` row per `venue_id + ip_hash`; rating again changes that score instead of adding another vote. `venue_rating_agg` stores the count / sum aggregate, and row writes plus aggregate updates happen in one `db.batch`. Venue SSR reads only that aggregate row and fails soft to an empty rating state if the read fails. KV limits only the number of new venues rated per day; changing an existing score does not consume quota.
+Anonymous ratings go through `POST /api/rating`, accepting only a static venue `venue.id` and a complete four-dimension 1–5-star score set: view, sound, amenities, and transit. They intentionally skip Turnstile (a rating should not trigger a challenge), but still use `TURNSTILE_SECRET_KEY` as the IP-hash salt. D1 stores one `venue_ratings` row per `venue_id + ip_hash`; rating again changes those four scores instead of adding another vote. `venue_rating_agg` stores the dimensional count / sum aggregate, and row writes plus aggregate updates happen in one `db.batch`. Venue SSR reads only that aggregate row and fails soft to an empty rating state if the read fails. KV limits only the number of new venues rated per day; changing an existing score does not consume quota.
 
 ### Key Implementation Trade-offs
 
@@ -247,7 +247,7 @@ Anonymous ratings go through `POST /api/rating`, accepting only 1–5 stars and 
 6. **ULID self-implemented** (`crypto.getRandomValues`), not the `ulid` package.
 7. The R2 binding is named **`BUCKET`**, the rate-limit KV is **`RATE_LIMIT`**, plus a **`SESSION`** KV (required by the adapter's auto-enabled session API; SeatView has no account system and doesn't actually write sessions, but the binding must resolve); admin uses **Cloudflare Access** (the `Cf-Access-Authenticated-User-Email` header), mocked locally via `DEV_ADMIN_EMAIL` in `.dev.vars`.
 8. **giscus comments are optional public config**: when `PUBLIC_GISCUS_*` is missing, no third-party resources load; once configured, comments map to GitHub Discussions by `venue:<id>`.
-9. **Venue ratings are anonymous D1 aggregates**: `venue_ratings` stores the current score for each `venue_id + ip_hash`, and `venue_rating_agg` stores display aggregates; this is not GitHub reactions or social likes.
+9. **Venue ratings are anonymous D1 aggregates**: `venue_ratings` stores the current four scores for each `venue_id + ip_hash`, and `venue_rating_agg` stores display aggregates; this is not GitHub reactions or social likes.
 
 </details>
 

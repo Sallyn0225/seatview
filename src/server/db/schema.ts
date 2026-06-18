@@ -85,7 +85,7 @@ export const stagingVotes = sqliteTable(
 );
 
 /**
- * One anonymous 1..5-star rating of a collected venue (task 06-10-giscus).
+ * One anonymous 1..5-star dimensional rating of a collected venue.
  * The rated venue is a STATIC venue id (data/venues/*.json, ADR-1), validated
  * against the bundled set at the API layer — D1 has no venues table to FK.
  *
@@ -99,7 +99,13 @@ export const venueRatings = sqliteTable(
   {
     id: text("id").primaryKey(), // ulid
     venueId: text("venue_id").notNull(),
-    score: integer("score").notNull(), // 1..5, validated at the API layer
+    // Legacy compatibility score. New writes store the rounded row mean here,
+    // but public display reads only the dimensional columns/aggregate.
+    score: integer("score").notNull(),
+    viewScore: integer("view_score"),
+    soundScore: integer("sound_score"),
+    amenitiesScore: integer("amenities_score"),
+    transitScore: integer("transit_score"),
     ipHash: text("ip_hash").notNull(),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at"), // last score change, null = never changed
@@ -114,12 +120,18 @@ export const venueRatings = sqliteTable(
  * page SSR) reads exactly this row — never `AVG()` over `venue_ratings` (D1
  * bills rows read; same reasoning as `stagingVenues.voteCount`). Kept in sync
  * with `venue_ratings` in the SAME `db.batch` as every rating write (atomic).
- * `rating_sum` is an integer so `avg = sum / count` avoids stored floats.
+ * Legacy `rating_count` / `rating_sum` are preserved for rollback/export.
+ * New display reads `dimension_rating_count` and the four dimension sums.
  */
 export const venueRatingAgg = sqliteTable("venue_rating_agg", {
   venueId: text("venue_id").primaryKey(),
   ratingCount: integer("rating_count").notNull().default(0),
   ratingSum: integer("rating_sum").notNull().default(0),
+  dimensionRatingCount: integer("dimension_rating_count").notNull().default(0),
+  viewRatingSum: integer("view_rating_sum").notNull().default(0),
+  soundRatingSum: integer("sound_rating_sum").notNull().default(0),
+  amenitiesRatingSum: integer("amenities_rating_sum").notNull().default(0),
+  transitRatingSum: integer("transit_rating_sum").notNull().default(0),
   updatedAt: integer("updated_at").notNull(),
 });
 

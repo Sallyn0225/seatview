@@ -67,7 +67,7 @@
 - **按都道府县浏览** —— 左侧场馆树按日本行政区划分组、可折叠；Fuse.js 客户端模糊搜索，中文 / 日文 / 罗马字别名都能命中。
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
 - **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；下方瀑布流展示该场馆的全部投稿。
-- **场馆评论与评分** —— 场馆页标题区的轻量入口显示平均分 / 评分数并打开右侧抽屉：上方是匿名 1–5 星评分（再次评分会改分），下方是按 `venue:<id>` 严格映射的 giscus 评论，跨语言与子坐席图共享同一讨论。
+- **场馆评论与评分** —— 场馆页标题区的轻量入口显示综合分 / 评分数并打开右侧抽屉：上方是匿名四项 1–5 星评分（视野、声音、周边便利、交通便利，再次评分会改分），下方是按 `venue:<id>` 严格映射的 giscus 评论，跨语言与子坐席图共享同一讨论。
 - **免注册上传** —— 标点（可进全屏放大精修）→ 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交；未完成步骤有行内引导，全程 IP 限频 + Turnstile 防滥用。
 - **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
 - **场馆众包** —— 站内「想看的场馆」暂存区可 +1 附议（公开票数 + 每日限流 + 同名去重），或通过 GitHub PR 直接提交场馆 JSON。
@@ -89,7 +89,7 @@
 | 图片存储 | **Cloudflare R2**（`BUCKET`） | **绑定直写**，不是 presigned URL |
 | 防机器人 | **Cloudflare Turnstile** | 两步：前端 token → 后端 siteverify |
 | 评论 | **giscus** + `@giscus/react` | GitHub Discussions 承载；评论抽屉首次打开才懒加载，主题跟随站点亮 / 暗模式 |
-| 匿名评分 | **D1 聚合表** + React island | 1–5 星评分；`venue_id + ip_hash` 去重，`venue_rating_agg` 读聚合 |
+| 匿名评分 | **D1 聚合表** + React island | 四项 1–5 星评分；`venue_id + ip_hash` 去重，`venue_rating_agg` 读四维聚合 |
 | 图片处理 | `browser-image-compression` | 长边 1920px / WebP / 去 EXIF / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | 瀑布流 | `react-photo-album`（masonry） | |
@@ -232,7 +232,7 @@ npm run deploy
 
 场馆页标题区挂载 `VenueComments` island，默认只显示一个降权的小入口（平均分 / 评分数 / 评论）。首次打开抽屉时才动态加载 `@giscus/react`；关闭抽屉时隐藏而不是卸载，因此 giscus iframe 不会反复重载。giscus 使用 `mapping="specific"` + `term="venue:<id>"`，同一场馆在不同语言路径、不同子坐席图 tab 下共享同一条 GitHub Discussions 讨论；主题跟随站点的 `html.dark` 类，而不是系统主题。若 `PUBLIC_GISCUS_CATEGORY_ID` 等配置为空，评论区只显示“暂未开放”状态，不加载任何第三方脚本或 iframe。
 
-匿名评分走 `POST /api/rating`，只接受 1–5 星与静态场馆 `venue.id`。它不跑 Turnstile（单次点击不应弹挑战），但仍使用 `TURNSTILE_SECRET_KEY` 作为 IP-hash salt；D1 中 `venue_ratings` 通过 `venue_id + ip_hash` 唯一索引去重，同一人再次评分会改分而不是新增一票。`venue_rating_agg` 保存 count / sum 聚合，写入与聚合更新在同一个 `db.batch` 中完成；场馆页 SSR 只读这一行聚合，失败时降级为空评分，不影响页面打开。KV 只限制“每天新增评分的不同场馆数”，改已有分数不消耗配额。
+匿名评分走 `POST /api/rating`，只接受静态场馆 `venue.id` 与完整四项 1–5 星评分：视野、声音、周边便利、交通便利。它不跑 Turnstile（单次评分不应弹挑战），但仍使用 `TURNSTILE_SECRET_KEY` 作为 IP-hash salt；D1 中 `venue_ratings` 通过 `venue_id + ip_hash` 唯一索引去重，同一人再次评分会改四项分数而不是新增一票。`venue_rating_agg` 保存四维 count / sum 聚合，写入与聚合更新在同一个 `db.batch` 中完成；场馆页 SSR 只读这一行聚合，失败时降级为空评分，不影响页面打开。KV 只限制“每天新增评分的不同场馆数”，改已有分数不消耗配额。
 
 ### 关键实现取舍
 
@@ -247,7 +247,7 @@ npm run deploy
 6. **ULID 自实现**（`crypto.getRandomValues`），不用 `ulid` 包。
 7. R2 绑定名是 **`BUCKET`**、限频 KV 是 **`RATE_LIMIT`**，另有 **`SESSION`** KV（适配器自动启用 session API 所需，SeatView 无账号系统、不实际写 session，但绑定需可解析）；admin 用 **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` 头），本地用 `.dev.vars` 的 `DEV_ADMIN_EMAIL` mock。
 8. **giscus 评论是可选公共配置**：缺 `PUBLIC_GISCUS_*` 时不加载第三方资源；配置齐全后，评论按 `venue:<id>` 映射到 GitHub Discussions。
-9. **场馆评分是匿名 D1 聚合**：`venue_ratings` 存每个 `venue_id + ip_hash` 的当前分数，`venue_rating_agg` 存展示聚合；不是 GitHub reaction，也不是社交点赞。
+9. **场馆评分是匿名 D1 聚合**：`venue_ratings` 存每个 `venue_id + ip_hash` 的当前四项分数，`venue_rating_agg` 存展示聚合；不是 GitHub reaction，也不是社交点赞。
 
 </details>
 

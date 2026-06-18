@@ -220,10 +220,21 @@ const ko: Messages = {
     title: "댓글과 평점",
     close: "닫기",
     ratingTitle: "이 회장을 평가하기",
-    starLabel: "별 {n}개",
+    overallLabel: "종합",
+    dimensions: {
+      view: "시야",
+      sound: "소리",
+      amenities: "주변 편의",
+      transit: "교통",
+    },
+    dimensionGroupLabel: "{dimension} 평가",
+    starLabel: "{dimension} 별 {n}개",
     ratingSummary: "평균 {avg} · {count}명이 평가",
     ratingEmpty: "아직 평점이 없어요. 첫 번째가 되어 볼까요?",
-    yourScore: "별 {score}개를 주셨어요. 다른 별을 탭하면 바꿀 수 있어요.",
+    yourRatingTitle: "내 평가",
+    ratingIncomplete: "네 항목을 모두 선택하면 저장할 수 있어요.",
+    ratingSave: "평점 저장",
+    ratingSaving: "저장 중…",
     ratingNote:
       "평가에 로그인은 필요 없어요. 중복 방지를 위해 솔트 해시 처리한 IP만 저장하고 원본 IP는 저장하지 않아요.",
     ratingSaved: "기록했어요.",
@@ -268,7 +279,7 @@ const ko: Messages = {
       },
       {
         heading: "댓글과 평점",
-        body: "회장 댓글은 제3자 서비스 giscus를 통해 내장 프레임으로 제공되며, 내용은 공개 GitHub 저장소의 Discussions에 저장돼요. 댓글을 쓰려면 GitHub에 로그인하고 giscus를 승인해야 하며, 이 단계에는 GitHub와 giscus의 개인정보 처리방침이 적용돼요. 읽기만 할 때는 로그인이 필요 없어요. 회장 평점도 로그인 없이 가능하며, 투표 중복 방지와 마찬가지로 솔트 해시 처리한 IP만 저장하고 원본 IP는 저장하지 않아요.",
+        body: "회장 댓글은 제3자 서비스 giscus를 통해 내장 프레임으로 제공되며, 내용은 공개 GitHub 저장소의 Discussions에 저장돼요. 댓글을 쓰려면 GitHub에 로그인하고 giscus를 승인해야 하며, 이 단계에는 GitHub와 giscus의 개인정보 처리방침이 적용돼요. 읽기만 할 때는 로그인이 필요 없어요. 회장 네 항목 평점도 로그인 없이 가능하며, 투표 중복 방지와 마찬가지로 솔트 해시 처리한 IP만 저장하고 원본 IP는 저장하지 않아요.",
       },
       {
         heading: "로컬 저장소",
@@ -297,7 +308,7 @@ const ko: Messages = {
       },
       {
         heading: "댓글과 평점",
-        body: "회장 댓글은 GitHub Discussions에 저장되며 GitHub의 이용약관과 커뮤니티 가이드라인이 적용돼요. 부적절한 댓글은 삭제·접기·잠금 처리하고 관련 계정을 차단할 수 있어요. 익명 평점은 참고용이며, 조작이 확인되면 해당 데이터를 조정하거나 삭제할 수 있어요.",
+        body: "회장 댓글은 GitHub Discussions에 저장되며 GitHub의 이용약관과 커뮤니티 가이드라인이 적용돼요. 부적절한 댓글은 삭제·접기·잠금 처리하고 관련 계정을 차단할 수 있어요. 익명 네 항목 평점은 참고용이며, 조작이 확인되면 해당 데이터를 조정하거나 삭제할 수 있어요.",
       },
       {
         heading: "면책 조항",

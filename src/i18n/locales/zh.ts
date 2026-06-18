@@ -264,14 +264,29 @@ export interface Messages {
     close: string;
     /** Rating block heading. */
     ratingTitle: string;
-    /** Star button aria-label, `{n}` → 1..5. */
+    /** Overall score label. */
+    overallLabel: string;
+    /** Dimension labels. */
+    dimensions: {
+      view: string;
+      sound: string;
+      amenities: string;
+      transit: string;
+    };
+    /** Star group aria-label, `{dimension}` → localized dimension. */
+    dimensionGroupLabel: string;
+    /** Star button aria-label, `{dimension}` + `{n}` → 1..5. */
     starLabel: string;
     /** Aggregate line under the stars, `{avg}` + `{count}`. */
     ratingSummary: string;
     /** Zero ratings (gentle 缝隙时刻). */
     ratingEmpty: string;
-    /** Your current score line, `{score}`. */
-    yourScore: string;
+    /** Your rating block heading. */
+    yourRatingTitle: string;
+    /** Incomplete four-dimension selection prompt. */
+    ratingIncomplete: string;
+    ratingSave: string;
+    ratingSaving: string;
     /** Transparency one-liner: no login, salted IP hash only. */
     ratingNote: string;
     /** Inline saved confirmation. */
@@ -741,10 +756,21 @@ const zh: Messages = {
     title: "评论与评分",
     close: "关闭",
     ratingTitle: "给这个场馆打分",
-    starLabel: "{n} 星",
+    overallLabel: "综合",
+    dimensions: {
+      view: "视野",
+      sound: "声音",
+      amenities: "周边便利",
+      transit: "交通便利",
+    },
+    dimensionGroupLabel: "给{dimension}打分",
+    starLabel: "{dimension} {n} 星",
     ratingSummary: "平均 {avg} · {count} 人评分",
     ratingEmpty: "还没有人打分。第一个，由你来。",
-    yourScore: "你打了 {score} 星。点其他星可以改分。",
+    yourRatingTitle: "你的评分",
+    ratingIncomplete: "四项都选好后再保存。",
+    ratingSave: "保存评分",
+    ratingSaving: "保存中…",
     ratingNote:
       "打分无需登录。为了去重，我们只保存加盐哈希后的 IP，不存原 IP。",
     ratingSaved: "已记录。",
@@ -788,7 +814,7 @@ const zh: Messages = {
       },
       {
         heading: "评论与评分",
-        body: "场馆评论由第三方服务 giscus 提供，以内嵌页面加载，内容存储在我们公开 GitHub 仓库的 Discussions 中；发表评论需要登录 GitHub 并授权 giscus，这一环节受 GitHub 与 giscus 的隐私政策约束，仅浏览无需登录。场馆评分无需登录，与投票去重相同，我们只保存加盐哈希后的 IP，不存原 IP。",
+        body: "场馆评论由第三方服务 giscus 提供，以内嵌页面加载，内容存储在我们公开 GitHub 仓库的 Discussions 中；发表评论需要登录 GitHub 并授权 giscus，这一环节受 GitHub 与 giscus 的隐私政策约束，仅浏览无需登录。场馆四项评分无需登录，与投票去重相同，我们只保存加盐哈希后的 IP，不存原 IP。",
       },
       {
         heading: "本地存储",
@@ -817,7 +843,7 @@ const zh: Messages = {
       },
       {
         heading: "评论与评分",
-        body: "场馆评论存储在 GitHub Discussions 中，需遵守 GitHub 的服务条款与社区准则。我们可以删除、折叠或锁定不当评论，并屏蔽相关账号。匿名评分仅供参考，发现刷分时我们可以调整或清除相关数据。",
+        body: "场馆评论存储在 GitHub Discussions 中，需遵守 GitHub 的服务条款与社区准则。我们可以删除、折叠或锁定不当评论，并屏蔽相关账号。匿名四项评分仅供参考，发现刷分时我们可以调整或清除相关数据。",
       },
       {
         heading: "免责声明",

@@ -5,6 +5,7 @@
 // localized inline copy (R9).
 
 import type {
+  RatingDimensionScores,
   RatingErrorCode,
   RatingRequest,
   RatingResponse,
@@ -38,10 +39,10 @@ async function parseErrorCode(
  */
 export async function submitRating(
   venueId: string,
-  score: number,
+  scores: RatingDimensionScores,
   signal?: AbortSignal,
 ): Promise<RatingResponse> {
-  const body: RatingRequest = { venueId, score };
+  const body: RatingRequest = { venueId, scores };
   let res: Response;
   try {
     res = await fetch("/api/rating", {
