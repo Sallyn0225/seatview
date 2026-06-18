@@ -2,16 +2,24 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyOptimisticRating,
+  emptyRatingSums,
   isValidRatingScore,
-  ratingAverage,
+  isValidRatingScores,
+  ratingDimensionAverage,
+  ratingOverallAverage,
+  RATING_DIMENSIONS,
   RATING_MAX,
   RATING_MIN,
+  type RatingDimensionScores,
   type VenueRatingSummaryDto,
 } from "./venue-rating.ts";
 
-// These pure helpers ARE the rating math contract: the server's batch writes
-// (src/server/ratings.ts) and the island's optimistic state both follow the
-// transitions asserted here, so a drift in either is a failure of this spec.
+const scores: RatingDimensionScores = {
+  view: 5,
+  sound: 4,
+  amenities: 3,
+  transit: 5,
+};
 
 describe("isValidRatingScore", () => {
   it("accepts every integer in RATING_MIN..RATING_MAX", () => {
@@ -36,56 +44,125 @@ describe("isValidRatingScore", () => {
   });
 });
 
-describe("ratingAverage", () => {
-  it("returns null when nobody rated (callers render the zero state)", () => {
-    assert.equal(ratingAverage(0, 0), null);
+describe("isValidRatingScores", () => {
+  it("accepts exactly the four required dimensions", () => {
+    assert.equal(isValidRatingScores(scores), true);
   });
 
-  it("rounds to one decimal", () => {
-    assert.equal(ratingAverage(3, 13), 4.3); // 4.333…
-    assert.equal(ratingAverage(3, 14), 4.7); // 4.666…
-    assert.equal(ratingAverage(2, 9), 4.5);
-    assert.equal(ratingAverage(1, 5), 5);
+  it("rejects missing, extra, malformed, or out-of-range dimensions", () => {
+    assert.equal(isValidRatingScores({ ...scores, transit: undefined }), false);
+    assert.equal(isValidRatingScores({ ...scores, extra: 4 }), false);
+    assert.equal(isValidRatingScores({ ...scores, view: 3.5 }), false);
+    assert.equal(isValidRatingScores({ ...scores, sound: 6 }), false);
+    assert.equal(isValidRatingScores(null), false);
+  });
+});
+
+describe("rating averages", () => {
+  it("returns null when nobody rated", () => {
+    const summary: VenueRatingSummaryDto = {
+      count: 0,
+      sums: emptyRatingSums(),
+      yourScores: null,
+    };
+    assert.equal(ratingOverallAverage(summary), null);
+    assert.equal(
+      ratingDimensionAverage(summary.count, summary.sums, "view"),
+      null,
+    );
+  });
+
+  it("rounds dimension averages to one decimal", () => {
+    assert.equal(
+      ratingDimensionAverage(
+        3,
+        { view: 13, sound: 14, amenities: 9, transit: 5 },
+        "view",
+      ),
+      4.3,
+    );
+    assert.equal(
+      ratingDimensionAverage(
+        3,
+        { view: 13, sound: 14, amenities: 9, transit: 5 },
+        "sound",
+      ),
+      4.7,
+    );
+  });
+
+  it("computes overall from raw sums before dimension rounding", () => {
+    const summary: VenueRatingSummaryDto = {
+      count: 3,
+      sums: { view: 13, sound: 14, amenities: 10, transit: 15 },
+      yourScores: null,
+    };
+    assert.equal(ratingOverallAverage(summary), 4.3);
   });
 });
 
 describe("applyOptimisticRating", () => {
-  const fresh: VenueRatingSummaryDto = { count: 12, sum: 51, yourScore: null };
+  const fresh: VenueRatingSummaryDto = {
+    count: 12,
+    sums: { view: 51, sound: 48, amenities: 42, transit: 55 },
+    yourScores: null,
+  };
 
-  it("new rating: count + 1, sum + score, yourScore set", () => {
-    assert.deepEqual(applyOptimisticRating(fresh, 4), {
+  it("new rating: count + 1, each sum increases, yourScores set", () => {
+    assert.deepEqual(applyOptimisticRating(fresh, scores), {
       count: 13,
-      sum: 55,
-      yourScore: 4,
+      sums: { view: 56, sound: 52, amenities: 45, transit: 60 },
+      yourScores: scores,
     });
   });
 
-  it("score change: count unchanged, sum moves by the delta", () => {
-    const rated: VenueRatingSummaryDto = { count: 13, sum: 55, yourScore: 4 };
-    assert.deepEqual(applyOptimisticRating(rated, 2), {
+  it("score change: count unchanged, each sum moves by its own delta", () => {
+    const rated: VenueRatingSummaryDto = {
       count: 13,
-      sum: 53, // 55 - 4 + 2
-      yourScore: 2,
+      sums: { view: 56, sound: 52, amenities: 45, transit: 60 },
+      yourScores: scores,
+    };
+    assert.deepEqual(
+      applyOptimisticRating(rated, {
+        view: 4,
+        sound: 4,
+        amenities: 5,
+        transit: 5,
+      }),
+      {
+        count: 13,
+        sums: { view: 55, sound: 52, amenities: 47, transit: 60 },
+        yourScores: { view: 4, sound: 4, amenities: 5, transit: 5 },
+      },
+    );
+  });
+
+  it("same scores: idempotent no-op", () => {
+    const rated: VenueRatingSummaryDto = {
+      count: 13,
+      sums: { view: 56, sound: 52, amenities: 45, transit: 60 },
+      yourScores: scores,
+    };
+    assert.deepEqual(applyOptimisticRating(rated, scores), rated);
+  });
+
+  it("does not mutate the input summary or scores", () => {
+    const before: VenueRatingSummaryDto = {
+      count: 2,
+      sums: { view: 8, sound: 7, amenities: 6, transit: 9 },
+      yourScores: null,
+    };
+    applyOptimisticRating(before, scores);
+    assert.deepEqual(before, {
+      count: 2,
+      sums: { view: 8, sound: 7, amenities: 6, transit: 9 },
+      yourScores: null,
     });
-  });
-
-  it("same score: idempotent no-op (no count or sum drift)", () => {
-    const rated: VenueRatingSummaryDto = { count: 13, sum: 55, yourScore: 4 };
-    assert.deepEqual(applyOptimisticRating(rated, 4), rated);
-  });
-
-  it("first rating on an unrated venue starts the aggregate", () => {
-    const empty: VenueRatingSummaryDto = { count: 0, sum: 0, yourScore: null };
-    assert.deepEqual(applyOptimisticRating(empty, 5), {
-      count: 1,
-      sum: 5,
-      yourScore: 5,
-    });
-  });
-
-  it("does not mutate the input summary (rollback keeps the original)", () => {
-    const before: VenueRatingSummaryDto = { count: 2, sum: 7, yourScore: null };
-    applyOptimisticRating(before, 3);
-    assert.deepEqual(before, { count: 2, sum: 7, yourScore: null });
+    assert.deepEqual(RATING_DIMENSIONS, [
+      "view",
+      "sound",
+      "amenities",
+      "transit",
+    ]);
   });
 });

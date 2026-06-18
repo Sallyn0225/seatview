@@ -213,11 +213,21 @@ const ja: Messages = {
     title: "コメントと評価",
     close: "閉じる",
     ratingTitle: "この会場を評価する",
-    starLabel: "星 {n} つ",
+    overallLabel: "総合",
+    dimensions: {
+      view: "見やすさ",
+      sound: "音響",
+      amenities: "周辺の便利さ",
+      transit: "アクセス",
+    },
+    dimensionGroupLabel: "{dimension}を評価",
+    starLabel: "{dimension} 星 {n} つ",
     ratingSummary: "平均 {avg} · {count} 件の評価",
     ratingEmpty: "まだ評価がありません。最初の一人に、あなたが。",
-    yourScore:
-      "あなたの評価は星 {score} つ。他の星をタップすると変更できます。",
+    yourRatingTitle: "あなたの評価",
+    ratingIncomplete: "4項目すべてを選ぶと保存できます。",
+    ratingSave: "評価を保存",
+    ratingSaving: "保存中…",
     ratingNote:
       "評価にログインは不要です。重複防止のため、ソルト付きでハッシュ化した IP のみを保存し、生の IP は保存しません。",
     ratingSaved: "記録しました。",
@@ -262,7 +272,7 @@ const ja: Messages = {
       },
       {
         heading: "コメントと評価",
-        body: "会場コメントは第三者サービス giscus を埋め込みで利用し、内容は公開 GitHub リポジトリの Discussions に保存されます。コメントの投稿には GitHub へのログインと giscus の認可が必要で、この処理には GitHub および giscus のプライバシーポリシーが適用されます。閲覧だけならログインは不要です。会場の評価にもログインは不要で、投票の重複防止と同じく、ソルト付きでハッシュ化した IP のみを保存し、生の IP は保存しません。",
+        body: "会場コメントは第三者サービス giscus を埋め込みで利用し、内容は公開 GitHub リポジトリの Discussions に保存されます。コメントの投稿には GitHub へのログインと giscus の認可が必要で、この処理には GitHub および giscus のプライバシーポリシーが適用されます。閲覧だけならログインは不要です。会場の4項目評価にもログインは不要で、投票の重複防止と同じく、ソルト付きでハッシュ化した IP のみを保存し、生の IP は保存しません。",
       },
       {
         heading: "ローカルストレージ",
@@ -291,7 +301,7 @@ const ja: Messages = {
       },
       {
         heading: "コメントと評価",
-        body: "会場コメントは GitHub Discussions に保存され、GitHub の利用規約とコミュニティガイドラインが適用されます。不適切なコメントは削除・非表示・ロックし、関連アカウントをブロックすることがあります。匿名の評価は参考情報であり、不正な操作を確認した場合は該当データを調整・削除することがあります。",
+        body: "会場コメントは GitHub Discussions に保存され、GitHub の利用規約とコミュニティガイドラインが適用されます。不適切なコメントは削除・非表示・ロックし、関連アカウントをブロックすることがあります。匿名の4項目評価は参考情報であり、不正な操作を確認した場合は該当データを調整・削除することがあります。",
       },
       {
         heading: "免責事項",

@@ -67,7 +67,7 @@
 - **都道府県別ブラウズ** —— 左側の会場ツリーは日本の行政区画でグループ化・折りたたみ可能。Fuse.js のクライアントサイドあいまい検索で、中国語 / 日本語 / ローマ字のエイリアスもヒットします。
 - **座席表マーキング** —— 会場公式の座席表（複数レイヤー / 複数エリアの tag 切り替え対応）上で、他ユーザーがマークした座席ポイントを表示。隣接するポイントは自動で集約し件数を表示します。
 - **リアルビュー Lightbox** —— マーカーをクリックすると、その席の実写 + 座席番号 / テキスト説明を表示。下部のウォーターフォールでその会場の全投稿を表示します。
-- **会場コメントと評価** —— 会場タイトル付近の控えめな入口に平均点 / 評価数を表示し、右側のドロワーを開きます。上部は匿名 1〜5 星評価（再評価はスコア変更）、下部は `venue:<id>` に厳密マッピングされた giscus コメントで、言語パスや座席表タブをまたいで同じ議論を共有します。
+- **会場コメントと評価** —— 会場タイトル付近の控えめな入口に総合点 / 評価数を表示し、右側のドロワーを開きます。上部は匿名4項目の 1〜5 星評価（見やすさ、音響、周辺の便利さ、アクセス。再評価はスコア変更）、下部は `venue:<id>` に厳密マッピングされた giscus コメントで、言語パスや座席表タブをまたいで同じ議論を共有します。
 - **登録不要の投稿** —— マーク（全画面ズームで精密に配置するモードあり）→ 画像選択 → クライアント側で WebP に圧縮（EXIF 除去）→ HMAC ticket の二段階コミット。未完了のステップはインライン案内で誘導し、全工程で IP レート制限 + Turnstile による不正対策。
 - **多言語 i18n** —— `/zh` `/ja` `/en` `/ko` の 4 プレフィックスルーティング、ルート直下 `/` は `Accept-Language` で自動リダイレクト（`zh` / `ja` は対等な二軸、`en` / `ko` はアクセシビリティのための翻訳レイヤー）。
 - **会場のクラウドソーシング** —— サイト内「見たい会場」一時置き場で +1（公開票数 + 日次レート制限 + 同名の重複排除）、または GitHub PR で会場 JSON を直接投稿。
@@ -89,7 +89,7 @@
 | 画像ストレージ | **Cloudflare R2**（`BUCKET`） | **バインディング直接書き込み**、presigned URL ではない |
 | ボット対策 | **Cloudflare Turnstile** | 二段階：フロントエンド token → バックエンド siteverify |
 | コメント | **giscus** + `@giscus/react` | GitHub Discussions を使用。コメントドロワーは初回オープン時だけ遅延ロードし、サイトのライト / ダークテーマに追従 |
-| 匿名評価 | **D1 集約テーブル** + React island | 1〜5 星評価。`venue_id + ip_hash` で重複排除し、`venue_rating_agg` から集約を読み取り |
+| 匿名評価 | **D1 集約テーブル** + React island | 4項目の 1〜5 星評価。`venue_id + ip_hash` で重複排除し、`venue_rating_agg` から次元別集約を読み取り |
 | 画像処理 | `browser-image-compression` | 長辺 1920px / WebP / EXIF 除去 / 約 500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
 | ウォーターフォール | `react-photo-album`（masonry） | |
@@ -232,7 +232,7 @@ presigned URL によるクライアント直接アップロードではなく、
 
 会場タイトル付近には `VenueComments` island がマウントされ、初期状態では控えめな入口（平均点 / 評価数 / コメント）だけを表示します。`@giscus/react` はドロワーを初めて開いたときだけ動的 import されます。閉じるときはアンマウントせず非表示にするため、再オープン時に giscus iframe が再読み込みされません。giscus は `mapping="specific"` + `term="venue:<id>"` を使うので、同じ会場は言語パスや座席表タブをまたいで 1 つの GitHub Discussions スレッドを共有します。テーマはシステムテーマではなく、サイトの `html.dark` クラスに追従します。`PUBLIC_GISCUS_CATEGORY_ID` など必須値が空の場合、コメント欄は「まだ利用できません」状態だけを表示し、第三者 script / iframe は読み込みません。
 
-匿名評価は `POST /api/rating` を通り、静的な `venue.id` と 1〜5 星のみを受け付けます。単発クリックで challenge を出さないため Turnstile は使いませんが、`TURNSTILE_SECRET_KEY` は IP-hash salt として使います。D1 では `venue_id + ip_hash` ごとに `venue_ratings` を 1 行だけ保存し、再評価は新規票ではなくスコア変更になります。`venue_rating_agg` は count / sum の集約を保持し、評価行と集約の更新は 1 つの `db.batch` で行います。会場ページ SSR はこの集約行だけを読み、失敗しても空の評価状態へ静かにフォールバックします。KV は「1 日に新規評価した異なる会場数」だけを制限し、既存スコアの変更では消費しません。
+匿名評価は `POST /api/rating` を通り、静的な `venue.id` と完全な4項目 1〜5 星評価（見やすさ、音響、周辺の便利さ、アクセス）のみを受け付けます。単発評価で challenge を出さないため Turnstile は使いませんが、`TURNSTILE_SECRET_KEY` は IP-hash salt として使います。D1 では `venue_id + ip_hash` ごとに `venue_ratings` を 1 行だけ保存し、再評価は新規票ではなく4項目スコアの変更になります。`venue_rating_agg` は次元別の count / sum 集約を保持し、評価行と集約の更新は 1 つの `db.batch` で行います。会場ページ SSR はこの集約行だけを読み、失敗しても空の評価状態へ静かにフォールバックします。KV は「1 日に新規評価した異なる会場数」だけを制限し、既存スコアの変更では消費しません。
 
 ### 主要な実装上のトレードオフ
 
@@ -247,7 +247,7 @@ presigned URL によるクライアント直接アップロードではなく、
 6. **ULID は自前実装**（`crypto.getRandomValues`）で、`ulid` パッケージは不使用。
 7. R2 バインディング名は **`BUCKET`**、レート制限 KV は **`RATE_LIMIT`**、さらに **`SESSION`** KV があります（アダプターが自動で有効化する session API に必要。SeatView はアカウントシステムを持たず session を実際には書きませんが、バインディングは解決可能である必要があります）。admin は **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` ヘッダー）を使用し、ローカルでは `.dev.vars` の `DEV_ADMIN_EMAIL` で mock します。
 8. **giscus コメントは任意の公開設定**です。`PUBLIC_GISCUS_*` が欠けている場合は第三者リソースを読み込まず、設定済みなら `venue:<id>` で GitHub Discussions に紐づけます。
-9. **会場評価は匿名の D1 集約**です。`venue_ratings` は各 `venue_id + ip_hash` の現在スコアを保存し、`venue_rating_agg` は表示用の集約を保存します。GitHub reaction やソーシャルな「いいね」ではありません。
+9. **会場評価は匿名の D1 集約**です。`venue_ratings` は各 `venue_id + ip_hash` の現在4項目スコアを保存し、`venue_rating_agg` は表示用の集約を保存します。GitHub reaction やソーシャルな「いいね」ではありません。
 
 </details>
 

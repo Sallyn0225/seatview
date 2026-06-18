@@ -1,6 +1,6 @@
 // /api/rating — record (or change) an anonymous 1..5-star venue rating.
 //
-// POST { venueId, score } → 200 { venueId, ratingCount, ratingSum, yourScore }.
+// POST { venueId, scores } → 200 { venueId, ratingCount, ratingSums, yourScores }.
 // Mirrors /api/staging/vote: NO Turnstile (a single click; a challenge per
 // rating would wreck the UX). Abuse is bounded by UNIQUE(venue_id, ip_hash) in
 // D1 (a repeat rating is a score CHANGE, never a second row) + a KV daily cap
@@ -12,12 +12,12 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
-import { getViewerScore, rateVenue } from "@/server/ratings";
+import { getViewerRatingRow, rateVenue } from "@/server/ratings";
 import { checkDailyLimit, incrementDaily } from "@/server/rate-limit";
 import { getVenue } from "@/data/venues";
 import {
   RATING_DAILY_LIMIT,
-  isValidRatingScore,
+  isValidRatingScores,
   type RatingErrorCode,
   type RatingRequest,
   type RatingResponse,
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
     return jsonError("missing_fields", 400);
   }
   const venueId = typeof body.venueId === "string" ? body.venueId.trim() : "";
-  if (venueId.length === 0 || !isValidRatingScore(body.score)) {
+  if (venueId.length === 0 || !isValidRatingScores(body.scores)) {
     return jsonError("missing_fields", 400);
   }
   // Ratings only attach to venues that exist in the static atlas (ADR-1) — D1
@@ -64,7 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!getVenue(venueId)) {
     return jsonError("venue_not_found", 404);
   }
-  const score = body.score;
+  const scores = body.scores;
 
   const ipHash = await hashIp(clientIp(request), secret);
 
@@ -72,9 +72,11 @@ export const POST: APIRoute = async ({ request }) => {
     const db = getDb(env.DB);
 
     // The daily cap only guards NEW venues rated today; changing an existing
-    // score must keep working even at the cap (it creates nothing new).
-    const existing = await getViewerScore(db, venueId, ipHash);
-    if (existing === null) {
+    // score must keep working even at the cap (it creates nothing new). Read the
+    // viewer's row ONCE here and hand it to rateVenue so the write path does not
+    // re-SELECT the same (venue_id, ip_hash) (D1 bills rows read).
+    const existingRow = await getViewerRatingRow(db, venueId, ipHash);
+    if (!existingRow) {
       const limit = await checkDailyLimit(
         env.RATE_LIMIT,
         "rating",
@@ -87,7 +89,9 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    const outcome = await rateVenue(db, venueId, ipHash, score);
+    const outcome = await rateVenue(db, venueId, ipHash, scores, {
+      existingRow,
+    });
 
     // Quota is consumed only after the protected write succeeds (rate-limit
     // contract), and only for a genuinely new rating. Best-effort, matching
@@ -106,8 +110,8 @@ export const POST: APIRoute = async ({ request }) => {
     const payload: RatingResponse = {
       venueId,
       ratingCount: outcome.ratingCount,
-      ratingSum: outcome.ratingSum,
-      yourScore: score,
+      ratingSums: outcome.ratingSums,
+      yourScores: scores,
     };
     return new Response(JSON.stringify(payload), {
       status: 200,

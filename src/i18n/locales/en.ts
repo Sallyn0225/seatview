@@ -223,10 +223,21 @@ const en: Messages = {
     title: "Comments & ratings",
     close: "Close",
     ratingTitle: "Rate this venue",
-    starLabel: "Rate {n} out of 5",
+    overallLabel: "Overall",
+    dimensions: {
+      view: "View",
+      sound: "Sound",
+      amenities: "Amenities",
+      transit: "Transit",
+    },
+    dimensionGroupLabel: "Rate {dimension}",
+    starLabel: "Rate {dimension} {n} out of 5",
     ratingSummary: "Average {avg} · {count} ratings",
     ratingEmpty: "No ratings yet. Want to be the first?",
-    yourScore: "You rated {score}. Tap another star to change it.",
+    yourRatingTitle: "Your rating",
+    ratingIncomplete: "Choose all four dimensions to save.",
+    ratingSave: "Save rating",
+    ratingSaving: "Saving…",
     ratingNote:
       "No sign-in needed to rate. For de-duplication we keep only a salted hash of your IP, never the raw IP.",
     ratingSaved: "Saved.",
@@ -271,7 +282,7 @@ const en: Messages = {
       },
       {
         heading: "Comments and ratings",
-        body: "Venue comments are provided by the third-party service giscus, loaded as an embedded frame, and stored in the Discussions of our public GitHub repository. Posting a comment requires signing in to GitHub and authorizing giscus; that step is governed by the GitHub and giscus privacy policies. Reading needs no account. Venue ratings need no sign-in either: as with vote de-duplication, we keep only a salted hash of your IP, never the raw IP.",
+        body: "Venue comments are provided by the third-party service giscus, loaded as an embedded frame, and stored in the Discussions of our public GitHub repository. Posting a comment requires signing in to GitHub and authorizing giscus; that step is governed by the GitHub and giscus privacy policies. Reading needs no account. Four-dimension venue ratings need no sign-in either: as with vote de-duplication, we keep only a salted hash of your IP, never the raw IP.",
       },
       {
         heading: "Local storage",
@@ -300,7 +311,7 @@ const en: Messages = {
       },
       {
         heading: "Comments and ratings",
-        body: "Venue comments are stored in GitHub Discussions and are subject to GitHub's terms of service and community guidelines. We may delete, minimize, or lock inappropriate comments and block the accounts involved. Anonymous ratings are for reference only; we may adjust or remove rating data if manipulation is found.",
+        body: "Venue comments are stored in GitHub Discussions and are subject to GitHub's terms of service and community guidelines. We may delete, minimize, or lock inappropriate comments and block the accounts involved. Anonymous four-dimension ratings are for reference only; we may adjust or remove rating data if manipulation is found.",
       },
       {
         heading: "Disclaimer",
