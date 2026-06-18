@@ -10,6 +10,7 @@ import type { Db } from "@/server/db";
 import {
   emptyRatingSums,
   isValidRatingScores,
+  RATING_DIMENSIONS,
   sameRatingScores,
   type RatingDimensionScores,
   type VenueRatingSummaryDto,
@@ -47,9 +48,8 @@ function rowToScores(
 }
 
 function legacyMeanScore(scores: RatingDimensionScores): number {
-  return Math.round(
-    (scores.view + scores.sound + scores.amenities + scores.transit) / 4,
-  );
+  const total = RATING_DIMENSIONS.reduce((sum, d) => sum + scores[d], 0);
+  return Math.round(total / RATING_DIMENSIONS.length);
 }
 
 // A per-(venue, viewer) scalar subquery: reads ONE rating column's pre-update
