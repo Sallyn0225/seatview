@@ -1,0 +1,29 @@
+{
+  "id": "tosai-classic-hall-iwate",
+  "name_zh": "Tosai Classic Hall 岩手",
+  "name_jp": "トーサイクラシックホール岩手",
+  "name_romaji": "Tosai Classic Hall Iwate",
+  "prefecture": "iwate",
+  "city": "盛岡市",
+  "aliases": [
+    "岩手県民会館"
+  ],
+  "subMaps": [
+    {
+      "id": "large-hall",
+      "label_zh": "大 Hall",
+      "label_jp": "大ホール",
+      "imageUrl": "/seatmaps/tosai-classic-hall-iwate/large-hall.webp",
+      "width": 1725,
+      "height": 2048
+    },
+    {
+      "id": "middle-hall",
+      "label_zh": "中 Hall",
+      "label_jp": "中ホール",
+      "imageUrl": "/seatmaps/tosai-classic-hall-iwate/middle-hall.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
