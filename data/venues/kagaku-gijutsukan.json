@@ -1,0 +1,23 @@
+{
+  "id": "kagaku-gijutsukan",
+  "name_zh": "科学技术馆",
+  "name_jp": "科学技術館",
+  "name_romaji": "Kagaku Gijutsukan",
+  "prefecture": "tokyo",
+  "city": "千代田区",
+  "aliases": [
+    "Science Museum",
+    "サイエンスホール",
+    "Science Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "Science Hall",
+      "label_jp": "サイエンスホール",
+      "imageUrl": "/seatmaps/kagaku-gijutsukan/default.webp",
+      "width": 1355,
+      "height": 1896
+    }
+  ]
+}
