@@ -1,0 +1,22 @@
+{
+  "id": "fukui-phoenix-plaza",
+  "name_zh": "福井 Phoenix Plaza",
+  "name_jp": "福井フェニックス・プラザ",
+  "name_romaji": "Fukui Phoenix Plaza",
+  "prefecture": "fukui",
+  "city": "福井市",
+  "aliases": [
+    "フェニックス・プラザ",
+    "福井市民福祉会館"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/fukui-phoenix-plaza/default.webp",
+      "width": 1639,
+      "height": 2048
+    }
+  ]
+}

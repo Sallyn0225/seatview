@@ -1,0 +1,22 @@
+{
+  "id": "fukuoka-sunpalace",
+  "name_zh": "福冈 Sun Palace",
+  "name_jp": "福岡サンパレス",
+  "name_romaji": "Fukuoka Sun Palace",
+  "prefecture": "fukuoka",
+  "city": "福岡市博多区",
+  "aliases": [
+    "福岡サンパレス ホテル&ホール",
+    "Fukuoka Sunpalace Hotel & Hall"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/fukuoka-sunpalace/default.webp",
+      "width": 1490,
+      "height": 2048
+    }
+  ]
+}
