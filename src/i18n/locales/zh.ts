@@ -212,6 +212,7 @@ export interface Messages {
   lightbox: {
     /** aria-labels / control titles. */
     close: string;
+    locate: string;
     prev: string;
     next: string;
     /** Footer strip: tap to open the metadata sheet. */
@@ -730,6 +731,7 @@ const zh: Messages = {
   },
   lightbox: {
     close: "关闭预览",
+    locate: "在坐席图中定位",
     prev: "上一张",
     next: "下一张",
     openDetails: "展开座位详情",

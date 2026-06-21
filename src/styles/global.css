@@ -167,6 +167,19 @@
   }
 }
 
+/* Seatmap locate pulse: the ring is centered with translate because pin markers
+   already use inline transforms on their outer positioning wrapper. */
+@keyframes seatview-locate-pulse {
+  from {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.2);
+  }
+}
+
 /* Upload Sheet slide-in (shape-upload-sheet.md §11): desktop/tablet from the
    right, mobile from the bottom. 250ms ease-out-quart. Reduced-motion makes it
    instant via the prefers-reduced-motion rule above. */
