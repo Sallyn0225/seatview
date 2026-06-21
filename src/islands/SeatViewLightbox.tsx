@@ -425,7 +425,7 @@ function FooterStrip({
         onClick={onOpenDetails}
         aria-label={openDetailsLabel}
         className={cn(
-          "pointer-events-auto inline-flex max-w-[80%] items-center gap-1.5 rounded-full py-1 pl-2.5 pr-3 text-left",
+          "pointer-events-auto inline-flex min-w-0 max-w-[80%] items-center gap-1.5 rounded-full py-1 pl-2.5 pr-3 text-left",
           "border border-[oklch(0.8_0.006_86_/_0.25)] bg-[oklch(0.13_0.008_75_/_0.6)] text-[oklch(0.93_0.006_88)]",
           "text-sm [font-variant-numeric:tabular-nums] transition-colors",
           "hover:border-[oklch(0.8_0.006_86_/_0.45)] hover:bg-[oklch(0.16_0.008_75_/_0.72)]",
@@ -447,7 +447,21 @@ function FooterStrip({
           )}
         </span>
       </button>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="relative flex shrink-0 items-center gap-2">
+        {copied && (
+          <span
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className={cn(
+              "pointer-events-none absolute bottom-full right-0 mb-2 block max-w-[calc(100vw-2rem)] truncate rounded-full px-2.5 py-1 text-xs",
+              "border border-[oklch(0.8_0.006_86_/_0.25)] bg-[oklch(0.13_0.008_75_/_0.82)] text-[oklch(0.93_0.006_88)]",
+              "[font-variant-numeric:tabular-nums]",
+            )}
+          >
+            {shareCopiedLabel}
+          </span>
+        )}
         {isSequence && position && (
           <span
             className="pointer-events-none rounded px-1.5 py-0.5 text-xs text-[oklch(0.8_0.006_86)] [font-variant-numeric:tabular-nums]"
@@ -462,8 +476,7 @@ function FooterStrip({
           aria-label={shareLabel}
           title={shareLabel}
           className={cn(
-            "pointer-events-auto inline-flex items-center gap-1.5 rounded-full text-sm",
-            copied ? "py-1 pl-2.5 pr-3" : "p-2",
+            "pointer-events-auto grid size-11 place-items-center rounded-full",
             "border border-[oklch(0.8_0.006_86_/_0.25)] bg-[oklch(0.13_0.008_75_/_0.6)] text-[oklch(0.93_0.006_88)]",
             "transition-colors hover:border-[oklch(0.8_0.006_86_/_0.45)] hover:bg-[oklch(0.16_0.008_75_/_0.72)]",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)] focus:outline-none",
@@ -474,11 +487,6 @@ function FooterStrip({
             aria-hidden="true"
             strokeWidth={1.5}
           />
-          {copied && (
-            <span aria-live="polite" className="whitespace-nowrap">
-              {shareCopiedLabel}
-            </span>
-          )}
         </button>
       </div>
     </div>
