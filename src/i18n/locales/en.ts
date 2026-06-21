@@ -191,6 +191,11 @@ const en: Messages = {
     imageError: "This photo can't open right now",
     imageAlt: "View from {label} {date} {event}",
     position: "{n} / {total}",
+    share: "Share this view",
+    shareCopied: "Link copied",
+    shareText: "I found a great view at {venue}: {url} — come take a look!",
+    shareTextWithRegion:
+      "I found a great view in {region} at {venue}: {url} — come take a look!",
     correction: {
       open: "Request seat-label correction",
       title: "Seat-label correction",

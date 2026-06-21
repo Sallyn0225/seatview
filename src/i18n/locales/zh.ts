@@ -228,6 +228,14 @@ export interface Messages {
     imageAlt: string;
     /** `{n}` / `{total}` → 1-based position and count (sequence mode). */
     position: string;
+    /** Share button aria-label / title (footer strip). */
+    share: string;
+    /** In-place confirmation shown after the share link is copied. */
+    shareCopied: string;
+    /** Share blurb for a single-map venue. `{venue}` → name, `{url}` → link. */
+    shareText: string;
+    /** Share blurb with region. `{venue}` / `{region}` / `{url}`. */
+    shareTextWithRegion: string;
     /** Anonymous seat-label correction request, shown inside the detail sheet. */
     correction: {
       open: string;
@@ -731,6 +739,11 @@ const zh: Messages = {
     imageError: "这张照片暂时打不开",
     imageAlt: "{label} {date} {event} 的视角",
     position: "{n} / {total}",
+    share: "分享这个视角",
+    shareCopied: "链接已复制",
+    shareText: "我在{venue}发现了一个不错的视角：{url}，你也来看看吧！",
+    shareTextWithRegion:
+      "我在{venue}的{region}发现了一个不错的视角：{url}，你也来看看吧！",
     correction: {
       open: "提交座席名修改请求",
       title: "座席名修改",

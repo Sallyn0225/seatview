@@ -5,7 +5,7 @@ import Lightbox, {
 } from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
-import { ChevronLeft, ChevronRight, ChevronUp, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronUp, Share2, X } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -25,6 +25,14 @@ import {
   relativeTime,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { Venue } from "@/types";
+import { subMapLabel, venueName } from "@/i18n";
+import {
+  buildShareText,
+  buildShareUrl,
+  copyToClipboard,
+  setPhotoIdInUrl,
+} from "@/lib/share";
 
 // Lightbox island (R3.7 + R3.9, shape-lightbox.md).
 //
@@ -61,6 +69,8 @@ export interface LightboxRequest {
 
 interface SeatViewLightboxProps {
   locale: Locale;
+  /** Owning venue — used to build share links + the locale-aware share blurb. */
+  venue: Venue;
   /** Active request (null = closed). VenueMain owns this state. */
   request: LightboxRequest | null;
   /** Called when the user closes the lightbox (Esc / ✕ / backdrop / swipe). */
@@ -99,6 +109,7 @@ function toSlide(dto: PhotoDto, locale: Locale, altTmpl: string): SeatSlide {
 
 export default function SeatViewLightbox({
   locale,
+  venue,
   request,
   onClose,
 }: SeatViewLightboxProps) {
@@ -112,6 +123,9 @@ export default function SeatViewLightbox({
   const [detailOpen, setDetailOpen] = useState(false);
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const graceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Which photo currently shows the "copied" confirmation, + its auto-reset timer.
+  const [copiedPhotoId, setCopiedPhotoId] = useState<string | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const open = request !== null;
   const mode = request?.mode ?? "single";
@@ -133,12 +147,16 @@ export default function SeatViewLightbox({
     setDetailOpen(false);
     setCorrectionOpen(false);
     const startPhoto = request.photos[request.index];
-    if (startPhoto) setSelectedPhoto(startPhoto.id);
+    if (startPhoto) {
+      setSelectedPhoto(startPhoto.id);
+      setPhotoIdInUrl(startPhoto.id);
+    }
   }, [request]);
 
   useEffect(
     () => () => {
       if (graceTimerRef.current) clearTimeout(graceTimerRef.current);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
     },
     [],
   );
@@ -153,7 +171,10 @@ export default function SeatViewLightbox({
       setDetailOpen(false);
       setCorrectionOpen(false);
       const photo = photos[index];
-      if (photo) setSelectedPhoto(photo.id);
+      if (photo) {
+        setSelectedPhoto(photo.id);
+        setPhotoIdInUrl(photo.id);
+      }
     },
     [photos],
   );
@@ -185,10 +206,37 @@ export default function SeatViewLightbox({
     } else {
       setSelectedPhoto(null);
     }
+    setPhotoIdInUrl(null);
     setDetailOpen(false);
     setCorrectionOpen(false);
     onClose();
   }, [photos, currentIndex, mode, reducedMotion, onClose]);
+
+  // Share the current photo: copy "<blurb> <canonical link>" to the clipboard and
+  // flash an in-place "copied" confirmation. The link is photoId-authoritative
+  // (`?tab=&photo=`), so it survives a sub-map rename. The region clause appears
+  // only when the venue actually has multiple sub-maps (single-map "全场" drops it).
+  const handleShare = useCallback(
+    async (dto: PhotoDto) => {
+      const subMap = venue.subMaps.find((s) => s.id === dto.subMapId);
+      const url = buildShareUrl(locale, venue.id, dto.subMapId, dto.id);
+      const region =
+        venue.subMaps.length > 1 && subMap ? subMapLabel(subMap, locale) : null;
+      const text = buildShareText(
+        {
+          withRegion: t.lightbox.shareTextWithRegion,
+          withoutRegion: t.lightbox.shareText,
+        },
+        { venue: venueName(venue, locale), region, url },
+      );
+      const ok = await copyToClipboard(text);
+      if (!ok) return;
+      setCopiedPhotoId(dto.id);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopiedPhotoId(null), 2000);
+    },
+    [venue, locale, t.lightbox.shareText, t.lightbox.shareTextWithRegion],
+  );
 
   // Esc priority: when the detail sheet is open, Esc closes the SHEET, not the
   // Lightbox (shape §7). If the correction panel is nested inside it, Esc closes
@@ -299,6 +347,10 @@ export default function SeatViewLightbox({
               }
               openDetailsLabel={t.lightbox.openDetails}
               onOpenDetails={() => setDetailOpen(true)}
+              shareLabel={t.lightbox.share}
+              shareCopiedLabel={t.lightbox.shareCopied}
+              copied={copiedPhotoId === dto.id}
+              onShare={handleShare}
             />
           );
         },
@@ -341,6 +393,10 @@ interface FooterStripProps {
   position: string | null;
   openDetailsLabel: string;
   onOpenDetails: () => void;
+  shareLabel: string;
+  shareCopiedLabel: string;
+  copied: boolean;
+  onShare: (dto: PhotoDto) => void;
 }
 
 /**
@@ -356,6 +412,10 @@ function FooterStrip({
   position,
   openDetailsLabel,
   onOpenDetails,
+  shareLabel,
+  shareCopiedLabel,
+  copied,
+  onShare,
 }: FooterStripProps) {
   const date = performanceDate(dto.performanceDate, locale);
   return (
@@ -387,14 +447,40 @@ function FooterStrip({
           )}
         </span>
       </button>
-      {isSequence && position && (
-        <span
-          className="pointer-events-none rounded px-1.5 py-0.5 text-xs text-[oklch(0.8_0.006_86)] [font-variant-numeric:tabular-nums]"
-          aria-hidden="true"
+      <div className="flex shrink-0 items-center gap-2">
+        {isSequence && position && (
+          <span
+            className="pointer-events-none rounded px-1.5 py-0.5 text-xs text-[oklch(0.8_0.006_86)] [font-variant-numeric:tabular-nums]"
+            aria-hidden="true"
+          >
+            {position}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={() => onShare(dto)}
+          aria-label={shareLabel}
+          title={shareLabel}
+          className={cn(
+            "pointer-events-auto inline-flex items-center gap-1.5 rounded-full text-sm",
+            copied ? "py-1 pl-2.5 pr-3" : "p-2",
+            "border border-[oklch(0.8_0.006_86_/_0.25)] bg-[oklch(0.13_0.008_75_/_0.6)] text-[oklch(0.93_0.006_88)]",
+            "transition-colors hover:border-[oklch(0.8_0.006_86_/_0.45)] hover:bg-[oklch(0.16_0.008_75_/_0.72)]",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[oklch(0.8_0.006_86)] focus:outline-none",
+          )}
         >
-          {position}
-        </span>
-      )}
+          <Share2
+            className="size-3.5 shrink-0"
+            aria-hidden="true"
+            strokeWidth={1.5}
+          />
+          {copied && (
+            <span aria-live="polite" className="whitespace-nowrap">
+              {shareCopiedLabel}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
