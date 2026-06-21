@@ -42,6 +42,8 @@ const en: Messages = {
     country: "Japan",
     breadcrumbLabel: "Breadcrumb",
     subMapTabsLabel: "Switch seating chart",
+    photoCountSingle: "{count} photos total",
+    photoCountMulti: "Current area {subMapCount}, whole venue {venueCount}",
     notFoundTitle: "We haven't collected this venue yet.",
     notFoundBody: "Want to look at other venues from the home page?",
     backHome: "Back to home",

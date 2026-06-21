@@ -41,6 +41,8 @@ const ko: Messages = {
     country: "일본",
     breadcrumbLabel: "탐색 경로",
     subMapTabsLabel: "좌석도 전환",
+    photoCountSingle: "총 {count}장",
+    photoCountMulti: "현재 구역 {subMapCount}장, 전체 공연장 {venueCount}장",
     notFoundTitle: "이 회장은 아직 수록하지 않았어요.",
     notFoundBody: "홈에서 다른 회장을 둘러볼까요?",
     backHome: "홈으로",

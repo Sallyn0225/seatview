@@ -11,7 +11,11 @@
 import { and, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
 import type { Db } from "@/server/db";
 import { photos, type NewPhotoRow, type PhotoRow } from "@/server/db/schema";
-import { rowToPhotoDto, type PhotoDto } from "@/lib/photos";
+import {
+  rowToPhotoDto,
+  type PhotoDto,
+  type VenuePhotoCountsDto,
+} from "@/lib/photos";
 import type { AdminPhotoDto, AdminPhotoVenueFacet } from "@/lib/admin";
 
 /**
@@ -61,6 +65,34 @@ export async function listSubMapPhotos(
 
   const rows = await base;
   return rows.map(rowToPhotoDto);
+}
+
+/**
+ * Live public photo counts for a venue, grouped by sub-map. Soft-deleted rows
+ * are excluded so the title-area count matches the public seatmap and grid.
+ */
+export async function listVenuePhotoCounts(
+  db: Db,
+  venueId: string,
+): Promise<VenuePhotoCountsDto> {
+  const rows = await db
+    .select({
+      subMapId: photos.subMapId,
+      count: sql<number>`count(*)`,
+    })
+    .from(photos)
+    .where(and(eq(photos.venueId, venueId), isNull(photos.deletedAt)))
+    .groupBy(photos.subMapId);
+
+  const bySubMapId: Record<string, number> = {};
+  let total = 0;
+  for (const row of rows) {
+    const count = Number(row.count);
+    bySubMapId[row.subMapId] = count;
+    total += count;
+  }
+
+  return { total, bySubMapId };
 }
 
 /**

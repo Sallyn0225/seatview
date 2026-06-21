@@ -20,6 +20,32 @@ import type { PhotoRow } from "@/server/db/schema";
  */
 export type PhotoDto = Photo;
 
+/** Live photo counts for one venue, keyed by sub-map id. */
+export interface VenuePhotoCountsDto {
+  total: number;
+  bySubMapId: Record<string, number>;
+}
+
+export const PHOTO_COUNT_CHANGE_EVENT = "seatview:photo-count-change";
+
+export interface PhotoCountChangeDetail {
+  venueId: string;
+  subMapId: string;
+  /** Absolute live count for this sub-map. */
+  count?: number;
+  /** Delta to apply to this sub-map and the venue total. */
+  delta?: number;
+}
+
+export function dispatchPhotoCountChange(detail: PhotoCountChangeDetail): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent<PhotoCountChangeDetail>(PHOTO_COUNT_CHANGE_EVENT, {
+      detail,
+    }),
+  );
+}
+
 /**
  * Map a raw D1 `photos` row to the client DTO. Drops server-only columns
  * (`ip_hash`, `deleted_at`) so they never reach the browser, and renames the

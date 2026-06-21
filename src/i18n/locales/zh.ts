@@ -41,6 +41,8 @@ export interface Messages {
     /** Breadcrumb `<nav>` aria-label. */
     breadcrumbLabel: string;
     subMapTabsLabel: string;
+    photoCountSingle: string;
+    photoCountMulti: string;
     notFoundTitle: string;
     notFoundBody: string;
     backHome: string;
@@ -584,6 +586,8 @@ const zh: Messages = {
     country: "日本",
     breadcrumbLabel: "面包屑",
     subMapTabsLabel: "切换坐席图",
+    photoCountSingle: "共 {count} 张",
+    photoCountMulti: "当前区域 {subMapCount} 张，全场馆 {venueCount} 张",
     notFoundTitle: "这个场馆我们还没收录。",
     notFoundBody: "要不去首页看看其他场馆？",
     backHome: "回到首页",
