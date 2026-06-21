@@ -68,6 +68,27 @@ export async function listSubMapPhotos(
 }
 
 /**
+ * Look up one LIVE photo by id for share deep-link resolution. The ULID alone
+ * is authoritative: the venue page reads it to derive the photo's (possibly
+ * renamed) sub-map so a shared `?photo=` link still opens even when `?tab=` is
+ * stale or absent. Soft-deleted rows return null so a link to a removed photo
+ * just renders the venue without auto-opening. Single primary-key read; only
+ * runs when the page is hit with `?photo=`.
+ */
+export async function getPhotoById(
+  db: Db,
+  id: string,
+): Promise<PhotoDto | null> {
+  const rows = await db
+    .select()
+    .from(photos)
+    .where(and(eq(photos.id, id), isNull(photos.deletedAt)))
+    .limit(1);
+  const row = rows[0];
+  return row ? rowToPhotoDto(row) : null;
+}
+
+/**
  * Live public photo counts for a venue, grouped by sub-map. Soft-deleted rows
  * are excluded so the title-area count matches the public seatmap and grid.
  */

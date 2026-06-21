@@ -183,6 +183,11 @@ const ja: Messages = {
     imageError: "この写真は今読み込めません",
     imageAlt: "{label} {date} {event} の視点",
     position: "{n} / {total}",
+    share: "この視点をシェア",
+    shareCopied: "リンクをコピーしました",
+    shareText: "{venue}でいい視点を見つけました：{url} ぜひ見てみてください！",
+    shareTextWithRegion:
+      "{venue}の{region}でいい視点を見つけました：{url} ぜひ見てみてください！",
     correction: {
       open: "座席名の修正を送る",
       title: "座席名の修正",

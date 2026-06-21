@@ -6,6 +6,7 @@ import { useSelectedPhoto } from "@/hooks/useSelectedPhoto";
 import type { Venue } from "@/types";
 import {
   resolveInitialSubMapId,
+  setActiveSubMap,
   SUBMAP_CHANGE_EVENT,
   type SubMapChangeDetail,
 } from "@/lib/submap";
@@ -30,6 +31,11 @@ interface VenueMainProps {
    * GET /api/photos.
    */
   initialPhotos?: PhotoDto[];
+  /**
+   * Photo id from a `?photo=` share deep link (resolved + validated SSR). When
+   * set, the lightbox auto-opens this photo (single mode) once on mount.
+   */
+  initialOpenPhotoId?: string;
 }
 
 /** First grid batch size (mirrors PhotoGrid's GRID_BATCH); used to decide the
@@ -55,6 +61,7 @@ export default function VenueMain({
   venue,
   initialSubMapId,
   initialPhotos = [],
+  initialOpenPhotoId,
 }: VenueMainProps) {
   const { t } = useLocale(locale);
 
@@ -194,6 +201,23 @@ export default function VenueMain({
 
   const handleCloseLightbox = useCallback(() => setLightboxRequest(null), []);
 
+  // Share deep link: open the linked photo once on mount (single mode — "look at
+  // THIS view"). SSR aligned the initial sub-map to the photo's, so it is already
+  // in `initialPhotos`. The ref guards against re-opening after the user closes.
+  const didOpenInitialRef = useRef(false);
+  useEffect(() => {
+    if (didOpenInitialRef.current || !initialOpenPhotoId) return;
+    const photo = initialPhotos.find((p) => p.id === initialOpenPhotoId);
+    if (!photo) return;
+    didOpenInitialRef.current = true;
+    // Canonicalize `?tab=` to the linked photo's sub-map so a stale/renamed tab
+    // self-heals in the tabs UI too — the SSR already aligned the seatmap/grid,
+    // but SubMapTabs reads `?tab=` from the URL. Multi-map venues only (single-
+    // map venues render no tabs). Broadcasts so the tabs underline follows.
+    if (venue.subMaps.length > 1) setActiveSubMap(photo.subMapId);
+    setLightboxRequest({ mode: "single", photos: [photo], index: 0 });
+  }, [initialOpenPhotoId, initialPhotos, venue.subMaps]);
+
   // ── Upload Sheet (step 6, shape-upload-sheet.md) ───────────────────────────
   // The upload is always attributed to the CURRENT active sub-map (R4.2 —
   // transparent to the user, no explicit picker). Both the upload button below
@@ -300,6 +324,7 @@ export default function VenueMain({
 
       <SeatViewLightbox
         locale={locale}
+        venue={venue}
         request={lightboxRequest}
         onClose={handleCloseLightbox}
       />

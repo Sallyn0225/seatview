@@ -20,11 +20,16 @@ import { getMessages, venueName } from "@/i18n";
 import { getVenue } from "@/data/venues";
 import { getPrefecture, prefectureName } from "@/data/prefectures";
 import { readSubMapFromUrl, resolveInitialSubMapId } from "@/lib/submap";
+import { readPhotoIdFromUrl } from "@/lib/share";
 import { STORAGE_KEYS } from "@/lib/storage";
 import { env } from "cloudflare:workers";
 import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
-import { listSubMapPhotos, listVenuePhotoCounts } from "@/server/photos";
+import {
+  getPhotoById,
+  listSubMapPhotos,
+  listVenuePhotoCounts,
+} from "@/server/photos";
 import { getRatingSummary } from "@/server/ratings";
 import type { PhotoDto, VenuePhotoCountsDto } from "@/lib/photos";
 import { emptyRatingSums, type VenueRatingSummaryDto } from "@/lib/venue-rating";
@@ -43,8 +48,34 @@ const venue = venueId ? getVenue(venueId) : undefined;
 const requestedSubMapId = venue
   ? readSubMapFromUrl(Astro.url, venue.subMaps)
   : undefined;
+
+// Share deep link (`?photo=<ulid>`): the photo ULID is authoritative — look it
+// up to derive its (possibly renamed) sub-map so a shared link still opens even
+// when `?tab=` is stale or missing. Soft-deleted / cross-venue / unknown ids are
+// ignored (the page renders without auto-opening). Runs only when `?photo=` is
+// present — one primary-key read, fails soft.
+const requestedPhotoId = venue ? readPhotoIdFromUrl(Astro.url) : undefined;
+let initialOpenPhotoId: string | undefined;
+let deepLinkSubMapId: string | undefined;
+if (venue && requestedPhotoId && env.DB) {
+  try {
+    const photo = await getPhotoById(getDb(env.DB), requestedPhotoId);
+    if (
+      photo &&
+      photo.venueId === venue.id &&
+      venue.subMaps.some((s) => s.id === photo.subMapId)
+    ) {
+      initialOpenPhotoId = photo.id;
+      deepLinkSubMapId = photo.subMapId;
+    }
+  } catch {
+    // Fail soft: a deep-link lookup error never breaks the page.
+  }
+}
+
+// Deep-link sub-map (from `?photo=`) wins over `?tab=` so a stale tab self-heals.
 const initialSubMapId = venue
-  ? resolveInitialSubMapId(venue.subMaps, requestedSubMapId)
+  ? resolveInitialSubMapId(venue.subMaps, deepLinkSubMapId ?? requestedSubMapId)
   : undefined;
 
 // SSR-query the initial sub-map's annotation points (R3.4) so the seatmap's
@@ -356,6 +387,7 @@ const giscusBacklink = venue
                   venue={venue}
                   initialSubMapId={initialSubMapId}
                   initialPhotos={initialPhotos}
+                  initialOpenPhotoId={initialOpenPhotoId}
                   client:load
                 />
               </div>

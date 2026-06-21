@@ -5,7 +5,9 @@ import type { SubMap } from "@/types";
 import {
   resolveInitialSubMapId,
   setActiveSubMap,
+  SUBMAP_CHANGE_EVENT,
   SUBMAP_QUERY_PARAM,
+  type SubMapChangeDetail,
 } from "@/lib/submap";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +47,18 @@ export default function SubMapTabs({
     const resolved = resolveInitialSubMapId(subMaps, requested);
     if (resolved) setActive(resolved);
   }, [subMaps]);
+
+  // Follow programmatic sub-map changes (e.g. a share deep link auto-opening a
+  // photo whose sub-map differs from a stale/renamed `?tab=`) so the underline
+  // stays in sync, not just on mount or local click.
+  useEffect(() => {
+    function onChange(event: Event) {
+      const detail = (event as CustomEvent<SubMapChangeDetail>).detail;
+      if (detail?.subMapId) setActive(detail.subMapId);
+    }
+    window.addEventListener(SUBMAP_CHANGE_EVENT, onChange);
+    return () => window.removeEventListener(SUBMAP_CHANGE_EVENT, onChange);
+  }, []);
 
   if (subMaps.length <= 1) return null;
 
