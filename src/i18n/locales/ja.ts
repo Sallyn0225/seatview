@@ -37,6 +37,8 @@ const ja: Messages = {
     country: "日本",
     breadcrumbLabel: "パンくず",
     subMapTabsLabel: "座席図を切り替え",
+    photoCountSingle: "全 {count} 枚",
+    photoCountMulti: "現在のエリア {subMapCount} 枚、会場全体 {venueCount} 枚",
     notFoundTitle: "この会場はまだ収録されていません。",
     notFoundBody: "トップから他の会場を探してみますか？",
     backHome: "ホームへ",

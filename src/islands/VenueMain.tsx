@@ -10,6 +10,7 @@ import {
   type SubMapChangeDetail,
 } from "@/lib/submap";
 import type { PhotoDto } from "@/lib/photos";
+import { dispatchPhotoCountChange } from "@/lib/photos";
 import { fetchSubMapPhotos } from "@/lib/photos-client";
 import Seatmap from "@/islands/Seatmap.tsx";
 import PhotoGrid, { type OpenSequencePayload } from "@/islands/PhotoGrid.tsx";
@@ -111,6 +112,11 @@ export default function VenueMain({
           if (!isCurrentRequest()) return;
           setPhotos(next);
           setPhotosSubMapId(subMapId);
+          dispatchPhotoCountChange({
+            venueId: venue.id,
+            subMapId,
+            count: next.length,
+          });
           setPhotosError(false);
           photosRequestRef.current = null;
           setPhotosLoading(false);
@@ -212,6 +218,11 @@ export default function VenueMain({
     setPhotos((prev) =>
       prev.some((p) => p.id === photo.id) ? prev : [photo, ...prev],
     );
+    dispatchPhotoCountChange({
+      venueId: photo.venueId,
+      subMapId: photo.subMapId,
+      delta: 1,
+    });
     setGridRefreshKey((k) => k + 1);
   }, []);
 

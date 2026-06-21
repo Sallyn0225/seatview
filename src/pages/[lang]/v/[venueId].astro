@@ -14,6 +14,7 @@ import VenueSearch from "@/islands/VenueSearch.tsx";
 import SubMapTabs from "@/islands/SubMapTabs.tsx";
 import VenueMain from "@/islands/VenueMain.tsx";
 import VenueComments from "@/islands/VenueComments.tsx";
+import VenuePhotoCountLine from "@/islands/VenuePhotoCountLine.tsx";
 import { asLocale } from "@/i18n/config";
 import { getMessages, venueName } from "@/i18n";
 import { getVenue } from "@/data/venues";
@@ -23,9 +24,9 @@ import { STORAGE_KEYS } from "@/lib/storage";
 import { env } from "cloudflare:workers";
 import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
-import { listSubMapPhotos } from "@/server/photos";
+import { listSubMapPhotos, listVenuePhotoCounts } from "@/server/photos";
 import { getRatingSummary } from "@/server/ratings";
-import type { PhotoDto } from "@/lib/photos";
+import type { PhotoDto, VenuePhotoCountsDto } from "@/lib/photos";
 import { emptyRatingSums, type VenueRatingSummaryDto } from "@/lib/venue-rating";
 
 export const prerender = false;
@@ -61,6 +62,15 @@ if (venue && initialSubMapId && env.DB) {
     );
   } catch {
     initialPhotos = [];
+  }
+}
+
+let initialPhotoCounts: VenuePhotoCountsDto | undefined;
+if (venue && env.DB) {
+  try {
+    initialPhotoCounts = await listVenuePhotoCounts(getDb(env.DB), venue.id);
+  } catch {
+    initialPhotoCounts = undefined;
   }
 }
 
@@ -311,6 +321,14 @@ const giscusBacklink = venue
               <p class="text-muted-foreground mt-1 text-sm">
                 {venue.name_romaji}
               </p>
+              <VenuePhotoCountLine
+                locale={locale}
+                venueId={venue.id}
+                subMaps={venue.subMaps}
+                initialSubMapId={initialSubMapId}
+                initialCounts={initialPhotoCounts}
+                client:load
+              />
 
               {/* Comments + rating entry (task 06-10-giscus): a quiet demoted
                   chip, never a big star bar. Opens the drawer island. */}
