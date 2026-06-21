@@ -13,6 +13,7 @@ import {
 import type { PhotoDto } from "@/lib/photos";
 import { dispatchPhotoCountChange } from "@/lib/photos";
 import { fetchSubMapPhotos } from "@/lib/photos-client";
+import { setSelectedPhoto } from "@/lib/selected-photo";
 import Seatmap from "@/islands/Seatmap.tsx";
 import PhotoGrid, { type OpenSequencePayload } from "@/islands/PhotoGrid.tsx";
 import SeatViewLightbox, {
@@ -41,6 +42,11 @@ interface VenueMainProps {
 /** First grid batch size (mirrors PhotoGrid's GRID_BATCH); used to decide the
  *  SSR `initialHasMore` probe from the full SSR point set. */
 const GRID_FIRST_BATCH = 24;
+
+interface LocateTarget {
+  photoId: string;
+  token: number;
+}
 
 /**
  * Venue main column below the title: seating chart + upload button + photo
@@ -177,6 +183,7 @@ export default function VenueMain({
   // ── Lightbox: one instance, two modes ─────────────────────────────────────
   const [lightboxRequest, setLightboxRequest] =
     useState<LightboxRequest | null>(null);
+  const [locateTarget, setLocateTarget] = useState<LocateTarget | null>(null);
 
   // Seatmap pin → SINGLE mode (look at this seat). The full point set lives in
   // `photos`; find the clicked one and open with just it (no paging).
@@ -200,6 +207,15 @@ export default function VenueMain({
   }, []);
 
   const handleCloseLightbox = useCallback(() => setLightboxRequest(null), []);
+
+  const handleLocatePhoto = useCallback((photoId: string) => {
+    setSelectedPhoto(photoId);
+    setLightboxRequest(null);
+    setLocateTarget((prev) => ({
+      photoId,
+      token: (prev?.token ?? 0) + 1,
+    }));
+  }, []);
 
   // Share deep link: open the linked photo once on mount (single mode — "look at
   // THIS view"). SSR aligned the initial sub-map to the photo's, so it is already
@@ -265,6 +281,7 @@ export default function VenueMain({
           loading={activePhotosLoading}
           error={photosMatchActive && photosError && !photosLoading}
           selectedPhotoId={selectedPhotoId}
+          locateTarget={locateTarget}
           onOpenLightbox={handleOpenLightbox}
           onRetry={handleRetryPoints}
         />
@@ -327,6 +344,7 @@ export default function VenueMain({
         venue={venue}
         request={lightboxRequest}
         onClose={handleCloseLightbox}
+        onLocate={handleLocatePhoto}
       />
 
       {/* Upload Sheet (step 6). Mounted only while open so the compression lib

@@ -12,7 +12,13 @@ import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { useElementSize } from "@/hooks/useElementSize";
 import { setSelectedPhoto } from "@/lib/selected-photo";
-import { clusterPoints, layOutPoints, type Cluster } from "@/lib/cluster";
+import {
+  CLUSTER_TUNING,
+  clusterPoints,
+  layOutPoints,
+  type Cluster,
+  type LaidOutPoint,
+} from "@/lib/cluster";
 import { imageContentRect } from "@/lib/image-rect";
 import type { PhotoDto } from "@/lib/photos";
 import type { SubMap } from "@/types";
@@ -45,6 +51,14 @@ const CLUSTER_ZOOM_FACTOR = 2;
 const ZOOM_ANIM_MS = 400;
 /** Controls fade to 50% opacity after this idle window (shape §5). */
 const CONTROLS_IDLE_MS = 5000;
+/** Locate zoom floor: enough context to see where the pin sits on the map. */
+const LOCATE_MIN_SCALE = 2.5;
+/** Small safety margin so a clustered target reliably separates after zoom. */
+const LOCATE_SEPARATION_MARGIN = 1.15;
+/** One-shot pin pulse duration after locate zoom completes. */
+const LOCATE_PULSE_MS = 1200;
+/** Delay locate until yarl has released its no-scroll lock after closing. */
+const LOCATE_START_DELAY_MS = 50;
 
 interface SeatmapProps {
   locale: Locale;
@@ -57,6 +71,8 @@ interface SeatmapProps {
   error?: boolean;
   /** Currently selected photo id from the cross-island signal. */
   selectedPhotoId: string | null;
+  /** One-shot request to bring a lightbox photo back into view on the map. */
+  locateTarget?: { photoId: string; token: number } | null;
   /**
    * Mount point for step 5: clicking a single pin opens the Lightbox here.
    * Optional so the seatmap works standalone before the Lightbox lands.
@@ -73,6 +89,7 @@ export default function Seatmap({
   loading = false,
   error = false,
   selectedPhotoId,
+  locateTarget = null,
   onOpenLightbox,
   onRetry,
 }: SeatmapProps) {
@@ -80,6 +97,7 @@ export default function Seatmap({
   const reducedMotion = usePrefersReducedMotion();
 
   const transformRef = useRef<ReactZoomPanPinchContentRef>(null);
+  const seatmapFrameRef = useRef<HTMLDivElement | null>(null);
   const wrapperNodeRef = useRef<HTMLDivElement | null>(null);
   // Unscaled frame box (NOT the zoom/pan-transformed layer) → the object-contain
   // chart-image content rect that pins anchor to. Re-measured on resize.
@@ -99,6 +117,7 @@ export default function Seatmap({
 
   // Controls idle fade.
   const [controlsIdle, setControlsIdle] = useState(false);
+  const [locatePulseId, setLocatePulseId] = useState<string | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const wakeControls = useCallback(() => {
@@ -176,6 +195,77 @@ export default function Seatmap({
     [scale, subMap.width, subMap.height, animTime, wakeControls],
   );
 
+  useEffect(() => {
+    if (!locateTarget) return;
+
+    let startTimer: ReturnType<typeof setTimeout> | null = null;
+    let pulseDelayTimer: ReturnType<typeof setTimeout> | null = null;
+    let pulseClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+    startTimer = setTimeout(() => {
+      const frame = seatmapFrameRef.current;
+      frame?.scrollIntoView({
+        block: "center",
+        behavior: reducedMotion ? "auto" : "smooth",
+      });
+
+      const target = laidOut.find(
+        (point) => point.photo.id === locateTarget.photoId,
+      );
+      const api = transformRef.current;
+      const wrapper = wrapperNodeRef.current;
+      let pulseDelay = 0;
+
+      if (target && api && wrapper) {
+        const rect = wrapper.getBoundingClientRect();
+        const targetScale = locateScaleForPoint(target, laidOut);
+        const cr = imageContentRect(
+          rect.width,
+          rect.height,
+          subMap.width,
+          subMap.height,
+        );
+        const surfaceX = cr.offsetX + (target.x / subMap.width) * cr.width;
+        const surfaceY = cr.offsetY + (target.y / subMap.height) * cr.height;
+        const positionX = rect.width / 2 - surfaceX * targetScale;
+        const positionY = rect.height / 2 - surfaceY * targetScale;
+
+        api.setTransform(
+          positionX,
+          positionY,
+          targetScale,
+          animTime,
+          "easeOutQuart",
+        );
+        wakeControls();
+        pulseDelay = animTime;
+      }
+
+      pulseDelayTimer = setTimeout(() => {
+        setLocatePulseId(locateTarget.photoId);
+        pulseClearTimer = setTimeout(() => {
+          setLocatePulseId((current) =>
+            current === locateTarget.photoId ? null : current,
+          );
+        }, LOCATE_PULSE_MS);
+      }, pulseDelay);
+    }, LOCATE_START_DELAY_MS);
+
+    return () => {
+      if (startTimer) clearTimeout(startTimer);
+      if (pulseDelayTimer) clearTimeout(pulseDelayTimer);
+      if (pulseClearTimer) clearTimeout(pulseClearTimer);
+    };
+  }, [
+    animTime,
+    laidOut,
+    locateTarget,
+    reducedMotion,
+    subMap.height,
+    subMap.width,
+    wakeControls,
+  ]);
+
   const handlePinClick = useCallback(
     (photoId: string) => {
       // Emit the cross-island signal so the matching pin (and step-5 grid card)
@@ -192,7 +282,7 @@ export default function Seatmap({
   // errorBody). It fills the fixed-ratio seatmap frame; retry re-runs the fetch.
   if (error) {
     return (
-      <SeatmapFrame subMapId={subMap.id}>
+      <SeatmapFrame subMapId={subMap.id} frameRef={seatmapFrameRef}>
         <LoadFailure locale={locale} onRetry={() => onRetry?.()} fill />
       </SeatmapFrame>
     );
@@ -200,7 +290,7 @@ export default function Seatmap({
 
   if (!loading && photos.length === 0) {
     return (
-      <SeatmapFrame subMapId={subMap.id}>
+      <SeatmapFrame subMapId={subMap.id} frameRef={seatmapFrameRef}>
         <ChartImage subMap={subMap} locale={locale} dimmed />
         <div className="bg-background/55 absolute inset-0 flex flex-col items-center justify-center gap-1 px-6 text-center">
           <p className="text-foreground text-sm">{t.seatmap.emptyBody}</p>
@@ -211,7 +301,7 @@ export default function Seatmap({
   }
 
   return (
-    <SeatmapFrame subMapId={subMap.id}>
+    <SeatmapFrame subMapId={subMap.id} frameRef={seatmapFrameRef}>
       <div ref={setWrapperRef} className="absolute inset-0">
         <TransformWrapper
           ref={transformRef}
@@ -287,6 +377,7 @@ export default function Seatmap({
                         selected={
                           cluster.members[0]!.photo.id === selectedPhotoId
                         }
+                        pulse={cluster.members[0]!.photo.id === locatePulseId}
                         onActivate={() =>
                           handlePinClick(cluster.members[0]!.photo.id)
                         }
@@ -405,17 +496,49 @@ function fallbackFramePct(
   return ((cr.offsetY + fraction * cr.height) / FRAME_FALLBACK_HEIGHT) * 100;
 }
 
+function locateScaleForPoint(
+  target: LaidOutPoint,
+  points: readonly LaidOutPoint[],
+): number {
+  let nearest = Number.POSITIVE_INFINITY;
+  for (const point of points) {
+    if (point.photo.id === target.photo.id) continue;
+    const distance = Math.hypot(point.x - target.x, point.y - target.y);
+    if (distance < nearest) nearest = distance;
+  }
+
+  const deClusterScale =
+    nearest === 0
+      ? MAX_SCALE
+      : Number.isFinite(nearest)
+        ? Math.sqrt(CLUSTER_TUNING.BASE_THRESHOLD_PX / nearest) *
+          LOCATE_SEPARATION_MARGIN
+        : MIN_SCALE;
+
+  return clamp(
+    Math.max(LOCATE_MIN_SCALE, deClusterScale),
+    MIN_SCALE,
+    MAX_SCALE,
+  );
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 /* ── Subcomponents ──────────────────────────────────────────────────────── */
 
 interface SeatmapFrameProps {
   subMapId: string;
   children: React.ReactNode;
+  frameRef?: React.Ref<HTMLDivElement>;
 }
 
 /** Outer surface: fixed 3:2 viewport, clipped, hairline border, no shadow. */
-function SeatmapFrame({ subMapId, children }: SeatmapFrameProps) {
+function SeatmapFrame({ subMapId, children, frameRef }: SeatmapFrameProps) {
   return (
     <div
+      ref={frameRef}
       className="border-border bg-card relative aspect-[3/2] w-full overflow-hidden rounded-md border"
       data-seatmap
       data-sub-map-id={subMapId}
@@ -454,6 +577,7 @@ interface PinProps {
   photo: PhotoDto;
   label: string;
   selected: boolean;
+  pulse?: boolean;
   onActivate: () => void;
 }
 
@@ -471,13 +595,13 @@ interface PinProps {
  * for an ink one, so the state reads without relying on hue (DESIGN.md
  * non-color-only rule).
  */
-function Pin({ photo, label, selected, onActivate }: PinProps) {
+function Pin({ photo, label, selected, pulse = false, onActivate }: PinProps) {
   return (
     <button
       type="button"
       // 44x44 touch target (transparent), centered on the visible ~14px marker.
       className={cn(
-        "group pointer-events-auto grid size-11 place-items-center rounded-full",
+        "group pointer-events-auto relative grid size-11 place-items-center rounded-full",
         "focus-visible:outline-none",
       )}
       aria-label={label}
@@ -485,6 +609,13 @@ function Pin({ photo, label, selected, onActivate }: PinProps) {
       data-photo-id={photo.id}
       onClick={onActivate}
     >
+      {pulse && (
+        <span
+          aria-hidden="true"
+          className="bg-accent/35 pointer-events-none absolute top-1/2 left-1/2 size-4 rounded-full"
+          style={{ animation: "seatview-locate-pulse 600ms ease-out 2" }}
+        />
+      )}
       <span
         className={cn(
           "block rounded-full transition-[transform,background-color,border-color] duration-150",

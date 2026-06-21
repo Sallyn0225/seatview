@@ -180,6 +180,7 @@ const ko: Messages = {
   },
   lightbox: {
     close: "미리보기 닫기",
+    locate: "좌석표에서 위치 보기",
     prev: "이전 사진",
     next: "다음 사진",
     openDetails: "좌석 상세 열기",

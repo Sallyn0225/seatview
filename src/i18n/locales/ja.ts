@@ -174,6 +174,7 @@ const ja: Messages = {
   },
   lightbox: {
     close: "プレビューを閉じる",
+    locate: "座席表で位置を表示",
     prev: "前の写真",
     next: "次の写真",
     openDetails: "座席詳細を開く",

@@ -182,6 +182,7 @@ const en: Messages = {
   },
   lightbox: {
     close: "Close preview",
+    locate: "Locate on the seating chart",
     prev: "Previous photo",
     next: "Next photo",
     openDetails: "Open seat details",

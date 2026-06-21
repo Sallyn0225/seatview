@@ -5,7 +5,14 @@ import Lightbox, {
 } from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
-import { ChevronLeft, ChevronRight, ChevronUp, Share2, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  LocateFixed,
+  Share2,
+  X,
+} from "lucide-react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
@@ -75,6 +82,8 @@ interface SeatViewLightboxProps {
   request: LightboxRequest | null;
   /** Called when the user closes the lightbox (Esc / ✕ / backdrop / swipe). */
   onClose: () => void;
+  /** Locate the current photo on the seatmap and close this overlay. */
+  onLocate?: (photoId: string) => void;
 }
 
 const PUBLIC_R2_BASE_URL = import.meta.env.PUBLIC_R2_BASE_URL;
@@ -112,6 +121,7 @@ export default function SeatViewLightbox({
   venue,
   request,
   onClose,
+  onLocate,
 }: SeatViewLightboxProps) {
   const { t } = useLocale(locale);
   const reducedMotion = usePrefersReducedMotion();
@@ -238,6 +248,18 @@ export default function SeatViewLightbox({
     [venue, locale, t.lightbox.shareText, t.lightbox.shareTextWithRegion],
   );
 
+  const handleLocateCurrent = useCallback(() => {
+    if (!currentPhoto) return;
+    if (graceTimerRef.current) {
+      clearTimeout(graceTimerRef.current);
+      graceTimerRef.current = null;
+    }
+    setPhotoIdInUrl(null);
+    setDetailOpen(false);
+    setCorrectionOpen(false);
+    onLocate?.(currentPhoto.id);
+  }, [currentPhoto, onLocate]);
+
   // Esc priority: when the detail sheet is open, Esc closes the SHEET, not the
   // Lightbox (shape §7). If the correction panel is nested inside it, Esc closes
   // that panel first.
@@ -291,6 +313,25 @@ export default function SeatViewLightbox({
         Previous: t.lightbox.prev,
         Next: t.lightbox.next,
         Close: t.lightbox.close,
+      }}
+      toolbar={{
+        buttons: [
+          <button
+            key="locate"
+            type="button"
+            className="yarl__button"
+            aria-label={t.lightbox.locate}
+            title={t.lightbox.locate}
+            onClick={handleLocateCurrent}
+          >
+            <LocateFixed
+              className="size-6"
+              aria-hidden="true"
+              strokeWidth={1.25}
+            />
+          </button>,
+          "close",
+        ],
       }}
       // Ink overlay ~90%, no vermilion. Chrome (close / nav) is hairline-ash on
       // ink — quiet, never the SaaS-blue default and never the accent.
