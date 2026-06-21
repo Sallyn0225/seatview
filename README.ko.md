@@ -11,7 +11,7 @@
 > 추첨이든, 티켓 전쟁이든, 공연 전 좌석 확인이든——그 좌석에서 실제로 무엇이 보이는지 먼저 확인하세요.
 > リアル座席ビュー · 真实视角图集 —— 내부 코드네임 `seatmap-real`
 
-**SeatView** 는 일본(일부 해외 포함) 콘서트 공연장의 **실제 좌석 시야 사진**을 모읍니다. 사용자는 공연장 공식 좌석도 위에 자신의 좌석을 표시하고 그 위치에서 찍은 실사 사진을 업로드합니다. 다른 사람은 좌석도의 마커를 클릭하면 그 좌석의 실제 시야를 Lightbox 에서 미리 볼 수 있어, 추첨이나 티켓 예매, 공연 전 좌석 확인 때 더 현명한 결정을 내릴 수 있습니다.
+**SeatView** 는 일본(일부 해외 포함) 콘서트 공연장의 **실제 좌석 시야 사진**을 모읍니다. 사용자는 공연장 공식 좌석도 위에 자신의 좌석을 표시하고 그 위치에서 찍은 실사 사진을 업로드합니다. 다른 사람은 좌석도의 마커를 클릭하면 그 좌석의 실제 시야를 Lightbox 에서 미리 볼 수 있고, 특정 시야 사진의 직접 링크도 공유할 수 있어 추첨이나 티켓 예매, 공연 전 좌석 확인 때 더 현명한 결정을 내릴 수 있습니다.
 
 조회, 업로드, 익명 평점은 모두 **SeatView 회원 가입이 필요 없습니다**. 업로드는 IP 요청 빈도 제한 + Cloudflare Turnstile 로 남용을 방지하고, 평점은 공연장 + salt 처리된 IP hash 로 중복 제거와 제한을 적용합니다. 댓글은 giscus 를 통해 GitHub Discussions 에 연결됩니다. 전체 스택은 Cloudflare 한 곳에서만 동작합니다: Workers(SSR + 정적 자산) + D1 + KV + R2.
 
@@ -66,7 +66,8 @@
 
 - **광역자치단체별 탐색** —— 왼쪽 공연장 트리는 일본 행정 구역으로 그룹화되어 접을 수 있습니다. Fuse.js 클라이언트 측 퍼지 검색으로 중국어 / 일본어 / 로마자 별칭까지 매칭됩니다.
 - **좌석도 마킹** —— 공연장 공식 좌석도(다중 레이어 / 다중 구역 tag 전환 지원) 위에서 다른 사용자가 표시한 좌석 포인트를 확인하고, 인접한 포인트는 자동으로 묶여 개수가 표시됩니다.
-- **실제 시야 Lightbox** —— 마커를 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 볼 수 있습니다. 아래의 워터폴(masonry)에는 해당 공연장의 모든 투고가 표시됩니다.
+- **실제 시야 Lightbox** —— 마커를 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 볼 수 있습니다. Lightbox 는 현재 사진을 `?photo=` 로 URL에 반영하고, 공유 버튼은 공연장 / 구역 문맥이 담긴 deep link 를 복사합니다. 아래의 워터폴(masonry)에는 해당 공연장의 모든 투고가 표시됩니다.
+- **공연장 사진 수 표시** —— 공연장 제목 아래에 현재 구역과 전체 공연장의 사진 수를 표시하며, 좌석도 구역 전환이나 새 업로드 후 즉시 동기화됩니다.
 - **공연장 댓글과 평점** —— 공연장 제목 영역의 조용한 진입점에 종합 점수 / 평점 수를 표시하고 오른쪽 드로어를 엽니다. 위쪽은 익명 네 항목 1~5점 별점(시야, 소리, 주변 편의, 교통. 다시 평가하면 점수 변경), 아래쪽은 `venue:<id>` 에 엄격하게 매핑된 giscus 댓글이며, 언어 경로와 좌석도 탭을 넘어 같은 토론을 공유합니다.
 - **회원 가입 없는 업로드** —— 마킹(전체 화면 줌으로 정밀하게 배치하는 모드 제공) → 이미지 선택 → 클라이언트 측에서 WebP 로 압축(EXIF 제거) → HMAC ticket 의 2단계 제출. 완료되지 않은 단계는 인라인 안내로 유도하며, 전 과정에 IP 요청 빈도 제한 + Turnstile 남용 방지가 적용됩니다.
 - **다국어 i18n** —— `/zh` `/ja` `/en` `/ko` 4개 프리픽스 라우팅, 루트 직하 `/` 는 `Accept-Language` 에 따라 자동 리다이렉트(`zh` / `ja` 는 대등한 두 축이며, `en` / `ko` 는 접근성을 위한 번역 레이어).
@@ -77,10 +78,10 @@
 
 | 레이어 | 선택 | 설명 |
 |---|---|---|
-| 프런트엔드 프레임워크 | **Astro 6.3** + React 19 Islands | 대부분 정적화하고, 인터랙티브한 컴포넌트는 React 사용 |
-| 배포 어댑터 | **`@astrojs/cloudflare` v13** | Astro 6 은 더 이상 Cloudflare Pages 를 지원하지 않아 전면적으로 **Workers** 를 사용(SSR + 정적 자산을 동일한 Worker 에서) |
+| 프런트엔드 프레임워크 | **Astro 6.4** + React 19.2 Islands | 대부분 정적화하고, 인터랙티브한 컴포넌트는 React 사용 |
+| 배포 어댑터 | **`@astrojs/cloudflare` v13.7** | Astro 6 은 더 이상 Cloudflare Pages 를 지원하지 않아 전면적으로 **Workers** 를 사용(SSR + 정적 자산을 동일한 Worker 에서) |
 | 런타임 바인딩 | **`import { env } from "cloudflare:workers"`** | Astro v6 은 `Astro.locals.runtime.env` 를 제거했습니다. 타입은 `src/env.d.ts` 의 `Cloudflare.Env` 참조 |
-| 스타일링 | **Tailwind v4**(Vite 플러그인 `@tailwindcss/vite`) | 독립된 `tailwind.config` 없음. 디자인 토큰은 `src/styles/global.css` 에 작성 |
+| 스타일링 | **Tailwind v4.3**(Vite 플러그인 `@tailwindcss/vite`) | 독립된 `tailwind.config` 없음. 디자인 토큰은 `src/styles/global.css` 에 작성 |
 | UI 컴포넌트 | **전부 수작업**(`DESIGN.md` 토큰 기준) | `components.json` 은 존재하지만, UI 는 shadcn/ui 로 생성된 것이 아님 |
 | 아이콘 | `lucide-react` | |
 | 검색 | **Fuse.js**(클라이언트 측 전량) | 공연장 ≤ 200, 번들 내 전량 검색으로 지연 시간 제로 |
@@ -141,7 +142,7 @@ npm run preview    # 전체 기능(바인딩 + API, miniflare 경유)
 | `npm run dev` | `astro dev`, 페이지 핫 리로드 |
 | `npm run build` | `astro build`, Workers 번들을 `dist/` 에 출력 |
 | `npm run preview` | `astro build` 후 `wrangler dev -c dist/server/wrangler.json`, 빌드 산출물 + 바인딩을 로컬에서 실행 |
-| `npm test` | `node --test`, 순수 로직 단위 테스트 실행 |
+| `npm test` | `node --experimental-strip-types --test`, 순수 로직 단위 테스트 실행 |
 | `npm run typecheck` | `astro check`, 타입 검사 |
 | `npm run format` / `format:check` | Prettier 포맷 / 검사(CI 는 `format:check` 사용) |
 | `npm run db:generate` | `drizzle-kit generate`, schema 에서 마이그레이션 생성 |
@@ -195,7 +196,7 @@ npm run deploy
 > **메인테이너 관리자**(`/admin` + `/api/admin/*`)는 **Cloudflare Access (Zero Trust)** 에 의해 엣지에서 보호됩니다: 대시보드의 Zero Trust → Access → Applications 에서 `/*/admin` 과 `/api/admin/*` 를 포함하는 self-hosted 애플리케이션을 새로 만들고, Allow → 메인테이너 이메일의 policy 를 하나 추가하세요. Access 가 인증 후 `Cf-Access-Authenticated-User-Email` 을 주입하면 Worker 는 그 헤더를 신뢰합니다(`src/server/admin-auth.ts`). 익명 트래픽은 Worker 에 도달하지 못합니다. 프로덕션에서는 admin 환경 변수가 **필요 없습니다**. 프로덕션에서 `DEV_ADMIN_EMAIL` 을 **절대 설정하지 마세요** —— 그렇게 하면 SSO 게이트웨이를 우회하게 됩니다.
 
 > [!NOTE]
-> 본 저장소에는 이미 18개 일본 공연장(좌석도 포함) + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
+> 본 저장소에는 이미 일본 / 일부 해외 공연장 항목 71개(`public/seatmaps/` 아래 좌석도 이미지 자산 85개) + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
 
 ## 작동 원리
 
@@ -234,6 +235,12 @@ presigned URL 을 통한 클라이언트 직접 업로드가 아니라 **sign + 
 
 익명 평점은 `POST /api/rating` 을 거치며, 정적 `venue.id` 와 완전한 네 항목 1~5점 점수(시야, 소리, 주변 편의, 교통)만 받습니다. 단일 평가에 challenge 를 띄우지 않기 위해 Turnstile 은 사용하지 않지만, `TURNSTILE_SECRET_KEY` 는 IP-hash salt 로 사용합니다. D1 은 `venue_id + ip_hash` 마다 `venue_ratings` 한 행만 저장하며, 다시 평가하면 새 표가 아니라 네 항목 점수가 변경됩니다. `venue_rating_agg` 는 항목별 count / sum 집계를 저장하고, 평점 행과 집계 업데이트는 하나의 `db.batch` 에서 처리됩니다. 공연장 페이지 SSR 은 이 집계 행만 읽으며, 실패해도 빈 평점 상태로 조용히 폴백합니다. KV 는 “하루에 새로 평점을 남긴 서로 다른 공연장 수”만 제한하고, 기존 점수 변경에는 할당량을 쓰지 않습니다.
 
+### 사진 수와 공유 deep link
+
+공연장 페이지는 SSR 에서 현재 sub-map 의 초기 사진과 `listVenuePhotoCounts` 가 반환하는 구역별 집계를 읽습니다. 제목 아래의 `VenuePhotoCountLine` 은 단일 맵 공연장에서는 전체 수를, 여러 맵 공연장에서는 “현재 구역 / 전체 공연장” 수를 표시합니다. sub-map 재조회나 업로드 성공 시에는 `seatview:photo-count-change` 이벤트로 이 줄을 동기화합니다.
+
+Lightbox 공유 URL 은 사진 ULID 를 기준으로 합니다: `/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`. `?photo=` 가 있을 때만 기본 키 조회를 한 번 수행하고, 사진이 공개 상태이며 현재 공연장에 속하는지 확인한 뒤 사진 자체의 sub-map 으로 오래된 `?tab=` 을 덮어쓰고 Lightbox 를 자동으로 엽니다. 해석할 수 없는 링크는 일반 공연장 페이지로 폴백합니다. 탐색 중에는 Lightbox 가 `replaceState` 로 `?photo=` 를 갱신하고, 공유 버튼은 현재 언어의 짧은 문구 + canonical link 를 복사합니다.
+
 ### 핵심 구현 선택
 
 <details>
@@ -248,6 +255,7 @@ presigned URL 을 통한 클라이언트 직접 업로드가 아니라 **sign + 
 7. R2 바인딩 이름은 **`BUCKET`**, 요청 빈도 제한 KV 는 **`RATE_LIMIT`**, 그리고 **`SESSION`** KV 가 있습니다(어댑터가 자동으로 활성화하는 session API 에 필요. SeatView 는 계정 시스템이 없어 session 을 실제로 쓰지 않지만, 바인딩은 해석 가능해야 합니다). admin 은 **Cloudflare Access**(`Cf-Access-Authenticated-User-Email` 헤더)를 사용하며, 로컬에서는 `.dev.vars` 의 `DEV_ADMIN_EMAIL` 로 mock 합니다.
 8. **giscus 댓글은 선택적 공개 설정**입니다. `PUBLIC_GISCUS_*` 가 없으면 서드파티 리소스를 불러오지 않고, 설정되어 있으면 `venue:<id>` 로 GitHub Discussions 에 연결합니다.
 9. **공연장 평점은 익명 D1 집계**입니다. `venue_ratings` 는 각 `venue_id + ip_hash` 의 현재 네 항목 점수를 저장하고, `venue_rating_agg` 는 표시용 집계를 저장합니다. GitHub reaction 이나 소셜 “좋아요”가 아닙니다.
+10. **사진 deep link 는 `?photo=<ulid>` 를 기준으로 합니다**: `?tab=` 은 읽기 쉬움과 폴백을 위한 값일 뿐입니다. 서버가 사진 행에서 sub-map 을 역으로 찾기 때문에, 하위 좌석도 이름이 바뀌어도 공유된 링크가 깨지지 않습니다.
 
 </details>
 
@@ -255,7 +263,7 @@ presigned URL 을 통한 클라이언트 직접 업로드가 아니라 **sign + 
 
 ```
 seatmap-real/
-├── astro.config.mjs          # Astro 6 + CF Workers 어댑터 + Tailwind v4 Vite 플러그인 + i18n
+├── astro.config.mjs          # Astro 6.4 + CF Workers 어댑터 + Tailwind v4.3 Vite 플러그인 + i18n
 ├── wrangler.jsonc            # CF 바인딩: DB(D1) / BUCKET(R2) / RATE_LIMIT,SESSION(KV) / vars
 ├── drizzle.config.ts         # drizzle-kit: schema 에서 ./migrations 로 마이그레이션 생성
 ├── data/
@@ -271,10 +279,10 @@ seatmap-real/
     ├── i18n/                 # locale 설정 + 문구
     ├── data/                 # 공연장 트리 + 47개 광역자치단체
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 단일 진실 공급원
-    ├── lib/                  # 레이어 간 계약 + 클라이언트 유틸리티(upload / staging / venue-rating 포함)
+    ├── lib/                  # 레이어 간 계약 + 클라이언트 유틸리티(upload / staging / venue-rating / share / photo counts 포함)
     ├── server/               # Worker 측: db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
     ├── pages/                # api/(upload·staging·rating·admin·photos) + [lang]/(홈 / 공연장 페이지 / 임시 보관 영역 / 관리자 / 개인정보 / 이용약관)
-    └── styles/global.css     # Tailwind v4 + 디자인 토큰(OKLCH 중성색 + 주홍 accent)
+    └── styles/global.css     # Tailwind v4.3 + 디자인 토큰(OKLCH 중성색 + 주홍 accent)
 ```
 
 ## 기여

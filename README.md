@@ -11,7 +11,7 @@
 > 抽选、抢票，还是开演前确认座位号——先看看那个座位到底能看到什么。
 > リアル座席ビュー · 真实视角图集 —— 内部代号 `seatmap-real`
 
-**SeatView** 聚合日本（含部分海外）演唱会场馆的**真实座位视角照片**。用户在场馆官方坐席图上标注自己的座位、上传该位置的实拍照片；其他人点击坐席图上的标注点，就能在 Lightbox 里预览那个座位的真实视角——在抽选、抢票或开演前确认座位时做出更明智的决定。
+**SeatView** 聚合日本（含部分海外）演唱会场馆的**真实座位视角照片**。用户在场馆官方坐席图上标注自己的座位、上传该位置的实拍照片；其他人点击坐席图上的标注点，就能在 Lightbox 里预览那个座位的真实视角，也可以直接分享某一张视角照片链接——在抽选、抢票或开演前确认座位时做出更明智的决定。
 
 浏览、上传和匿名评分**均无需 SeatView 注册**。上传靠 IP 限频 + Cloudflare Turnstile 防滥用；评分按场馆 + 盐化 IP hash 去重并限流；评论通过 giscus 接入 GitHub Discussions。全栈只跑在 Cloudflare 一家：Workers（SSR + 静态资源）+ D1 + KV + R2。
 
@@ -66,7 +66,8 @@
 
 - **按都道府县浏览** —— 左侧场馆树按日本行政区划分组、可折叠；Fuse.js 客户端模糊搜索，中文 / 日文 / 罗马字别名都能命中。
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
-- **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；下方瀑布流展示该场馆的全部投稿。
+- **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；Lightbox 会把当前照片同步到地址栏 `?photo=`，分享按钮复制带场馆 / 区域文案的深链；下方瀑布流展示该场馆的全部投稿。
+- **场馆投稿统计** —— 场馆标题下方显示当前区域与全场馆照片数，切换坐席图分区或新上传后即时更新。
 - **场馆评论与评分** —— 场馆页标题区的轻量入口显示综合分 / 评分数并打开右侧抽屉：上方是匿名四项 1–5 星评分（视野、声音、周边便利、交通便利，再次评分会改分），下方是按 `venue:<id>` 严格映射的 giscus 评论，跨语言与子坐席图共享同一讨论。
 - **免注册上传** —— 标点（可进全屏放大精修）→ 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交；未完成步骤有行内引导，全程 IP 限频 + Turnstile 防滥用。
 - **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
@@ -77,10 +78,10 @@
 
 | 层 | 选型 | 说明 |
 |---|---|---|
-| 前端框架 | **Astro 6.3** + React 19 Islands | 大部分静态化，交互组件用 React |
-| 部署适配器 | **`@astrojs/cloudflare` v13** | Astro 6 已不支持 Cloudflare Pages，全面用 **Workers**（SSR + 静态资源同一个 Worker） |
+| 前端框架 | **Astro 6.4** + React 19.2 Islands | 大部分静态化，交互组件用 React |
+| 部署适配器 | **`@astrojs/cloudflare` v13.7** | Astro 6 已不支持 Cloudflare Pages，全面用 **Workers**（SSR + 静态资源同一个 Worker） |
 | 运行时绑定 | **`import { env } from "cloudflare:workers"`** | Astro v6 移除了 `Astro.locals.runtime.env`；类型见 `src/env.d.ts` 的 `Cloudflare.Env` |
-| 样式 | **Tailwind v4**（Vite 插件 `@tailwindcss/vite`） | 无独立 `tailwind.config`；设计 token 写在 `src/styles/global.css` |
+| 样式 | **Tailwind v4.3**（Vite 插件 `@tailwindcss/vite`） | 无独立 `tailwind.config`；设计 token 写在 `src/styles/global.css` |
 | UI 组件 | **全部手写**（按 `DESIGN.md` token） | `components.json` 虽在，但 UI 并非 shadcn/ui 生成 |
 | 图标 | `lucide-react` | |
 | 搜索 | **Fuse.js**（客户端全量） | 场馆 ≤ 200，bundle 内全量搜索零延迟 |
@@ -141,7 +142,7 @@ npm run preview    # 全功能（含绑定 + API，走 miniflare）
 | `npm run dev` | `astro dev`，页面热更新 |
 | `npm run build` | `astro build`，产出 Workers bundle 到 `dist/` |
 | `npm run preview` | `astro build` 后 `wrangler dev -c dist/server/wrangler.json`，本地跑构建产物 + 绑定 |
-| `npm test` | `node --test`，运行纯逻辑单测 |
+| `npm test` | `node --experimental-strip-types --test`，运行纯逻辑单测 |
 | `npm run typecheck` | `astro check`，类型检查 |
 | `npm run format` / `format:check` | Prettier 格式化 / 校验（CI 用 `format:check`） |
 | `npm run db:generate` | `drizzle-kit generate`，从 schema 生成迁移 |
@@ -195,7 +196,7 @@ npm run deploy
 > **维护者后台**（`/admin` + `/api/admin/*`）由 **Cloudflare Access (Zero Trust)** 在边缘保护：在控制台 Zero Trust → Access → Applications 新建 self-hosted 应用覆盖 `/*/admin` 与 `/api/admin/*`，加一条 Allow → 维护者邮箱的 policy。Access 鉴权后注入 `Cf-Access-Authenticated-User-Email`，Worker 信任该头（`src/server/admin-auth.ts`），匿名流量到不了 Worker。生产**无需**任何 admin 环境变量；**切勿**在生产设 `DEV_ADMIN_EMAIL`——那会绕过 SSO 网关。
 
 > [!NOTE]
-> 本仓库已带 18 个日本场馆（含坐席图）+ demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
+> 本仓库已带 71 个日本 / 海外场馆条目（`public/seatmaps/` 下 85 个坐席图资源）+ demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
 
 ## 工作原理
 
@@ -234,6 +235,12 @@ npm run deploy
 
 匿名评分走 `POST /api/rating`，只接受静态场馆 `venue.id` 与完整四项 1–5 星评分：视野、声音、周边便利、交通便利。它不跑 Turnstile（单次评分不应弹挑战），但仍使用 `TURNSTILE_SECRET_KEY` 作为 IP-hash salt；D1 中 `venue_ratings` 通过 `venue_id + ip_hash` 唯一索引去重，同一人再次评分会改四项分数而不是新增一票。`venue_rating_agg` 保存四维 count / sum 聚合，写入与聚合更新在同一个 `db.batch` 中完成；场馆页 SSR 只读这一行聚合，失败时降级为空评分，不影响页面打开。KV 只限制“每天新增评分的不同场馆数”，改已有分数不消耗配额。
 
+### 照片数量与分享深链
+
+场馆页 SSR 会读取当前 sub-map 的初始照片，以及 `listVenuePhotoCounts` 返回的分区统计。标题下方的 `VenuePhotoCountLine` 会显示单图场馆总数，或多图场馆的“当前区域 / 全场馆”数量；切换 sub-map 重新拉取照片、上传成功时，都会通过 `seatview:photo-count-change` 事件同步这行数字。
+
+Lightbox 的分享链接以照片 ULID 为主：`/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`。页面只在存在 `?photo=` 时做一次主键查询，确认照片未软删除、属于当前场馆，并用照片自己的 sub-map 覆盖旧的 `?tab=` 后自动打开 Lightbox；无法解析的链接降级为普通场馆页。Lightbox 浏览时用 `replaceState` 更新 `?photo=`，分享按钮复制当前语言的短文案 + canonical link。
+
 ### 关键实现取舍
 
 <details>
@@ -248,6 +255,7 @@ npm run deploy
 7. R2 绑定名是 **`BUCKET`**、限频 KV 是 **`RATE_LIMIT`**，另有 **`SESSION`** KV（适配器自动启用 session API 所需，SeatView 无账号系统、不实际写 session，但绑定需可解析）；admin 用 **Cloudflare Access**（`Cf-Access-Authenticated-User-Email` 头），本地用 `.dev.vars` 的 `DEV_ADMIN_EMAIL` mock。
 8. **giscus 评论是可选公共配置**：缺 `PUBLIC_GISCUS_*` 时不加载第三方资源；配置齐全后，评论按 `venue:<id>` 映射到 GitHub Discussions。
 9. **场馆评分是匿名 D1 聚合**：`venue_ratings` 存每个 `venue_id + ip_hash` 的当前四项分数，`venue_rating_agg` 存展示聚合；不是 GitHub reaction，也不是社交点赞。
+10. **照片深链以 `?photo=<ulid>` 为权威**：`?tab=` 只用于可读性与兜底；服务器从照片记录反推 sub-map，因此子坐席图重命名不会破坏已分享链接。
 
 </details>
 
@@ -255,7 +263,7 @@ npm run deploy
 
 ```
 seatmap-real/
-├── astro.config.mjs          # Astro 6 + CF Workers 适配器 + Tailwind v4 Vite 插件 + i18n
+├── astro.config.mjs          # Astro 6.4 + CF Workers 适配器 + Tailwind v4.3 Vite 插件 + i18n
 ├── wrangler.jsonc            # CF 绑定：DB(D1) / BUCKET(R2) / RATE_LIMIT,SESSION(KV) / vars
 ├── drizzle.config.ts         # drizzle-kit：从 schema 生成迁移到 ./migrations
 ├── data/
@@ -271,10 +279,10 @@ seatmap-real/
     ├── i18n/                 # locale 配置 + 文案
     ├── data/                 # 场馆树 + 47 都道府县
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 单一真源
-    ├── lib/                  # 跨层契约 + 客户端工具（含 upload / staging / venue-rating）
+    ├── lib/                  # 跨层契约 + 客户端工具（含 upload / staging / venue-rating / share / photo counts）
     ├── server/               # Worker 侧：db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
     ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）
-    └── styles/global.css     # Tailwind v4 + 设计 token（OKLCH 中性色 + 朱赤 accent）
+    └── styles/global.css     # Tailwind v4.3 + 设计 token（OKLCH 中性色 + 朱赤 accent）
 ```
 
 ## 贡献
