@@ -36,10 +36,28 @@ export default function NearbyStrip({
   const suppressClickRef = useRef(false);
 
   useEffect(() => {
+    const scroller = scrollerRef.current;
     const current = itemRefs.current.get(currentId);
-    current?.scrollIntoView({
-      block: "nearest",
-      inline: "center",
+    if (!scroller || !current) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const currentRect = current.getBoundingClientRect();
+    const currentCenter =
+      currentRect.left -
+      scrollerRect.left +
+      scroller.scrollLeft +
+      currentRect.width / 2;
+    const maxScrollLeft = Math.max(
+      0,
+      scroller.scrollWidth - scroller.clientWidth,
+    );
+    const nextScrollLeft = Math.min(
+      Math.max(0, currentCenter - scroller.clientWidth / 2),
+      maxScrollLeft,
+    );
+
+    scroller.scrollTo({
+      left: nextScrollLeft,
       behavior: reducedMotion ? "auto" : "smooth",
     });
   }, [currentId, reducedMotion]);
