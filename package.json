@@ -30,7 +30,7 @@
     "@astrojs/cloudflare": "^13.7.0",
     "@astrojs/react": "^5.0.7",
     "@giscus/react": "^3.1.0",
-    "astro": "^6.4.6",
+    "astro": "^6.4.8",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "@cloudflare/workers-types": "^4.20260613.1",
+    "@cloudflare/workers-types": "^4.20260621.1",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^22.19.19",
     "@types/react": "^19.2.17",
@@ -58,7 +58,7 @@
     "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
-    "wrangler": "^4.100.0"
+    "wrangler": "^4.103.0"
   },
   "overrides": {
     "ws": "^8.21.0",
