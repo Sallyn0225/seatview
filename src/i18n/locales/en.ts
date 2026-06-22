@@ -192,6 +192,8 @@ const en: Messages = {
     imageError: "This photo can't open right now",
     imageAlt: "View from {label} {date} {event}",
     position: "{n} / {total}",
+    nearbyLabel: "Nearby seat previews",
+    nearbyThumbLabel: "View nearby seat {label}",
     share: "Share this view",
     shareCopied: "Link copied",
     shareText: "I found a great view at {venue}: {url} — come take a look!",
