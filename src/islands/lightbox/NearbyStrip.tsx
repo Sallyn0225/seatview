@@ -113,7 +113,7 @@ export default function NearbyStrip({
           event.stopPropagation();
         }}
         className={cn(
-          "pointer-events-auto max-w-full overflow-x-auto rounded-full",
+          "pointer-events-auto max-w-full overflow-x-auto rounded-2xl",
           "border border-[oklch(0.8_0.006_86_/_0.22)] bg-[oklch(0.13_0.008_75_/_0.62)]",
           "px-2 py-2 [scrollbar-width:thin] [touch-action:pan-x]",
         )}
@@ -169,7 +169,7 @@ export default function NearbyStrip({
                   loading="lazy"
                   decoding="async"
                   draggable={false}
-                  className="size-full select-none object-contain"
+                  className="size-full select-none object-cover"
                 />
                 {current && (
                   <span
