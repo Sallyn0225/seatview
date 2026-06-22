@@ -229,6 +229,10 @@ export interface Messages {
     imageAlt: string;
     /** `{n}` / `{total}` → 1-based position and count (sequence mode). */
     position: string;
+    /** Nearby same-cluster strip region aria-label. */
+    nearbyLabel: string;
+    /** `{label}` → user seat label. Nearby thumbnail button aria-label. */
+    nearbyThumbLabel: string;
     /** Share button aria-label / title (footer strip). */
     share: string;
     /** In-place confirmation shown after the share link is copied. */
@@ -741,6 +745,8 @@ const zh: Messages = {
     imageError: "这张照片暂时打不开",
     imageAlt: "{label} {date} {event} 的视角",
     position: "{n} / {total}",
+    nearbyLabel: "附近座位预览",
+    nearbyThumbLabel: "查看附近座位：{label}",
     share: "分享这个视角",
     shareCopied: "链接已复制",
     shareText: "我在{venue}发现了一个不错的视角：{url}，你也来看看吧！",

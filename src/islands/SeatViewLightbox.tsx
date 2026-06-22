@@ -16,7 +16,9 @@ import {
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import NearbyStrip from "@/islands/lightbox/NearbyStrip";
 import TurnstileWidget from "@/islands/upload/TurnstileWidget";
+import { clusterPoints, layOutPoints } from "@/lib/cluster";
 import { PHOTO_CORRECTION_LABEL_MAX } from "@/lib/photo-corrections";
 import {
   PhotoCorrectionError,
@@ -32,7 +34,7 @@ import {
   relativeTime,
 } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Venue } from "@/types";
+import type { SubMap, Venue } from "@/types";
 import { subMapLabel, venueName } from "@/i18n";
 import {
   buildShareText,
@@ -78,10 +80,16 @@ interface SeatViewLightboxProps {
   locale: Locale;
   /** Owning venue — used to build share links + the locale-aware share blurb. */
   venue: Venue;
+  /** Full point set for the active sub-map, used for same-cluster previews. */
+  allPhotos: PhotoDto[];
+  /** Active sub-map, providing intrinsic image dimensions for clustering. */
+  subMap: SubMap;
   /** Active request (null = closed). VenueMain owns this state. */
   request: LightboxRequest | null;
   /** Called when the user closes the lightbox (Esc / ✕ / backdrop / swipe). */
   onClose: () => void;
+  /** Navigate to another photo without closing this lightbox. */
+  onNavigate: (photoId: string) => void;
   /** Locate the current photo on the seatmap and close this overlay. */
   onLocate?: (photoId: string) => void;
 }
@@ -119,8 +127,11 @@ function toSlide(dto: PhotoDto, locale: Locale, altTmpl: string): SeatSlide {
 export default function SeatViewLightbox({
   locale,
   venue,
+  allPhotos,
+  subMap,
   request,
   onClose,
+  onNavigate,
   onLocate,
 }: SeatViewLightboxProps) {
   const { t } = useLocale(locale);
@@ -172,6 +183,22 @@ export default function SeatViewLightbox({
   );
 
   const currentPhoto = photos[currentIndex];
+
+  const nearbyPhotos = useMemo(() => {
+    if (!currentPhoto || currentPhoto.subMapId !== subMap.id) return [];
+    const points = layOutPoints(
+      allPhotos.filter((photo) => photo.subMapId === currentPhoto.subMapId),
+      subMap.width,
+      subMap.height,
+    );
+    const currentCluster = clusterPoints(points, 1).find((cluster) =>
+      cluster.members.some((member) => member.photo.id === currentPhoto.id),
+    );
+    if (!currentCluster || currentCluster.members.length <= 1) return [];
+    return currentCluster.members
+      .map((member) => member.photo)
+      .sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id));
+  }, [allPhotos, currentPhoto, subMap]);
 
   // `view` fires on every active-slide change (open + each page turn). Re-emit
   // the selected signal so the seatmap pin tracks the visible photo (shape §7).
@@ -395,22 +422,37 @@ export default function SeatViewLightbox({
             />
           );
         },
-        // The detail sheet (rendered above slides, absolute) when expanded.
+        // Bottom same-cluster previews + the detail sheet overlay.
         controls: () =>
-          currentPhoto && detailOpen ? (
-            <DetailSheet
-              dto={currentPhoto}
-              locale={locale}
-              labels={{
-                collapse: t.lightbox.collapse,
-                expand: t.lightbox.expand,
-                uploadedAt: t.lightbox.uploadedAt,
-                correction: t.lightbox.correction,
-              }}
-              correctionOpen={correctionOpen}
-              onCorrectionOpenChange={setCorrectionOpen}
-              onClose={() => setDetailOpen(false)}
-            />
+          currentPhoto ? (
+            <>
+              {nearbyPhotos.length >= 2 && (
+                <NearbyStrip
+                  items={nearbyPhotos}
+                  currentId={currentPhoto.id}
+                  onSelect={onNavigate}
+                  baseUrl={PUBLIC_R2_BASE_URL}
+                  label={t.lightbox.nearbyLabel}
+                  thumbLabelTemplate={t.lightbox.nearbyThumbLabel}
+                  reducedMotion={reducedMotion}
+                />
+              )}
+              {detailOpen && (
+                <DetailSheet
+                  dto={currentPhoto}
+                  locale={locale}
+                  labels={{
+                    collapse: t.lightbox.collapse,
+                    expand: t.lightbox.expand,
+                    uploadedAt: t.lightbox.uploadedAt,
+                    correction: t.lightbox.correction,
+                  }}
+                  correctionOpen={correctionOpen}
+                  onCorrectionOpenChange={setCorrectionOpen}
+                  onClose={() => setDetailOpen(false)}
+                />
+              )}
+            </>
           ) : null,
       }}
     />

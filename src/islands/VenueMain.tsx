@@ -206,6 +206,33 @@ export default function VenueMain({
     });
   }, []);
 
+  const handleNavigatePhoto = useCallback(
+    (photoId: string) => {
+      setLightboxRequest((prev) => {
+        if (!prev) return prev;
+        const target = activePhotos.find((photo) => photo.id === photoId);
+        if (!target) return prev;
+
+        if (prev.mode === "single") {
+          return { mode: "single", photos: [target], index: 0 };
+        }
+
+        const existingIndex = prev.photos.findIndex(
+          (photo) => photo.id === photoId,
+        );
+        if (existingIndex >= 0) return { ...prev, index: existingIndex };
+
+        const fullPhotos = [...activePhotos].sort(
+          (a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id),
+        );
+        const fullIndex = fullPhotos.findIndex((photo) => photo.id === photoId);
+        if (fullIndex < 0) return prev;
+        return { mode: "sequence", photos: fullPhotos, index: fullIndex };
+      });
+    },
+    [activePhotos],
+  );
+
   const handleCloseLightbox = useCallback(() => setLightboxRequest(null), []);
 
   const handleLocatePhoto = useCallback((photoId: string) => {
@@ -339,13 +366,18 @@ export default function VenueMain({
         />
       ) : null}
 
-      <SeatViewLightbox
-        locale={locale}
-        venue={venue}
-        request={lightboxRequest}
-        onClose={handleCloseLightbox}
-        onLocate={handleLocatePhoto}
-      />
+      {activeSubMap ? (
+        <SeatViewLightbox
+          locale={locale}
+          venue={venue}
+          allPhotos={activePhotos}
+          subMap={activeSubMap}
+          request={lightboxRequest}
+          onClose={handleCloseLightbox}
+          onNavigate={handleNavigatePhoto}
+          onLocate={handleLocatePhoto}
+        />
+      ) : null}
 
       {/* Upload Sheet (step 6). Mounted only while open so the compression lib
           + Turnstile script aren't loaded until the user contributes. */}

@@ -190,6 +190,8 @@ const ko: Messages = {
     imageError: "이 사진은 지금 열 수 없어요",
     imageAlt: "{label} {date} {event}의 시점",
     position: "{n} / {total}",
+    nearbyLabel: "가까운 좌석 미리보기",
+    nearbyThumbLabel: "{label}의 가까운 시점 보기",
     share: "이 시야 공유하기",
     shareCopied: "링크가 복사되었습니다",
     shareText: "{venue}에서 멋진 시야를 발견했어요: {url} 보러 오세요!",

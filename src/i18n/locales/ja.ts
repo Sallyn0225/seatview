@@ -184,6 +184,8 @@ const ja: Messages = {
     imageError: "この写真は今読み込めません",
     imageAlt: "{label} {date} {event} の視点",
     position: "{n} / {total}",
+    nearbyLabel: "近くの座席プレビュー",
+    nearbyThumbLabel: "近くの視点、{label}を表示",
     share: "この視点をシェア",
     shareCopied: "リンクをコピーしました",
     shareText: "{venue}でいい視点を見つけました：{url} ぜひ見てみてください！",
