@@ -1,0 +1,23 @@
+{
+  "id": "toki-messe",
+  "name_zh": "朱鹭 Messe",
+  "name_jp": "朱鷺メッセ",
+  "name_romaji": "Toki Messe",
+  "prefecture": "niigata",
+  "city": "新潟市",
+  "aliases": [
+    "新潟コンベンションセンター",
+    "Niigata Convention Center",
+    "朱鹭会展中心"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/toki-messe/default.webp",
+      "width": 1469,
+      "height": 2048
+    }
+  ]
+}

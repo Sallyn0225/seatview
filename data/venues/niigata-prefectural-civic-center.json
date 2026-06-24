@@ -1,0 +1,30 @@
+{
+  "id": "niigata-prefectural-civic-center",
+  "name_zh": "新潟县民会馆",
+  "name_jp": "新潟県民会館",
+  "name_romaji": "Niigata Prefectural Civic Center",
+  "prefecture": "niigata",
+  "city": "新潟市",
+  "aliases": [
+    "新潟県民会館",
+    "にいがた県民会館"
+  ],
+  "subMaps": [
+    {
+      "id": "large",
+      "label_zh": "大厅",
+      "label_jp": "大ホール",
+      "imageUrl": "/seatmaps/niigata-prefectural-civic-center/large.webp",
+      "width": 1463,
+      "height": 2048
+    },
+    {
+      "id": "small",
+      "label_zh": "小厅",
+      "label_jp": "小ホール",
+      "imageUrl": "/seatmaps/niigata-prefectural-civic-center/small.webp",
+      "width": 1459,
+      "height": 2042
+    }
+  ]
+}

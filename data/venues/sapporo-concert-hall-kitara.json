@@ -1,0 +1,31 @@
+{
+  "id": "sapporo-concert-hall-kitara",
+  "name_zh": "札幌音乐厅 Kitara",
+  "name_jp": "札幌コンサートホールKitara",
+  "name_romaji": "Sapporo Concert Hall Kitara",
+  "prefecture": "hokkaido",
+  "city": "札幌市",
+  "aliases": [
+    "Kitara",
+    "キタラ",
+    "札幌キタラ"
+  ],
+  "subMaps": [
+    {
+      "id": "large",
+      "label_zh": "大厅",
+      "label_jp": "大ホール",
+      "imageUrl": "/seatmaps/sapporo-concert-hall-kitara/large.webp",
+      "width": 1517,
+      "height": 2048
+    },
+    {
+      "id": "small",
+      "label_zh": "小厅",
+      "label_jp": "小ホール",
+      "imageUrl": "/seatmaps/sapporo-concert-hall-kitara/small.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
