@@ -33,6 +33,12 @@ export const GET: APIRoute = ({ request }) => {
 
   const restPaths = [...STATIC_PATHS, ...venues.map((v) => `/v/${v.id}`)];
 
+  // Site-wide deploy timestamp (build-time, inlined via Vite `define`). The
+  // sitemap is intentionally D1-free, so we can't surface per-venue photo
+  // freshness here; <lastmod> signals "last redeploy" and is stable across
+  // requests within a deploy.
+  const lastmod = xmlEscape(__BUILD_TIME__);
+
   const urls: string[] = [];
   for (const rest of restPaths) {
     // Pre-compute the alternate set once per path (same for every locale entry).
@@ -50,7 +56,9 @@ export const GET: APIRoute = ({ request }) => {
 
     for (const loc of locales) {
       const lofrom = xmlEscape(new URL(localePath(loc, rest), siteUrl).href);
-      urls.push(`<url><loc>${lofrom}</loc>${links}</url>`);
+      urls.push(
+        `<url><loc>${lofrom}</loc><lastmod>${lastmod}</lastmod>${links}</url>`,
+      );
     }
   }
 

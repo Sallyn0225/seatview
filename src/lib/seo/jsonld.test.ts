@@ -4,6 +4,7 @@ import {
   buildBreadcrumbLd,
   buildMusicVenueLd,
   buildOrganizationLd,
+  buildVenuePhotosLd,
   buildWebsiteLd,
 } from "./jsonld-core.ts";
 
@@ -35,6 +36,41 @@ describe("buildMusicVenueLd", () => {
         alternateName: ["Ariake Arena"],
       },
     );
+  });
+});
+
+describe("buildMusicVenueLd aggregateRating", () => {
+  const base = {
+    id: "ariake-arena",
+    name: "有明竞技馆",
+    aliases: [] as string[],
+    city: "江東区",
+    locale: "zh",
+    siteUrl: "https://seat.genchi.top",
+  };
+
+  it("attaches an AggregateRating when one is provided", () => {
+    const ld = buildMusicVenueLd({
+      ...base,
+      aggregateRating: {
+        ratingValue: 4.3,
+        ratingCount: 12,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    });
+    assert.deepEqual(ld.aggregateRating, {
+      "@type": "AggregateRating",
+      ratingValue: 4.3,
+      ratingCount: 12,
+      bestRating: 5,
+      worstRating: 1,
+    });
+  });
+
+  it("omits aggregateRating entirely when not provided", () => {
+    const ld = buildMusicVenueLd(base);
+    assert.equal("aggregateRating" in ld, false);
   });
 });
 
@@ -73,6 +109,46 @@ describe("buildBreadcrumbLd", () => {
         ],
       },
     );
+  });
+});
+
+describe("buildVenuePhotosLd", () => {
+  it("returns null when there are no photos", () => {
+    assert.equal(
+      buildVenuePhotosLd({
+        name: "有明竞技馆",
+        pageUrl: "https://seat.genchi.top/zh/v/ariake-arena",
+        images: [],
+      }),
+      null,
+    );
+  });
+
+  it("builds an ImageGallery of ImageObjects with caption + license", () => {
+    const ld = buildVenuePhotosLd({
+      name: "有明竞技馆",
+      pageUrl: "https://seat.genchi.top/zh/v/ariake-arena",
+      license: "https://creativecommons.org/licenses/by-nc/4.0/",
+      images: [
+        {
+          contentUrl: "https://img.genchi.top/abc.webp",
+          caption: "2階 A列 — ライブ · 2026-05-01",
+          width: 1600,
+          height: 1200,
+        },
+      ],
+    });
+    assert.equal(ld?.["@type"], "ImageGallery");
+    assert.deepEqual(ld?.image, [
+      {
+        "@type": "ImageObject",
+        contentUrl: "https://img.genchi.top/abc.webp",
+        caption: "2階 A列 — ライブ · 2026-05-01",
+        width: 1600,
+        height: 1200,
+        license: "https://creativecommons.org/licenses/by-nc/4.0/",
+      },
+    ]);
   });
 });
 

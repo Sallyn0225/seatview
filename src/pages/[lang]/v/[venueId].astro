@@ -20,7 +20,7 @@ import { getMessages, venueName, subMapLabel } from "@/i18n";
 import { getVenue } from "@/data/venues";
 import { getPrefecture, prefectureName } from "@/data/prefectures";
 import { fillTemplate, performanceDate } from "@/lib/format";
-import { musicVenueLd, breadcrumbLd } from "@/lib/seo/jsonld";
+import { musicVenueLd, breadcrumbLd, venuePhotosLd } from "@/lib/seo/jsonld";
 import { readSubMapFromUrl, resolveInitialSubMapId } from "@/lib/submap";
 import { readPhotoIdFromUrl } from "@/lib/share";
 import { STORAGE_KEYS } from "@/lib/storage";
@@ -33,6 +33,7 @@ import {
   listVenuePhotoCounts,
 } from "@/server/photos";
 import { getRatingSummary } from "@/server/ratings";
+import { imageKeyToUrl } from "@/lib/photos";
 import type { PhotoDto, VenuePhotoCountsDto } from "@/lib/photos";
 import { emptyRatingSums, type VenueRatingSummaryDto } from "@/lib/venue-rating";
 
@@ -177,12 +178,42 @@ const giscusBacklink = venue
   ? new URL(`/${locale}/v/${venue.id}`, siteUrl).href
   : undefined;
 
-// Structured data (R2.2): MusicVenue + BreadcrumbList, injected into <head>.
+// Seat-view photos as crawler-readable SSR <img> nodes (SEO C1) + ImageObject
+// metadata (SEO C2). The photo grid hydrates client-side, so this gives image
+// search an explicit URL + caption + license per initial-sub-map photo without
+// relying on JS rendering. Captions reuse the user-authored seat label +
+// event/date verbatim (R9.5).
+const r2BaseUrl = import.meta.env.PUBLIC_R2_BASE_URL;
+const initialPhotoSeoImages = initialPhotos.map((p) => {
+  const date = performanceDate(p.performanceDate, locale);
+  const extra = [p.eventName, date].filter(Boolean).join(" · ");
+  const caption = extra ? `${p.seatLabel} — ${extra}` : p.seatLabel;
+  const contentUrl = new URL(imageKeyToUrl(p.imageKey, r2BaseUrl), siteUrl).href;
+  return {
+    contentUrl,
+    caption,
+    alt: fillTemplate(t.lightbox.imageAlt, {
+      label: p.seatLabel,
+      date: date ?? "",
+      event: p.eventName ?? "",
+    }),
+    width: p.width,
+    height: p.height,
+  };
+});
+
+// Structured data (R2.2): MusicVenue + BreadcrumbList (+ ImageGallery when the
+// initial sub-map has photos), injected into <head>.
 const jsonLd = venue
   ? [
-      musicVenueLd(venue, prefecture, locale, siteUrl),
+      musicVenueLd(venue, prefecture, locale, siteUrl, ratingSummary),
       breadcrumbLd(venue, prefecture, locale, siteUrl, t.nav.home),
-    ]
+      venuePhotosLd(
+        venueName(venue, locale),
+        new URL(`/${locale}/v/${venue.id}`, siteUrl).href,
+        initialPhotoSeoImages,
+      ),
+    ].filter((ld): ld is Record<string, unknown> => ld !== null)
   : [];
 ---
 
@@ -374,26 +405,28 @@ const jsonLd = venue
           <main class="min-w-0 flex-1">
             {/* SEO summary (R1.3): visually hidden but present in the DOM /
                 accessibility tree, so crawlers and AT read the venue description
-                + real seat labels even before the React islands hydrate. Pure
-                text — no layout impact. */}
+                + real first-sub-map photo <img> nodes even before the React
+                islands hydrate. Hidden, so it has no layout impact. */}
             <section class="sr-only">
               <h2>{seoSummaryName}</h2>
               <p>{seoDescription}</p>
-              {initialPhotos.length > 0 && (
+              {initialPhotoSeoImages.length > 0 && (
                 <Fragment>
                   <h3>{t.venue.seoSeatListLabel}</h3>
                   <ul>
-                    {initialPhotos.map((p) => {
-                      const date = performanceDate(p.performanceDate, locale);
-                      const extra = [p.eventName, date]
-                        .filter(Boolean)
-                        .join(" · ");
-                      return (
-                        <li>
-                          {extra ? `${p.seatLabel} — ${extra}` : p.seatLabel}
-                        </li>
-                      );
-                    })}
+                    {initialPhotoSeoImages.map((image) => (
+                      <li>
+                        <img
+                          src={image.contentUrl}
+                          alt={image.alt}
+                          width={image.width}
+                          height={image.height}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span>{image.caption}</span>
+                      </li>
+                    ))}
                   </ul>
                 </Fragment>
               )}

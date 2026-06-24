@@ -73,3 +73,7 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// Build-time constant injected via Vite `define` in astro.config.mjs. ISO 8601
+// timestamp of the `astro build` moment; used as the sitemap `<lastmod>`.
+declare const __BUILD_TIME__: string;

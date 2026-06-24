@@ -134,6 +134,43 @@ export function ratingOverallAverage(
 }
 
 /**
+ * Minimum number of raters before a venue exposes an `aggregateRating` in its
+ * structured data (SEO B). Below this, the sample is too small to be
+ * representative and a star rich-result could read as noise / manipulation, so
+ * we emit no `aggregateRating` at all (never a fake low-sample value).
+ */
+export const AGGREGATE_RATING_MIN_COUNT = 5;
+
+/** The schema.org AggregateRating projection of a rating summary. */
+export interface VenueAggregateRating {
+  /** Overall average across all dimensions, 1..5, one decimal. */
+  ratingValue: number;
+  /** Number of distinct raters. */
+  ratingCount: number;
+  bestRating: number;
+  worstRating: number;
+}
+
+/**
+ * Project a rating summary to an `aggregateRating` for JSON-LD, or `null` when
+ * the sample is below {@link AGGREGATE_RATING_MIN_COUNT} (or nobody rated).
+ * Equal-weights the four dimensions via {@link ratingOverallAverage}.
+ */
+export function venueAggregateRating(
+  summary: VenueRatingSummaryDto,
+): VenueAggregateRating | null {
+  if (summary.count < AGGREGATE_RATING_MIN_COUNT) return null;
+  const ratingValue = ratingOverallAverage(summary);
+  if (ratingValue === null) return null;
+  return {
+    ratingValue,
+    ratingCount: summary.count,
+    bestRating: RATING_MAX,
+    worstRating: RATING_MIN,
+  };
+}
+
+/**
  * Whether two dimension-score sets are identical. The single equality used by
  * the client's optimistic gate, the server's no-op detection AND the
  * optimistic-apply below, so those three layers cannot drift. `null` (no

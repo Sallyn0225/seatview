@@ -11,13 +11,26 @@ import { prefectureName } from "@/data/prefectures";
 import { venueName } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import {
+  venueAggregateRating,
+  type VenueRatingSummaryDto,
+} from "@/lib/venue-rating";
+import {
   buildBreadcrumbLd,
   buildMusicVenueLd,
   buildOrganizationLd,
+  buildVenuePhotosLd,
   buildWebsiteLd,
+  type VenueImageLd,
 } from "@/lib/seo/jsonld-core";
 
 type JsonLd = Record<string, unknown>;
+
+/** CC BY-NC 4.0 — the single license every uploaded photo is contributed under. */
+export const PHOTO_LICENSE_URL =
+  "https://creativecommons.org/licenses/by-nc/4.0/";
+
+/** Cap how many seat-view photos enter the ImageGallery JSON-LD (keep <head> lean). */
+export const VENUE_PHOTOS_LD_MAX = 30;
 
 /**
  * `MusicVenue` for a venue page. Address is resolved as far as the data goes:
@@ -29,6 +42,7 @@ export function musicVenueLd(
   prefecture: Prefecture | undefined,
   locale: Locale,
   siteUrl: string | URL,
+  ratingSummary?: VenueRatingSummaryDto,
 ): JsonLd {
   return buildMusicVenueLd({
     id: venue.id,
@@ -39,6 +53,29 @@ export function musicVenueLd(
     prefectureName: prefecture ? prefectureName(prefecture, locale) : undefined,
     locale,
     siteUrl,
+    // Only attached when the venue clears the min-sample threshold (SEO B).
+    aggregateRating: ratingSummary
+      ? (venueAggregateRating(ratingSummary) ?? undefined)
+      : undefined,
+  });
+}
+
+/**
+ * `ImageGallery` of a venue's seat-view photos for crawler image discovery.
+ * Caller passes already-resolved (URL + locale-aware caption) images — kept out
+ * of this layer so date/locale formatting stays at the page. Caps at
+ * {@link VENUE_PHOTOS_LD_MAX}. Returns `null` when there are no photos.
+ */
+export function venuePhotosLd(
+  name: string,
+  pageUrl: string,
+  images: readonly VenueImageLd[],
+): JsonLd | null {
+  return buildVenuePhotosLd({
+    name,
+    pageUrl,
+    images: images.slice(0, VENUE_PHOTOS_LD_MAX),
+    license: PHOTO_LICENSE_URL,
   });
 }
 

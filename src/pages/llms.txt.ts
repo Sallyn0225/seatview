@@ -14,7 +14,7 @@ export const GET: APIRoute = ({ request }) => {
   const url = (path: string) => new URL(path, siteUrl).href;
 
   const venueLines = venues
-    .map((v) => `- ${v.name_zh} / ${v.name_romaji}: ${url(`/zh/v/${v.id}`)}`)
+    .map((v) => `- [${v.name_zh} / ${v.name_romaji}](${url(`/zh/v/${v.id}`)})`)
     .join("\n");
 
   const body = `# SeatView
@@ -29,12 +29,11 @@ Languages: Simplified Chinese (zh, default), Japanese (ja), English (en), Korean
 Every route is locale-prefixed, e.g. ${url("/zh/v/k-arena-yokohama")}.
 
 ## Key pages
-- Home / intro: ${url("/zh/")}
-- Suggest a venue (staging): ${url("/zh/staging")}
-- Friend links: ${url("/zh/links")}
-- Privacy: ${url("/zh/privacy")}
-- Terms: ${url("/zh/terms")}
-- Sitemap: ${url("/sitemap.xml")}
+- [Home / intro](${url("/zh/")})
+- [Friend links](${url("/zh/links")})
+- [Privacy](${url("/zh/privacy")})
+- [Terms](${url("/zh/terms")})
+- [Sitemap](${url("/sitemap.xml")})
 
 ## Venues (${venues.length})
 ${venueLines}
