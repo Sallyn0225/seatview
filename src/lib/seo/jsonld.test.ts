@@ -4,6 +4,7 @@ import {
   buildBreadcrumbLd,
   buildMusicVenueLd,
   buildOrganizationLd,
+  buildVenuePhotosLd,
   buildWebsiteLd,
 } from "./jsonld-core.ts";
 
@@ -108,6 +109,46 @@ describe("buildBreadcrumbLd", () => {
         ],
       },
     );
+  });
+});
+
+describe("buildVenuePhotosLd", () => {
+  it("returns null when there are no photos", () => {
+    assert.equal(
+      buildVenuePhotosLd({
+        name: "有明竞技馆",
+        pageUrl: "https://seat.genchi.top/zh/v/ariake-arena",
+        images: [],
+      }),
+      null,
+    );
+  });
+
+  it("builds an ImageGallery of ImageObjects with caption + license", () => {
+    const ld = buildVenuePhotosLd({
+      name: "有明竞技馆",
+      pageUrl: "https://seat.genchi.top/zh/v/ariake-arena",
+      license: "https://creativecommons.org/licenses/by-nc/4.0/",
+      images: [
+        {
+          contentUrl: "https://img.genchi.top/abc.webp",
+          caption: "2階 A列 — ライブ · 2026-05-01",
+          width: 1600,
+          height: 1200,
+        },
+      ],
+    });
+    assert.equal(ld?.["@type"], "ImageGallery");
+    assert.deepEqual(ld?.image, [
+      {
+        "@type": "ImageObject",
+        contentUrl: "https://img.genchi.top/abc.webp",
+        caption: "2階 A列 — ライブ · 2026-05-01",
+        width: 1600,
+        height: 1200,
+        license: "https://creativecommons.org/licenses/by-nc/4.0/",
+      },
+    ]);
   });
 });
 

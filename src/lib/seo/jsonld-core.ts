@@ -96,6 +96,50 @@ export function buildBreadcrumbLd(input: BreadcrumbLdInput): JsonLd {
   };
 }
 
+export interface VenueImageLd {
+  contentUrl: string;
+  /** User-authored seat label (+ event/date); surfaced verbatim, not translated. */
+  caption: string;
+  width?: number | undefined;
+  height?: number | undefined;
+}
+
+export interface VenuePhotosLdInput {
+  name: string;
+  pageUrl: string;
+  images: readonly VenueImageLd[];
+  /** License URL applied to every photo (all uploads share one CC license). */
+  license?: string | undefined;
+}
+
+/**
+ * `ImageGallery` of the seat-view photos rendered on a venue page. The photo
+ * grid hydrates client-side, so these `ImageObject` entries give crawlers an
+ * explicit, render-free signal of each image's URL, caption and license —
+ * the Google Images / image-license path a JS-rendered `<img>` serves weakly.
+ * Returns `null` when there are no photos (caller omits the script entirely).
+ */
+export function buildVenuePhotosLd(input: VenuePhotosLdInput): JsonLd | null {
+  if (input.images.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageGallery",
+    name: input.name,
+    url: input.pageUrl,
+    image: input.images.map((img) => {
+      const obj: JsonLd = {
+        "@type": "ImageObject",
+        contentUrl: img.contentUrl,
+        caption: img.caption,
+      };
+      if (img.width) obj.width = img.width;
+      if (img.height) obj.height = img.height;
+      if (input.license) obj.license = input.license;
+      return obj;
+    }),
+  };
+}
+
 /** `WebSite` for the home page. No SearchAction (search is client-side only). */
 export function buildWebsiteLd(
   siteUrl: string | URL,
