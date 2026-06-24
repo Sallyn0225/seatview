@@ -46,6 +46,14 @@ export interface Messages {
     notFoundTitle: string;
     notFoundBody: string;
     backHome: string;
+    /** SEO `<meta description>` + sr-only summary. Slots: `{name}` `{location}`
+     *  `{subMaps}` `{count}`. Never machine-translate embedded seat labels. */
+    seoDescription: string;
+    /** SEO description variant when the venue has zero photos yet. Slots:
+     *  `{name}` `{location}` `{subMaps}`. */
+    seoDescriptionEmpty: string;
+    /** sr-only heading above the recorded seat-view list (crawler-visible). */
+    seoSeatListLabel: string;
   };
   seatmap: {
     /** Empty sub-map: gentle invitation (shape-seatmap §8). */
@@ -604,6 +612,11 @@ const zh: Messages = {
     notFoundTitle: "这个场馆我们还没收录。",
     notFoundBody: "要不去首页看看其他场馆？",
     backHome: "回到首页",
+    seoDescription:
+      "「{name}」（{location}）的真实座位视野照片图鉴，收录{subMaps}等区域的观众实拍视角，目前共 {count} 张实拍照片。",
+    seoDescriptionEmpty:
+      "「{name}」（{location}）的真实座位视野照片图鉴，涵盖{subMaps}等区域，正在征集观众实拍视角。",
+    seoSeatListLabel: "已收录座位视角",
   },
   seatmap: {
     emptyBody: "这个区域还没有粉丝分享视角。",

@@ -47,6 +47,11 @@ const en: Messages = {
     notFoundTitle: "We haven't collected this venue yet.",
     notFoundBody: "Want to look at other venues from the home page?",
     backHome: "Back to home",
+    seoDescription:
+      "Real seat-view photo atlas for {name} ({location}). Covers audience views from areas such as {subMaps}, with {count} real photos so far.",
+    seoDescriptionEmpty:
+      "Real seat-view photo atlas for {name} ({location}). Covering areas such as {subMaps} — audience photos welcome.",
+    seoSeatListLabel: "Seat views on record",
   },
   seatmap: {
     emptyBody: "No one has shared a view from this area yet.",

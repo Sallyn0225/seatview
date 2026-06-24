@@ -2,15 +2,18 @@
 import "@/styles/global.css";
 import { getMessages } from "@/i18n";
 import type { Locale } from "@/i18n/config";
+import { localeAlternates } from "@/lib/seo/hreflang";
 
 interface Props {
   title?: string;
+  description?: string;
   locale?: Locale;
 }
 
 const locale: Locale = Astro.props.locale ?? Astro.locals.locale ?? "zh";
 const t = getMessages(locale);
 const title = Astro.props.title ?? t.meta.title;
+const description = Astro.props.description ?? t.meta.tagline;
 const HTML_LANG: Record<Locale, string> = {
   zh: "zh-Hans",
   ja: "ja",
@@ -27,6 +30,9 @@ const OG_LOCALE: Record<Locale, string> = {
 const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? Astro.url.origin;
 const ogImage = new URL("/og.jpg", siteUrl).href;
 const canonical = new URL(Astro.url.pathname, siteUrl).href;
+// hreflang alternates for the four locale-prefixed variants of this route
+// (+ x-default). Skips paths with no locale prefix (e.g. error fallbacks).
+const alternates = localeAlternates(Astro.url.pathname, siteUrl);
 ---
 
 <!doctype html>
@@ -34,8 +40,15 @@ const canonical = new URL(Astro.url.pathname, siteUrl).href;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={t.meta.tagline} />
+    <meta name="description" content={description} />
     <title>{title}</title>
+
+    <link rel="canonical" href={canonical} />
+    {
+      alternates.map((alt) => (
+        <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
+      ))
+    }
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -55,7 +68,7 @@ const canonical = new URL(Astro.url.pathname, siteUrl).href;
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="SeatView" />
     <meta property="og:title" content={title} />
-    <meta property="og:description" content={t.meta.tagline} />
+    <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
@@ -65,7 +78,7 @@ const canonical = new URL(Astro.url.pathname, siteUrl).href;
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={t.meta.tagline} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
     <!-- Page-specific head extras (e.g. the venue page's giscus:backlink). -->
     <slot name="head" />
