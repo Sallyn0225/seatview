@@ -129,12 +129,15 @@ describe("venueAggregateRating", () => {
   });
 
   it("projects ratingValue/count/best/worst at the threshold", () => {
-    assert.deepEqual(venueAggregateRating(summaryWith(AGGREGATE_RATING_MIN_COUNT)), {
-      ratingValue: 4,
-      ratingCount: AGGREGATE_RATING_MIN_COUNT,
-      bestRating: RATING_MAX,
-      worstRating: RATING_MIN,
-    });
+    assert.deepEqual(
+      venueAggregateRating(summaryWith(AGGREGATE_RATING_MIN_COUNT)),
+      {
+        ratingValue: 4,
+        ratingCount: AGGREGATE_RATING_MIN_COUNT,
+        bestRating: RATING_MAX,
+        worstRating: RATING_MIN,
+      },
+    );
   });
 });
 
