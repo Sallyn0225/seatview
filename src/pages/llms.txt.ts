@@ -30,7 +30,6 @@ Every route is locale-prefixed, e.g. ${url("/zh/v/k-arena-yokohama")}.
 
 ## Key pages
 - Home / intro: ${url("/zh/")}
-- Suggest a venue (staging): ${url("/zh/staging")}
 - Friend links: ${url("/zh/links")}
 - Privacy: ${url("/zh/privacy")}
 - Terms: ${url("/zh/terms")}

@@ -42,7 +42,7 @@ for (const v of venues) {
 const r2BaseUrl = import.meta.env.PUBLIC_R2_BASE_URL ?? "";
 ---
 
-<Layout locale={locale} title={`${t.admin.title} · SeatView`}>
+<Layout locale={locale} title={`${t.admin.title} · SeatView`} noindex>
   <div class="flex min-h-screen flex-col">
     <SiteHeader locale={locale} />
     <main class="flex-1">

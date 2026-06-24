@@ -38,5 +38,15 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    define: {
+      // Build-time timestamp, inlined once when this config is evaluated (the
+      // `astro build` moment on the build machine). Used as the sitemap
+      // `<lastmod>` — stable across requests within a deploy. The SSR sitemap
+      // route runs per-request, so a `new Date()` there would be request time
+      // and make lastmod churn on every hit; this changes only on redeploy. The
+      // sitemap is kept intentionally D1-free, so per-venue freshness isn't
+      // available — this is a site-wide "last deployed" signal.
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
   },
 });

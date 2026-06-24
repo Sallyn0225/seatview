@@ -8,6 +8,10 @@ interface Props {
   title?: string;
   description?: string;
   locale?: Locale;
+  // When true, emit `<meta name="robots" content="noindex,follow">` so crawlers
+  // skip indexing this page but still follow its links. Used by low-value UGC /
+  // gated pages (staging, admin) that should not surface in search results.
+  noindex?: boolean;
 }
 
 const locale: Locale = Astro.props.locale ?? Astro.locals.locale ?? "zh";
@@ -33,6 +37,7 @@ const canonical = new URL(Astro.url.pathname, siteUrl).href;
 // hreflang alternates for the four locale-prefixed variants of this route
 // (+ x-default). Skips paths with no locale prefix (e.g. error fallbacks).
 const alternates = localeAlternates(Astro.url.pathname, siteUrl);
+const noindex = Astro.props.noindex ?? false;
 ---
 
 <!doctype html>
@@ -43,11 +48,16 @@ const alternates = localeAlternates(Astro.url.pathname, siteUrl);
     <meta name="description" content={description} />
     <title>{title}</title>
 
+    {noindex && <meta name="robots" content="noindex,follow" />}
+
     <link rel="canonical" href={canonical} />
     {
-      alternates.map((alt) => (
-        <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
-      ))
+      /* hreflang advertises an indexable locale cluster — skip it on noindex
+         pages so we don't invite indexing of a page we've asked to exclude. */
+      !noindex &&
+        alternates.map((alt) => (
+          <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />
+        ))
     }
 
     <link rel="icon" href="/favicon.ico" sizes="any" />
