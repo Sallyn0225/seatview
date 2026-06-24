@@ -16,9 +16,11 @@ import VenueMain from "@/islands/VenueMain.tsx";
 import VenueComments from "@/islands/VenueComments.tsx";
 import VenuePhotoCountLine from "@/islands/VenuePhotoCountLine.tsx";
 import { asLocale } from "@/i18n/config";
-import { getMessages, venueName } from "@/i18n";
+import { getMessages, venueName, subMapLabel } from "@/i18n";
 import { getVenue } from "@/data/venues";
 import { getPrefecture, prefectureName } from "@/data/prefectures";
+import { fillTemplate, performanceDate } from "@/lib/format";
+import { musicVenueLd, breadcrumbLd } from "@/lib/seo/jsonld";
 import { readSubMapFromUrl, resolveInitialSubMapId } from "@/lib/submap";
 import { readPhotoIdFromUrl } from "@/lib/share";
 import { STORAGE_KEYS } from "@/lib/storage";
@@ -108,6 +110,37 @@ if (venue && env.DB) {
 const prefecture = venue ? getPrefecture(venue.prefecture) : undefined;
 const title = venue ? `${venueName(venue, locale)} · SeatView` : "SeatView";
 
+// SEO (R1.1/R1.3): a per-venue <meta description> + a crawler-visible sr-only
+// summary, both built from data the page already rendered server-side (the
+// `initialPhotoCounts` aggregate + the initial sub-map's `initialPhotos`). No
+// extra D1 query, no visible UI change. User-authored seat labels / event names
+// are surfaced verbatim (R9.5 — never machine-translated).
+let seoDescription = t.meta.tagline;
+let seoSummaryName = "";
+if (venue) {
+  const localeName = venueName(venue, locale);
+  const location = [
+    prefecture ? prefectureName(prefecture, locale) : "",
+    venue.city,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const subMapList = venue.subMaps
+    .map((s) => subMapLabel(s, locale))
+    .join("、");
+  const totalPhotos = initialPhotoCounts?.total ?? 0;
+  seoSummaryName = localeName;
+  seoDescription = fillTemplate(
+    totalPhotos > 0 ? t.venue.seoDescription : t.venue.seoDescriptionEmpty,
+    {
+      name: localeName,
+      location,
+      subMaps: subMapList,
+      count: String(totalPhotos),
+    },
+  );
+}
+
 // SSR-read the venue rating aggregate (ONE `venue_rating_agg` row — never an
 // AVG over rating rows) + this viewer's own score (by salted ip_hash, same
 // privacy model as staging votedByMe). Fails soft to a zero summary so a D1
@@ -143,14 +176,30 @@ const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? Astro.url.origin;
 const giscusBacklink = venue
   ? new URL(`/${locale}/v/${venue.id}`, siteUrl).href
   : undefined;
+
+// Structured data (R2.2): MusicVenue + BreadcrumbList, injected into <head>.
+const jsonLd = venue
+  ? [
+      musicVenueLd(venue, prefecture, locale, siteUrl),
+      breadcrumbLd(venue, prefecture, locale, siteUrl, t.nav.home),
+    ]
+  : [];
 ---
 
-<Layout locale={locale} title={title}>
+<Layout locale={locale} title={title} description={seoDescription}>
   {
     venue && giscusBacklink ? (
       <meta slot="head" name="giscus:backlink" content={giscusBacklink} />
     ) : null
   }
+  {jsonLd.map((ld) => (
+    <script
+      is:inline
+      slot="head"
+      type="application/ld+json"
+      set:html={JSON.stringify(ld)}
+    />
+  ))}
   {
     venue ? (
       <Fragment>
@@ -323,6 +372,32 @@ const giscusBacklink = venue
 
           {/* Main column: breadcrumb → title → tabs → seatmap → upload → grid. */}
           <main class="min-w-0 flex-1">
+            {/* SEO summary (R1.3): visually hidden but present in the DOM /
+                accessibility tree, so crawlers and AT read the venue description
+                + real seat labels even before the React islands hydrate. Pure
+                text — no layout impact. */}
+            <section class="sr-only">
+              <h2>{seoSummaryName}</h2>
+              <p>{seoDescription}</p>
+              {initialPhotos.length > 0 && (
+                <Fragment>
+                  <h3>{t.venue.seoSeatListLabel}</h3>
+                  <ul>
+                    {initialPhotos.map((p) => {
+                      const date = performanceDate(p.performanceDate, locale);
+                      const extra = [p.eventName, date]
+                        .filter(Boolean)
+                        .join(" · ");
+                      return (
+                        <li>
+                          {extra ? `${p.seatLabel} — ${extra}` : p.seatLabel}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Fragment>
+              )}
+            </section>
             <div class="mx-auto max-w-[900px] px-4 py-6 lg:px-8 lg:py-8">
               {/* Mobile-only search (header search is desktop-only). */}
               <div class="mb-4 lg:hidden">

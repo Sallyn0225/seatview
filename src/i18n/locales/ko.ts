@@ -46,6 +46,11 @@ const ko: Messages = {
     notFoundTitle: "이 회장은 아직 수록하지 않았어요.",
     notFoundBody: "홈에서 다른 회장을 둘러볼까요?",
     backHome: "홈으로",
+    seoDescription:
+      "{name}({location})의 실제 좌석 시야 사진 도감. {subMaps} 등 구역의 관객 실사 시야를 수록하며 현재 {count}장의 사진이 있습니다.",
+    seoDescriptionEmpty:
+      "{name}({location})의 실제 좌석 시야 사진 도감. {subMaps} 등 구역을 대상으로 관객 사진을 모집 중입니다.",
+    seoSeatListLabel: "수록된 좌석 시야",
   },
   seatmap: {
     emptyBody: "이 구역에는 아직 공유된 시점이 없어요.",

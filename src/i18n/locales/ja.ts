@@ -42,6 +42,11 @@ const ja: Messages = {
     notFoundTitle: "この会場はまだ収録されていません。",
     notFoundBody: "トップから他の会場を探してみますか？",
     backHome: "ホームへ",
+    seoDescription:
+      "「{name}」（{location}）の実際の座席からの見え方を集めた写真アトラス。{subMaps}などのエリアの観客投稿を収録し、現在 {count} 枚の実写があります。",
+    seoDescriptionEmpty:
+      "「{name}」（{location}）の実際の座席からの見え方を集めた写真アトラス。{subMaps}などのエリアを対象に、観客の投稿を募集中です。",
+    seoSeatListLabel: "収録済みの座席ビュー",
   },
   seatmap: {
     emptyBody: "このエリアにはまだ視点投稿がありません。",

@@ -24,6 +24,7 @@ import SectionHeading from "@/components/SectionHeading.astro";
 import { asLocale } from "@/i18n/config";
 import { getMessages, venueName } from "@/i18n";
 import { getVenue } from "@/data/venues";
+import { websiteLd, organizationLd } from "@/lib/seo/jsonld";
 
 const locale = asLocale(Astro.params.lang);
 const t = getMessages(locale);
@@ -54,9 +55,26 @@ const steps = [
 
 // Split the upload-rule-3 line around the {license} slot for the inline link.
 const rule3Parts = t.home.rule3.split("{license}");
+
+// Structured data (R2.3): WebSite + Organization, injected into <head>.
+const siteUrl = import.meta.env.PUBLIC_SITE_URL ?? Astro.url.origin;
+const jsonLd = [
+  websiteLd(siteUrl, locale, "SeatView", t.meta.tagline),
+  organizationLd(siteUrl, "SeatView"),
+];
 ---
 
 <Layout locale={locale}>
+  {
+    jsonLd.map((ld) => (
+      <script
+        is:inline
+        slot="head"
+        type="application/ld+json"
+        set:html={JSON.stringify(ld)}
+      />
+    ))
+  }
   <div class="flex min-h-screen flex-col">
     <SiteHeader locale={locale} />
 
