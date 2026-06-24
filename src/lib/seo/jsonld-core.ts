@@ -4,6 +4,13 @@ function abs(path: string, siteUrl: string | URL): string {
   return new URL(path, siteUrl).href;
 }
 
+export interface AggregateRatingLd {
+  ratingValue: number;
+  ratingCount: number;
+  bestRating: number;
+  worstRating: number;
+}
+
 export interface MusicVenueLdInput {
   id: string;
   name: string;
@@ -13,6 +20,9 @@ export interface MusicVenueLdInput {
   prefectureName?: string | undefined;
   locale: string;
   siteUrl: string | URL;
+  // Omitted when the venue has too few ratings to expose (SEO B); only attached
+  // when present, so low-sample venues carry no aggregateRating at all.
+  aggregateRating?: AggregateRatingLd | undefined;
 }
 
 export function buildMusicVenueLd(input: MusicVenueLdInput): JsonLd {
@@ -32,6 +42,15 @@ export function buildMusicVenueLd(input: MusicVenueLdInput): JsonLd {
   };
   if (input.imagePath) ld.image = abs(input.imagePath, input.siteUrl);
   if (input.aliases.length > 0) ld.alternateName = [...input.aliases];
+  if (input.aggregateRating) {
+    ld.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: input.aggregateRating.ratingValue,
+      ratingCount: input.aggregateRating.ratingCount,
+      bestRating: input.aggregateRating.bestRating,
+      worstRating: input.aggregateRating.worstRating,
+    };
+  }
   return ld;
 }
 

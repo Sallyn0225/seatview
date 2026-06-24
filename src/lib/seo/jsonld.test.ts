@@ -38,6 +38,41 @@ describe("buildMusicVenueLd", () => {
   });
 });
 
+describe("buildMusicVenueLd aggregateRating", () => {
+  const base = {
+    id: "ariake-arena",
+    name: "有明竞技馆",
+    aliases: [] as string[],
+    city: "江東区",
+    locale: "zh",
+    siteUrl: "https://seat.genchi.top",
+  };
+
+  it("attaches an AggregateRating when one is provided", () => {
+    const ld = buildMusicVenueLd({
+      ...base,
+      aggregateRating: {
+        ratingValue: 4.3,
+        ratingCount: 12,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    });
+    assert.deepEqual(ld.aggregateRating, {
+      "@type": "AggregateRating",
+      ratingValue: 4.3,
+      ratingCount: 12,
+      bestRating: 5,
+      worstRating: 1,
+    });
+  });
+
+  it("omits aggregateRating entirely when not provided", () => {
+    const ld = buildMusicVenueLd(base);
+    assert.equal("aggregateRating" in ld, false);
+  });
+});
+
 describe("buildBreadcrumbLd", () => {
   it("builds Home -> Prefecture -> Venue breadcrumbs when prefecture is known", () => {
     assert.deepEqual(

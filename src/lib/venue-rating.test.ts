@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   applyOptimisticRating,
+  AGGREGATE_RATING_MIN_COUNT,
   emptyRatingSums,
   isValidRatingScore,
   isValidRatingScores,
   ratingDimensionAverage,
   ratingOverallAverage,
+  venueAggregateRating,
   RATING_DIMENSIONS,
   RATING_MAX,
   RATING_MIN,
@@ -98,6 +100,41 @@ describe("rating averages", () => {
       yourScores: null,
     };
     assert.equal(ratingOverallAverage(summary), 4.3);
+  });
+});
+
+describe("venueAggregateRating", () => {
+  // A summary with `count` raters whose dimension sums average to 4.0 overall
+  // (each of the 4 dimensions sums to count*4).
+  const summaryWith = (count: number): VenueRatingSummaryDto => ({
+    count,
+    sums: {
+      view: count * 4,
+      sound: count * 4,
+      amenities: count * 4,
+      transit: count * 4,
+    },
+    yourScores: null,
+  });
+
+  it("returns null when nobody rated", () => {
+    assert.equal(venueAggregateRating(summaryWith(0)), null);
+  });
+
+  it("returns null just below the min-count threshold", () => {
+    assert.equal(
+      venueAggregateRating(summaryWith(AGGREGATE_RATING_MIN_COUNT - 1)),
+      null,
+    );
+  });
+
+  it("projects ratingValue/count/best/worst at the threshold", () => {
+    assert.deepEqual(venueAggregateRating(summaryWith(AGGREGATE_RATING_MIN_COUNT)), {
+      ratingValue: 4,
+      ratingCount: AGGREGATE_RATING_MIN_COUNT,
+      bestRating: RATING_MAX,
+      worstRating: RATING_MIN,
+    });
   });
 });
 

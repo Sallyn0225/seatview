@@ -180,7 +180,7 @@ const giscusBacklink = venue
 // Structured data (R2.2): MusicVenue + BreadcrumbList, injected into <head>.
 const jsonLd = venue
   ? [
-      musicVenueLd(venue, prefecture, locale, siteUrl),
+      musicVenueLd(venue, prefecture, locale, siteUrl, ratingSummary),
       breadcrumbLd(venue, prefecture, locale, siteUrl, t.nav.home),
     ]
   : [];

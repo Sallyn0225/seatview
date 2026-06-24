@@ -11,6 +11,10 @@ import { prefectureName } from "@/data/prefectures";
 import { venueName } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import {
+  venueAggregateRating,
+  type VenueRatingSummaryDto,
+} from "@/lib/venue-rating";
+import {
   buildBreadcrumbLd,
   buildMusicVenueLd,
   buildOrganizationLd,
@@ -29,6 +33,7 @@ export function musicVenueLd(
   prefecture: Prefecture | undefined,
   locale: Locale,
   siteUrl: string | URL,
+  ratingSummary?: VenueRatingSummaryDto,
 ): JsonLd {
   return buildMusicVenueLd({
     id: venue.id,
@@ -39,6 +44,10 @@ export function musicVenueLd(
     prefectureName: prefecture ? prefectureName(prefecture, locale) : undefined,
     locale,
     siteUrl,
+    // Only attached when the venue clears the min-sample threshold (SEO B).
+    aggregateRating: ratingSummary
+      ? (venueAggregateRating(ratingSummary) ?? undefined)
+      : undefined,
   });
 }
 
