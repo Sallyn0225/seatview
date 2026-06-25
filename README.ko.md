@@ -66,13 +66,14 @@
 
 - **광역자치단체별 탐색** —— 왼쪽 공연장 트리는 일본 행정 구역으로 그룹화되어 접을 수 있습니다. Fuse.js 클라이언트 측 퍼지 검색으로 중국어 / 일본어 / 로마자 별칭까지 매칭됩니다.
 - **좌석도 마킹** —— 공연장 공식 좌석도(다중 레이어 / 다중 구역 tag 전환 지원) 위에서 다른 사용자가 표시한 좌석 포인트를 확인하고, 인접한 포인트는 자동으로 묶여 개수가 표시됩니다.
-- **실제 시야 Lightbox** —— 마커를 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 볼 수 있습니다. Lightbox 는 현재 사진을 `?photo=` 로 URL에 반영하고, 공유 버튼은 공연장 / 구역 문맥이 담긴 deep link 를 복사합니다. 아래의 워터폴(masonry)에는 해당 공연장의 모든 투고가 표시됩니다.
+- **실제 시야 Lightbox** —— 마커를 클릭하면 그 좌석의 실사 사진 + 좌석 번호 / 텍스트 설명을 볼 수 있습니다. 아래쪽의 「인접 좌석」 띠를 스크롤하면 같은 클러스터의 이웃 좌석을 둘러볼 수 있고, 「좌석도에서 위치 찾기」 는 좌석도의 해당 마커로 다시 점프합니다. Lightbox 는 현재 사진을 `?photo=` 로 URL에 반영하고, 공유 버튼은 공연장 / 구역 문맥이 담긴 deep link 를 복사합니다. 아래의 워터폴(masonry)에는 해당 공연장의 모든 투고가 표시됩니다.
 - **공연장 사진 수 표시** —— 공연장 제목 아래에 현재 구역과 전체 공연장의 사진 수를 표시하며, 좌석도 구역 전환이나 새 업로드 후 즉시 동기화됩니다.
 - **공연장 댓글과 평점** —— 공연장 제목 영역의 조용한 진입점에 종합 점수 / 평점 수를 표시하고 오른쪽 드로어를 엽니다. 위쪽은 익명 네 항목 1~5점 별점(시야, 소리, 주변 편의, 교통. 다시 평가하면 점수 변경), 아래쪽은 `venue:<id>` 에 엄격하게 매핑된 giscus 댓글이며, 언어 경로와 좌석도 탭을 넘어 같은 토론을 공유합니다.
 - **회원 가입 없는 업로드** —— 마킹(전체 화면 줌으로 정밀하게 배치하는 모드 제공) → 이미지 선택 → 클라이언트 측에서 WebP 로 압축(EXIF 제거) → HMAC ticket 의 2단계 제출. 완료되지 않은 단계는 인라인 안내로 유도하며, 전 과정에 IP 요청 빈도 제한 + Turnstile 남용 방지가 적용됩니다.
 - **다국어 i18n** —— `/zh` `/ja` `/en` `/ko` 4개 프리픽스 라우팅, 루트 직하 `/` 는 `Accept-Language` 에 따라 자동 리다이렉트(`zh` / `ja` 는 대등한 두 축이며, `en` / `ko` 는 접근성을 위한 번역 레이어).
 - **공연장 크라우드소싱** —— 사이트 내 「보고 싶은 공연장」 임시 보관 영역에서 +1(공개 득표 수 + 일일 요청 제한 + 동명 중복 제거)하거나, GitHub PR 로 공연장 JSON 을 직접 제출할 수 있습니다.
 - **메인테이너 관리자** —— `/admin` 은 Cloudflare Access 의 엣지 인증으로 보호되며, 투고의 소프트 삭제를 지원합니다.
+- **SEO 와 AI 발견 가능성** —— 모든 페이지는 canonical + 4개 로케일 hreflang(`x-default` 포함)을 내보냅니다. 공연장 페이지는 `MusicVenue`(평점이 충분할 때 `aggregateRating` 포함) / `BreadcrumbList` / 좌석 사진 `ImageGallery` 구조화 데이터를 주입하고, 홈페이지는 `WebSite` / `Organization` 을 주입합니다. 사이트 루트는 `/sitemap.xml`(로케일 × 경로 + hreflang 대체 링크)과 `/llms.txt`(AI 용 플레인 텍스트 공연장 인덱스)를 제공하며, 가치가 낮은 페이지(임시 보관 / 관리자)는 `noindex,follow` 로 표시됩니다.
 
 ## 기술 스택
 
@@ -96,6 +97,7 @@
 | 워터폴 | `react-photo-album`(masonry) | |
 | 좌석도 줌 | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` 으로 프로그래밍 방식 줌 |
 | i18n | **Astro 내장 i18n 라우팅** | `/zh` `/ja` `/en` `/ko` 4개 프리픽스, 루트 직하는 302 |
+| SEO / 구조화 데이터 | **수작업 JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`(순수 함수 + 단위 테스트): canonical / 4개 로케일 hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |
 | ULID | **자체 구현**(`src/server/id.ts`) | `ulid` 패키지는 사용하지 않음(import 시 `detectPrng()` 가 workerd 에서 예외를 던지기 때문) |
 
 > [!NOTE]
@@ -196,7 +198,7 @@ npm run deploy
 > **메인테이너 관리자**(`/admin` + `/api/admin/*`)는 **Cloudflare Access (Zero Trust)** 에 의해 엣지에서 보호됩니다: 대시보드의 Zero Trust → Access → Applications 에서 `/*/admin` 과 `/api/admin/*` 를 포함하는 self-hosted 애플리케이션을 새로 만들고, Allow → 메인테이너 이메일의 policy 를 하나 추가하세요. Access 가 인증 후 `Cf-Access-Authenticated-User-Email` 을 주입하면 Worker 는 그 헤더를 신뢰합니다(`src/server/admin-auth.ts`). 익명 트래픽은 Worker 에 도달하지 못합니다. 프로덕션에서는 admin 환경 변수가 **필요 없습니다**. 프로덕션에서 `DEV_ADMIN_EMAIL` 을 **절대 설정하지 마세요** —— 그렇게 하면 SSO 게이트웨이를 우회하게 됩니다.
 
 > [!NOTE]
-> 본 저장소에는 이미 일본 / 일부 해외 공연장 항목 71개(`public/seatmaps/` 아래 좌석도 이미지 자산 85개) + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
+> 본 저장소에는 이미 일본 / 일부 해외 공연장 항목 74개(`public/seatmaps/` 아래 좌석도 이미지 자산 90개) + demo 마커가 포함되어 있습니다. 프로덕션의 실제 마커는 사용자가 업로드 플로우를 통해 D1 에 기록합니다. `npm run db:migrate:prod` 를 다시 실행해야 하는 경우는 DB schema 를 변경했을 때뿐이며, 순수 프런트엔드 변경에는 마이그레이션이 필요 없습니다.
 
 ## 작동 원리
 
@@ -241,6 +243,16 @@ presigned URL 을 통한 클라이언트 직접 업로드가 아니라 **sign + 
 
 Lightbox 공유 URL 은 사진 ULID 를 기준으로 합니다: `/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`. `?photo=` 가 있을 때만 기본 키 조회를 한 번 수행하고, 사진이 공개 상태이며 현재 공연장에 속하는지 확인한 뒤 사진 자체의 sub-map 으로 오래된 `?tab=` 을 덮어쓰고 Lightbox 를 자동으로 엽니다. 해석할 수 없는 링크는 일반 공연장 페이지로 폴백합니다. 탐색 중에는 Lightbox 가 `replaceState` 로 `?photo=` 를 갱신하고, 공유 버튼은 현재 언어의 짧은 문구 + canonical link 를 복사합니다.
 
+Lightbox 아래쪽에는 「인접 좌석」 가로 띠(`NearbyStrip`, 같은 클러스터 이웃 좌석의 썸네일)도 있습니다. 썸네일을 탭하면 그 이웃 좌석의 사진으로 바로 전환됩니다. 「좌석도에서 위치 찾기」 버튼은 Lightbox 를 닫고 현재 사진을 선택 상태로 표시한 뒤, 좌석도의 해당 마커로 다시 스크롤 / 하이라이트합니다.
+
+### SEO 와 구조화 데이터 / AI 발견 가능성
+
+`Layout.astro` 는 모든 페이지에 `<link rel="canonical">` 과 4개 로케일 hreflang(`zh-Hans` / `ja` / `en` / `ko` + `x-default`, `src/lib/seo/hreflang.ts` 가 생성)을 내보냅니다. `description` 은 페이지별로 덮어쓸 수 있으며, 없으면 사이트 태그라인으로 폴백합니다. 가치가 낮거나 게이트된 페이지(임시 보관, 관리자)는 `noindex` 를 전달하며, 이는 `<meta name="robots" content="noindex,follow">` 를 내보내고 hreflang 을 생략합니다.
+
+공연장 페이지는 SSR 에서 세 가지 JSON-LD 블록을 주입합니다: `MusicVenue`(주소 / 별칭, 평점 표본이 충분할 때 `aggregateRating` 추가), `BreadcrumbList`(홈 → 광역자치단체 → 공연장), 그리고 공연장 좌석 사진의 `ImageGallery`(각 `ImageObject` 에 캡션 + CC 라이선스를 담아 크롤러에 렌더링 없는 이미지 신호를 제공). 홈페이지는 `WebSite` + `Organization` 을 주입합니다. 빌드 로직은 `src/lib/seo/jsonld-core.ts`(순수 함수, `*.test.ts` 포함)에 있습니다.
+
+사이트 루트는 또한 두 개의 SSR 엔드포인트를 제공하며, 둘 다 정적 `venues` 배열에서 D1 접근 없이 생성됩니다: `/sitemap.xml`(로케일 × 경로마다 하나의 `<url>`, 전체 언어 `xhtml:link` 대체 링크 + `x-default`, 그리고 빌드 시점 스탬프 `__BUILD_TIME__` 로 설정된 `<lastmod>` 는 재배포 때만 변경)과 `/llms.txt`([llmstxt.org](https://llmstxt.org/) 스타일의 플레인 텍스트 개요 + 모든 공연장의 canonical zh 링크, AI 크롤링용)입니다. `public/robots.txt` 는 모든 UA 를 허용하고 sitemap 을 가리킵니다.
+
 ### 핵심 구현 선택
 
 <details>
@@ -279,9 +291,9 @@ seatmap-real/
     ├── i18n/                 # locale 설정 + 문구
     ├── data/                 # 공연장 트리 + 47개 광역자치단체
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 단일 진실 공급원
-    ├── lib/                  # 레이어 간 계약 + 클라이언트 유틸리티(upload / staging / venue-rating / share / photo counts 포함)
+    ├── lib/                  # 레이어 간 계약 + 클라이언트 유틸리티(upload / staging / venue-rating / share / photo counts / transport 포함; SEO 헬퍼는 lib/seo)
     ├── server/               # Worker 측: db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/(upload·staging·rating·admin·photos) + [lang]/(홈 / 공연장 페이지 / 임시 보관 영역 / 관리자 / 개인정보 / 이용약관)
+    ├── pages/                # api/(upload·staging·rating·admin·photos) + [lang]/(홈 / 공연장 페이지 / 임시 보관 영역 / 관리자 / 개인정보 / 이용약관) + sitemap.xml / llms.txt(사이트 루트 SSR 엔드포인트)
     └── styles/global.css     # Tailwind v4.3 + 디자인 토큰(OKLCH 중성색 + 주홍 accent)
 ```
 

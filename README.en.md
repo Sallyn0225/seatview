@@ -66,13 +66,14 @@ The core experience is just two steps — **tap a seat on the seating chart → 
 
 - **Browse by prefecture** — the venue tree on the left is grouped and collapsible by Japanese administrative divisions; Fuse.js client-side fuzzy search matches Chinese / Japanese / romaji aliases.
 - **Seating-chart markers** — view seat markers placed by other users on the venue's official seating chart (supports multi-layer / multi-zone tag switching); adjacent markers auto-cluster and show a count.
-- **Real-view Lightbox** — click a marker to see that seat's actual photo + seat number / text description; the Lightbox reflects the current photo as `?photo=`, and the share button copies a venue / area-aware deep link; the masonry feed below shows every submission for that venue.
+- **Real-view Lightbox** — click a marker to see that seat's actual photo + seat number / text description; a "nearby seats" strip at the bottom scrolls through same-cluster neighbors, and "locate on the seating chart" jumps back to the matching marker on the chart; the Lightbox reflects the current photo as `?photo=`, and the share button copies a venue / area-aware deep link; the masonry feed below shows every submission for that venue.
 - **Venue photo counts** — under the venue title, current-area and whole-venue photo counts stay in sync when switching seating-chart areas or after a new upload.
 - **Venue comments and ratings** — a quiet entry in the venue title area shows the overall score / rating count and opens a right drawer: anonymous four-dimension 1–5-star ratings on top (view, sound, amenities, transit; rating again changes your scores), giscus comments below, strictly mapped to `venue:<id>` and shared across locales and seating-chart tabs.
 - **Registration-free uploads** — mark (with an optional full-screen zoom mode for precise placement) → pick image → compress to WebP client-side (EXIF stripped) → two-stage HMAC-ticket submission; in-line guidance nudges you through unfinished steps, with IP rate limiting + Turnstile guarding the whole flow.
 - **Multilingual i18n** — `/zh` `/ja` `/en` `/ko` four-prefix routing; the bare root `/` auto-redirects by `Accept-Language` (zh / ja are equal tracks, while en / ko are an accessibility translation layer).
 - **Venue crowdsourcing** — +1 a venue in the in-site "venues you want to see" staging area (public vote count + daily rate limit + name dedup), or submit venue JSON directly via a GitHub PR.
 - **Maintainer admin** — `/admin` is edge-authenticated by Cloudflare Access and supports soft-deleting submissions.
+- **SEO and AI discoverability** — every page emits a canonical + four-locale hreflang (incl. `x-default`); venue pages inject `MusicVenue` (with `aggregateRating` when there are enough ratings) / `BreadcrumbList` / seat-photo `ImageGallery` structured data, and the home page injects `WebSite` / `Organization`; the site root serves `/sitemap.xml` (locale × path + hreflang alternates) and `/llms.txt` (a plain-text venue index for AI), while low-value pages (staging / admin) are marked `noindex,follow`.
 
 ## Tech Stack
 
@@ -96,6 +97,7 @@ The core experience is just two steps — **tap a seat on the seating chart → 
 | Masonry | `react-photo-album` (masonry) | |
 | Seating-chart zoom | **`react-zoom-pan-pinch` v4.0** | programmatic zoom via `setTransform` / `resetTransform` |
 | i18n | **Astro built-in i18n routing** | `/zh` `/ja` `/en` `/ko` four prefixes, bare root 302 |
+| SEO / structured data | **hand-written JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/` (pure functions + unit tests): canonical / four-locale hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |
 | ULID | **self-implemented** (`src/server/id.ts`) | not the `ulid` package (its `detectPrng()` throws on import under workerd) |
 
 > [!NOTE]
@@ -196,7 +198,7 @@ npm run deploy
 > The **maintainer admin** (`/admin` + `/api/admin/*`) is protected at the edge by **Cloudflare Access (Zero Trust)**: in the dashboard, Zero Trust → Access → Applications, create a self-hosted app covering `/*/admin` and `/api/admin/*`, and add an Allow → maintainer-email policy. After Access authenticates, it injects `Cf-Access-Authenticated-User-Email`, and the Worker trusts that header (`src/server/admin-auth.ts`); anonymous traffic never reaches the Worker. Production needs **no** admin env vars; **never** set `DEV_ADMIN_EMAIL` in production — that would bypass the SSO gateway.
 
 > [!NOTE]
-> This repo already ships 71 Japanese / overseas venue entries (85 seating-chart image assets under `public/seatmaps/`) + demo markers. Real production markers are written to D1 by users via the upload flow. You only need to re-run `npm run db:migrate:prod` after changing the DB schema; pure frontend changes need no migration.
+> This repo already ships 74 Japanese / overseas venue entries (90 seating-chart image assets under `public/seatmaps/`) + demo markers. Real production markers are written to D1 by users via the upload flow. You only need to re-run `npm run db:migrate:prod` after changing the DB schema; pure frontend changes need no migration.
 
 ## How It Works
 
@@ -241,6 +243,16 @@ The venue page SSR-reads the initial photos for the current sub-map and the per-
 
 Lightbox share links are photo-ULID authoritative: `/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`. When `?photo=` is present, the page does one primary-key lookup, confirms the photo is live and belongs to the current venue, uses the photo's own sub-map to override a stale `?tab=`, then auto-opens the Lightbox. Links that cannot resolve degrade to the normal venue page. While browsing, the Lightbox updates `?photo=` with `replaceState`, and the share button copies the current locale's short blurb + canonical link.
 
+The Lightbox also has a "nearby seats" horizontal strip at the bottom (`NearbyStrip`, thumbnails of same-cluster neighbors); tapping a thumbnail switches straight to that neighbor's photo. The "locate on the seating chart" button closes the Lightbox, marks the current photo as selected, and scrolls / highlights the matching marker back on the chart.
+
+### SEO and Structured Data / AI Discoverability
+
+`Layout.astro` emits `<link rel="canonical">` and four-locale `hreflang` (`zh-Hans` / `ja` / `en` / `ko` + `x-default`, generated by `src/lib/seo/hreflang.ts`) on every page; `description` can be overridden per page, falling back to the site tagline. Low-value or gated pages (staging, admin) pass `noindex`, which emits `<meta name="robots" content="noindex,follow">` and skips hreflang.
+
+Venue pages SSR-inject three JSON-LD blocks: `MusicVenue` (address / aliases, plus `aggregateRating` when the rating sample is large enough), `BreadcrumbList` (Home → Prefecture → Venue), and an `ImageGallery` of the venue's seat photos (each `ImageObject` with caption + CC license, giving crawlers a render-free image signal); the home page injects `WebSite` + `Organization`. The build logic lives in `src/lib/seo/jsonld-core.ts` (pure functions, with `*.test.ts`).
+
+The site root also serves two SSR endpoints, both generated from the static `venues` array with zero D1 access: `/sitemap.xml` (one `<url>` per locale × path, with full-language `xhtml:link` alternates + `x-default`, and `<lastmod>` set to the build-time stamp `__BUILD_TIME__`, changing only on redeploy) and `/llms.txt` (an [llmstxt.org](https://llmstxt.org/)-style plain-text overview + every venue's canonical zh link, for AI crawling). `public/robots.txt` allows all UAs and points to the sitemap.
+
 ### Key Implementation Trade-offs
 
 <details>
@@ -279,9 +291,9 @@ seatmap-real/
     ├── i18n/                 # locale config + copy
     ├── data/                 # venue tree + 47 prefectures
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue single source of truth
-    ├── lib/                  # cross-layer contracts + client utilities (including upload / staging / venue-rating / share / photo counts)
+    ├── lib/                  # cross-layer contracts + client utilities (upload / staging / venue-rating / share / photo counts / transport; SEO helpers in lib/seo)
     ├── server/               # Worker side: db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/ (upload·staging·rating·admin·photos) + [lang]/ (home / venue / staging / admin / privacy / terms)
+    ├── pages/                # api/ (upload·staging·rating·admin·photos) + [lang]/ (home / venue / staging / admin / privacy / terms) + sitemap.xml / llms.txt (site-root SSR endpoints)
     └── styles/global.css     # Tailwind v4.3 + design tokens (OKLCH neutrals + vermilion accent)
 ```
 

@@ -66,13 +66,14 @@
 
 - **按都道府县浏览** —— 左侧场馆树按日本行政区划分组、可折叠；Fuse.js 客户端模糊搜索，中文 / 日文 / 罗马字别名都能命中。
 - **坐席图标注** —— 在场馆官方坐席图（支持多层 / 多分区 tag 切换）上查看其他用户标注的座位点，相邻点自动聚合并显示数量。
-- **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；Lightbox 会把当前照片同步到地址栏 `?photo=`，分享按钮复制带场馆 / 区域文案的深链；下方瀑布流展示该场馆的全部投稿。
+- **真实视角 Lightbox** —— 点标注点即可查看该座位的实拍照片 + 座位号 / 文字描述；底部「附近座位」预览条可横滑切换同簇邻座，「在坐席图中定位」一键跳回坐席图上对应标注点；Lightbox 会把当前照片同步到地址栏 `?photo=`，分享按钮复制带场馆 / 区域文案的深链；下方瀑布流展示该场馆的全部投稿。
 - **场馆投稿统计** —— 场馆标题下方显示当前区域与全场馆照片数，切换坐席图分区或新上传后即时更新。
 - **场馆评论与评分** —— 场馆页标题区的轻量入口显示综合分 / 评分数并打开右侧抽屉：上方是匿名四项 1–5 星评分（视野、声音、周边便利、交通便利，再次评分会改分），下方是按 `venue:<id>` 严格映射的 giscus 评论，跨语言与子坐席图共享同一讨论。
 - **免注册上传** —— 标点（可进全屏放大精修）→ 选图 → 客户端压成 WebP（去 EXIF）→ HMAC ticket 两段式提交；未完成步骤有行内引导，全程 IP 限频 + Turnstile 防滥用。
 - **多语 i18n** —— `/zh` `/ja` `/en` `/ko` 四前缀路由，裸根 `/` 按 `Accept-Language` 自动重定向（`zh`/`ja` 等价双轨，`en`/`ko` 为可达性翻译层）。
 - **场馆众包** —— 站内「想看的场馆」暂存区可 +1 附议（公开票数 + 每日限流 + 同名去重），或通过 GitHub PR 直接提交场馆 JSON。
 - **维护者后台** —— `/admin` 由 Cloudflare Access 边缘鉴权，支持软删除投稿。
+- **SEO 与 AI 可发现性** —— 每页输出 canonical + 四语 hreflang（含 `x-default`）；场馆页注入 `MusicVenue`（评分样本充足时附 `aggregateRating`）/ `BreadcrumbList` / 座位照片 `ImageGallery` 结构化数据，首页注入 `WebSite` / `Organization`；站点根提供 `/sitemap.xml`（locale × 路径 + hreflang 备选）与 `/llms.txt`（面向 AI 的纯文本场馆索引），低价值页（暂存区 / 后台）标 `noindex,follow`。
 
 ## 技术栈
 
@@ -96,6 +97,7 @@
 | 瀑布流 | `react-photo-album`（masonry） | |
 | 坐席图缩放 | **`react-zoom-pan-pinch` v4.0** | 用 `setTransform` / `resetTransform` 程序化缩放 |
 | i18n | **Astro 内置 i18n 路由** | `/zh` `/ja` `/en` `/ko` 四前缀，裸根 302 |
+| SEO / 结构化数据 | **手写 JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`（纯函数 + 单测）：canonical / 四语 hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |
 | ULID | **自实现**（`src/server/id.ts`） | 不用 `ulid` 包（它 import 时 `detectPrng()` 在 workerd 抛错） |
 
 > [!NOTE]
@@ -196,7 +198,7 @@ npm run deploy
 > **维护者后台**（`/admin` + `/api/admin/*`）由 **Cloudflare Access (Zero Trust)** 在边缘保护：在控制台 Zero Trust → Access → Applications 新建 self-hosted 应用覆盖 `/*/admin` 与 `/api/admin/*`，加一条 Allow → 维护者邮箱的 policy。Access 鉴权后注入 `Cf-Access-Authenticated-User-Email`，Worker 信任该头（`src/server/admin-auth.ts`），匿名流量到不了 Worker。生产**无需**任何 admin 环境变量；**切勿**在生产设 `DEV_ADMIN_EMAIL`——那会绕过 SSO 网关。
 
 > [!NOTE]
-> 本仓库已带 71 个日本 / 海外场馆条目（`public/seatmaps/` 下 85 个坐席图资源）+ demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
+> 本仓库已带 74 个日本 / 海外场馆条目（`public/seatmaps/` 下 90 个坐席图资源）+ demo 标注。生产的真实标注由用户通过上传流程写入 D1。改了 DB schema 才需要重新跑 `npm run db:migrate:prod`；纯前端改动无需迁移。
 
 ## 工作原理
 
@@ -241,6 +243,16 @@ npm run deploy
 
 Lightbox 的分享链接以照片 ULID 为主：`/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`。页面只在存在 `?photo=` 时做一次主键查询，确认照片未软删除、属于当前场馆，并用照片自己的 sub-map 覆盖旧的 `?tab=` 后自动打开 Lightbox；无法解析的链接降级为普通场馆页。Lightbox 浏览时用 `replaceState` 更新 `?photo=`，分享按钮复制当前语言的短文案 + canonical link。
 
+Lightbox 底部还有一条「附近座位」横滑预览条（`NearbyStrip`，同簇邻座缩略图），点缩略图直接切到邻座照片；「在坐席图中定位」按钮则关闭 Lightbox，把当前照片设为选中并把对应标注点滚动 / 高亮回坐席图。
+
+### SEO 与结构化数据 / AI 可发现性
+
+`Layout.astro` 给每页输出 `<link rel="canonical">` 与四语 `hreflang`（`zh-Hans` / `ja` / `en` / `ko` + `x-default`，由 `src/lib/seo/hreflang.ts` 生成）；`description` 可按页覆盖，缺省回落到站点 tagline。暂存区、后台等低价值或受限页传 `noindex`，输出 `<meta name="robots" content="noindex,follow">` 并跳过 hreflang。
+
+场馆页 SSR 注入三段 JSON-LD：`MusicVenue`（地址 / 别名，评分样本充足时附 `aggregateRating`）、`BreadcrumbList`（首页 → 都道府县 → 场馆）、以及该场馆座位照片的 `ImageGallery`（逐张 `ImageObject` 带 caption 与 CC 许可，给爬虫一个无需渲染的图片信号）；首页注入 `WebSite` + `Organization`。构建逻辑集中在 `src/lib/seo/jsonld-core.ts`（纯函数，带 `*.test.ts`）。
+
+站点根另有两个 SSR 端点，均从静态 `venues` 数组生成、不碰 D1：`/sitemap.xml`（每个 locale × 路径一条 `<url>`，附全语言 `xhtml:link` 备选 + `x-default`，`<lastmod>` 用构建期时间戳 `__BUILD_TIME__`，redeploy 才变）与 `/llms.txt`（[llmstxt.org](https://llmstxt.org/) 风格的纯文本概览 + 全场馆 zh 规范链接，供 AI 抓取）。`public/robots.txt` 放行全部 UA 并指向 sitemap。
+
 ### 关键实现取舍
 
 <details>
@@ -279,9 +291,9 @@ seatmap-real/
     ├── i18n/                 # locale 配置 + 文案
     ├── data/                 # 场馆树 + 47 都道府县
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue 单一真源
-    ├── lib/                  # 跨层契约 + 客户端工具（含 upload / staging / venue-rating / share / photo counts）
+    ├── lib/                  # 跨层契约 + 客户端工具（upload / staging / venue-rating / share / photo counts / transport；SEO 助手见 lib/seo）
     ├── server/               # Worker 侧：db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）
+    ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（首页 / 场馆页 / 暂存区 / 后台 / 隐私 / 条款）+ sitemap.xml / llms.txt（站点根 SSR 端点）
     └── styles/global.css     # Tailwind v4.3 + 设计 token（OKLCH 中性色 + 朱赤 accent）
 ```
 

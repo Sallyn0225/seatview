@@ -66,13 +66,14 @@
 
 - **都道府県別ブラウズ** —— 左側の会場ツリーは日本の行政区画でグループ化・折りたたみ可能。Fuse.js のクライアントサイドあいまい検索で、中国語 / 日本語 / ローマ字のエイリアスもヒットします。
 - **座席表マーキング** —— 会場公式の座席表（複数レイヤー / 複数エリアの tag 切り替え対応）上で、他ユーザーがマークした座席ポイントを表示。隣接するポイントは自動で集約し件数を表示します。
-- **リアルビュー Lightbox** —— マーカーをクリックすると、その席の実写 + 座席番号 / テキスト説明を表示。Lightbox は現在の写真を `?photo=` として URL に反映し、共有ボタンで会場 / エリア文脈つきの deep link をコピーできます。下部のウォーターフォールでその会場の全投稿を表示します。
+- **リアルビュー Lightbox** —— マーカーをクリックすると、その席の実写 + 座席番号 / テキスト説明を表示。下部の「近くの座席」ストリップで同一クラスタの隣席を横スクロールでき、「座席表で位置を確認」で座席表上の対応するマーカーへ戻ります。Lightbox は現在の写真を `?photo=` として URL に反映し、共有ボタンで会場 / エリア文脈つきの deep link をコピーできます。下部のウォーターフォールでその会場の全投稿を表示します。
 - **会場の投稿数表示** —— 会場タイトル下に現在のエリアと会場全体の写真数を表示し、座席図エリアの切り替えや新規投稿後に即時同期します。
 - **会場コメントと評価** —— 会場タイトル付近の控えめな入口に総合点 / 評価数を表示し、右側のドロワーを開きます。上部は匿名4項目の 1〜5 星評価（見やすさ、音響、周辺の便利さ、アクセス。再評価はスコア変更）、下部は `venue:<id>` に厳密マッピングされた giscus コメントで、言語パスや座席表タブをまたいで同じ議論を共有します。
 - **登録不要の投稿** —— マーク（全画面ズームで精密に配置するモードあり）→ 画像選択 → クライアント側で WebP に圧縮（EXIF 除去）→ HMAC ticket の二段階コミット。未完了のステップはインライン案内で誘導し、全工程で IP レート制限 + Turnstile による不正対策。
 - **多言語 i18n** —— `/zh` `/ja` `/en` `/ko` の 4 プレフィックスルーティング、ルート直下 `/` は `Accept-Language` で自動リダイレクト（`zh` / `ja` は対等な二軸、`en` / `ko` はアクセシビリティのための翻訳レイヤー）。
 - **会場のクラウドソーシング** —— サイト内「見たい会場」一時置き場で +1（公開票数 + 日次レート制限 + 同名の重複排除）、または GitHub PR で会場 JSON を直接投稿。
 - **メンテナー管理画面** —— `/admin` は Cloudflare Access のエッジ認証で保護、投稿のソフト削除に対応。
+- **SEO と AI への発見性** —— すべてのページが canonical + 4 ロケールの hreflang（`x-default` を含む）を出力。会場ページは `MusicVenue`（評価が十分にある場合は `aggregateRating` 付き）/ `BreadcrumbList` / 座席写真の `ImageGallery` 構造化データを注入し、トップページは `WebSite` / `Organization` を注入します。サイトルートでは `/sitemap.xml`（ロケール × パス + hreflang の代替）と `/llms.txt`（AI 向けのプレーンテキスト会場インデックス）を配信し、価値の低いページ（一時置き場 / 管理画面）は `noindex,follow` を付与します。
 
 ## 技術スタック
 
@@ -96,6 +97,7 @@
 | ウォーターフォール | `react-photo-album`（masonry） | |
 | 座席表のズーム | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` でプログラム的にズーム |
 | i18n | **Astro 組み込み i18n ルーティング** | `/zh` `/ja` `/en` `/ko` の 4 プレフィックス、ルート直下は 302 |
+| SEO / 構造化データ | **手書き JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`（純粋関数 + 単体テスト）：canonical / 4 ロケールの hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |
 | ULID | **自前実装**（`src/server/id.ts`） | `ulid` パッケージは不使用（import 時に `detectPrng()` が workerd で例外を投げるため） |
 
 > [!NOTE]
@@ -196,7 +198,7 @@ npm run deploy
 > **メンテナー管理画面**（`/admin` + `/api/admin/*`）は **Cloudflare Access (Zero Trust)** によりエッジで保護されます：ダッシュボードの Zero Trust → Access → Applications で `/*/admin` と `/api/admin/*` をカバーする self-hosted アプリを新規作成し、Allow → メンテナーのメールアドレスの policy を 1 つ追加します。Access が認証後に `Cf-Access-Authenticated-User-Email` を注入し、Worker はそのヘッダーを信頼します（`src/server/admin-auth.ts`）。匿名トラフィックは Worker に到達しません。本番では admin の環境変数は**不要**です。本番で `DEV_ADMIN_EMAIL` を**絶対に設定しないでください**——SSO ゲートウェイを迂回してしまいます。
 
 > [!NOTE]
-> 本リポジトリには既に日本 / 一部海外の会場データ 71 件（`public/seatmaps/` 下に座席図画像 85 点）+ デモのマーカーが含まれています。本番の実際のマーカーは、ユーザーがアップロードフローを通じて D1 に書き込みます。`npm run db:migrate:prod` の再実行が必要なのは DB schema を変更したときだけで、フロントエンドのみの変更にマイグレーションは不要です。
+> 本リポジトリには既に日本 / 一部海外の会場データ 74 件（`public/seatmaps/` 下に座席図画像 90 点）+ デモのマーカーが含まれています。本番の実際のマーカーは、ユーザーがアップロードフローを通じて D1 に書き込みます。`npm run db:migrate:prod` の再実行が必要なのは DB schema を変更したときだけで、フロントエンドのみの変更にマイグレーションは不要です。
 
 ## 仕組み
 
@@ -241,6 +243,16 @@ presigned URL によるクライアント直接アップロードではなく、
 
 Lightbox の共有 URL は写真 ULID を主とします：`/{locale}/v/{venueId}?tab=<subMapId>&photo=<photoId>`。`?photo=` がある場合のみ主キー検索を行い、写真が公開状態で現在の会場に属することを確認し、写真自身の sub-map で古い `?tab=` を上書きしてから Lightbox を自動で開きます。解決できないリンクは通常の会場ページにフォールバックします。閲覧中は Lightbox が `replaceState` で `?photo=` を更新し、共有ボタンは現在の言語の短い文面 + canonical link をコピーします。
 
+Lightbox の下部には「近くの座席」の横スクロールストリップ（`NearbyStrip`、同一クラスタの隣席のサムネイル）もあり、サムネイルをタップするとその隣席の写真へ直接切り替わります。「座席表で位置を確認」ボタンは Lightbox を閉じ、現在の写真を選択状態にし、座席表上の対応するマーカーへスクロール / ハイライトして戻します。
+
+### SEO と構造化データ / AI への発見性
+
+`Layout.astro` はすべてのページで `<link rel="canonical">` と 4 ロケールの hreflang（`zh-Hans` / `ja` / `en` / `ko` + `x-default`、`src/lib/seo/hreflang.ts` が生成）を出力します。`description` はページごとに上書き可能で、未指定の場合はサイトのタグラインにフォールバックします。価値の低いページやゲート付きページ（一時置き場、管理画面）は `noindex` を渡し、`<meta name="robots" content="noindex,follow">` を出力して hreflang をスキップします。
+
+会場ページは SSR で 3 つの JSON-LD ブロックを注入します：`MusicVenue`（住所 / 別名、評価サンプルが十分に大きい場合は `aggregateRating` も）、`BreadcrumbList`（ホーム → 都道府県 → 会場）、そして会場の座席写真の `ImageGallery`（各 `ImageObject` にキャプション + CC ライセンスを付与し、レンダリング不要の画像シグナルをクローラーに提供）。トップページは `WebSite` + `Organization` を注入します。ビルドロジックは `src/lib/seo/jsonld-core.ts`（純粋関数、`*.test.ts` 付き）にあります。
+
+サイトルートはさらに 2 つの SSR エンドポイントを配信します。いずれも静的な `venues` 配列から生成され、D1 へのアクセスはありません：`/sitemap.xml`（ロケール × パスごとに 1 つの `<url>`、全言語の `xhtml:link` 代替 + `x-default` 付き、`<lastmod>` はビルド時のスタンプ `__BUILD_TIME__` を設定し、再デプロイ時のみ変化）と `/llms.txt`（[llmstxt.org](https://llmstxt.org/) スタイルのプレーンテキスト概要 + 全会場の canonical な zh リンク、AI のクロール用）。`public/robots.txt` はすべての UA を許可し、sitemap を指します。
+
 ### 主要な実装上のトレードオフ
 
 <details>
@@ -279,9 +291,9 @@ seatmap-real/
     ├── i18n/                 # locale 設定 + 文言
     ├── data/                 # 会場ツリー + 47 都道府県
     ├── types/venue.ts        # Venue / SubMap / Photo / StagingVenue の単一の真実の源
-    ├── lib/                  # レイヤー横断の契約 + クライアントユーティリティ（upload / staging / venue-rating / share / photo counts を含む）
+    ├── lib/                  # レイヤー横断の契約 + クライアントユーティリティ（upload / staging / venue-rating / share / photo counts / transport を含む。SEO ヘルパーは lib/seo）
     ├── server/               # Worker 側：db / photos / staging / ratings / rate-limit / turnstile / id / admin-auth / r2
-    ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（ホーム / 会場ページ / 一時置き場 / 管理画面 / プライバシー / 利用規約）
+    ├── pages/                # api/（upload·staging·rating·admin·photos）+ [lang]/（ホーム / 会場ページ / 一時置き場 / 管理画面 / プライバシー / 利用規約）+ sitemap.xml / llms.txt（サイトルートの SSR エンドポイント）
     └── styles/global.css     # Tailwind v4.3 + デザイントークン（OKLCH ニュートラル + 朱赤アクセント）
 ```
 
