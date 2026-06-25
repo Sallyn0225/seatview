@@ -19,26 +19,13 @@ import type {
   UploadErrorCode,
   UploadFields,
 } from "@/lib/upload";
+import { TransportError, parseErrorCode } from "@/lib/transport";
 
 /** A typed transport failure the Sheet maps to localized inline copy. */
-export class UploadError extends Error {
-  constructor(
-    readonly code: UploadErrorCode | "network",
-    readonly status?: number,
-  ) {
-    super(code);
+export class UploadError extends TransportError<UploadErrorCode> {
+  constructor(code: UploadErrorCode | "network", status?: number) {
+    super(code, status);
     this.name = "UploadError";
-  }
-}
-
-async function parseErrorCode(
-  res: Response,
-): Promise<UploadErrorCode | "network"> {
-  try {
-    const data = (await res.json()) as { error?: UploadErrorCode };
-    return data.error ?? "server_error";
-  } catch {
-    return "server_error";
   }
 }
 
@@ -61,7 +48,10 @@ export async function signUpload(
     throw new UploadError("network");
   }
   if (!res.ok) {
-    throw new UploadError(await parseErrorCode(res), res.status);
+    throw new UploadError(
+      await parseErrorCode<UploadErrorCode>(res),
+      res.status,
+    );
   }
   return (await res.json()) as SignResponse;
 }
@@ -105,7 +95,7 @@ export async function commitUpload(
         return (await res.json()) as CommitResponse;
       }
       // 4xx → terminal (do not retry). 5xx → retryable.
-      const code = await parseErrorCode(res);
+      const code = await parseErrorCode<UploadErrorCode>(res);
       if (res.status < 500) {
         throw new UploadError(code, res.status);
       }

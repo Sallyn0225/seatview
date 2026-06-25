@@ -16,26 +16,13 @@ import type {
   StagingRequest,
   StagingVoteResponse,
 } from "@/lib/staging";
+import { TransportError, parseErrorCode } from "@/lib/transport";
 
 /** A typed transport failure the form maps to localized inline copy. */
-export class StagingError extends Error {
-  constructor(
-    readonly code: StagingErrorCode | "network",
-    readonly status?: number,
-  ) {
-    super(code);
+export class StagingError extends TransportError<StagingErrorCode> {
+  constructor(code: StagingErrorCode | "network", status?: number) {
+    super(code, status);
     this.name = "StagingError";
-  }
-}
-
-async function parseErrorCode(
-  res: Response,
-): Promise<StagingErrorCode | "network"> {
-  try {
-    const data = (await res.json()) as { error?: StagingErrorCode };
-    return data.error ?? "server_error";
-  } catch {
-    return "server_error";
   }
 }
 
@@ -58,7 +45,10 @@ export async function submitStaging(
     throw new StagingError("network");
   }
   if (!res.ok) {
-    throw new StagingError(await parseErrorCode(res), res.status);
+    throw new StagingError(
+      await parseErrorCode<StagingErrorCode>(res),
+      res.status,
+    );
   }
   return (await res.json()) as StagingCreateResponse;
 }
@@ -85,7 +75,10 @@ export async function plusOneStaging(
     throw new StagingError("network");
   }
   if (!res.ok) {
-    throw new StagingError(await parseErrorCode(res), res.status);
+    throw new StagingError(
+      await parseErrorCode<StagingErrorCode>(res),
+      res.status,
+    );
   }
   return (await res.json()) as StagingVoteResponse;
 }

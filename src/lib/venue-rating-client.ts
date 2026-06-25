@@ -10,26 +10,13 @@ import type {
   RatingRequest,
   RatingResponse,
 } from "@/lib/venue-rating";
+import { TransportError, parseErrorCode } from "@/lib/transport";
 
 /** A typed transport failure the rating control maps to localized copy. */
-export class RatingError extends Error {
-  constructor(
-    readonly code: RatingErrorCode | "network",
-    readonly status?: number,
-  ) {
-    super(code);
+export class RatingError extends TransportError<RatingErrorCode> {
+  constructor(code: RatingErrorCode | "network", status?: number) {
+    super(code, status);
     this.name = "RatingError";
-  }
-}
-
-async function parseErrorCode(
-  res: Response,
-): Promise<RatingErrorCode | "network"> {
-  try {
-    const data = (await res.json()) as { error?: RatingErrorCode };
-    return data.error ?? "server_error";
-  } catch {
-    return "server_error";
   }
 }
 
@@ -55,7 +42,10 @@ export async function submitRating(
     throw new RatingError("network");
   }
   if (!res.ok) {
-    throw new RatingError(await parseErrorCode(res), res.status);
+    throw new RatingError(
+      await parseErrorCode<RatingErrorCode>(res),
+      res.status,
+    );
   }
   return (await res.json()) as RatingResponse;
 }

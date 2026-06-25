@@ -32,7 +32,6 @@
     "@giscus/react": "^3.1.0",
     "astro": "^6.4.8",
     "browser-image-compression": "^2.0.2",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.0",
     "fuse.js": "^7.4.2",
@@ -43,7 +42,6 @@
     "react-photo-album": "^3.0.2",
     "react-zoom-pan-pinch": "^4.0.3",
     "tailwind-merge": "^3.6.0",
-    "tailwindcss-animate": "^1.0.7",
     "yet-another-react-lightbox": "^3.21.0"
   },
   "devDependencies": {
