@@ -3,26 +3,13 @@ import type {
   PhotoCorrectionRequest,
   PhotoCorrectionResponse,
 } from "@/lib/photo-corrections";
+import { TransportError, parseErrorCode } from "@/lib/transport";
 
 /** A typed transport failure the Lightbox maps to localized inline copy. */
-export class PhotoCorrectionError extends Error {
-  constructor(
-    readonly code: PhotoCorrectionErrorCode | "network",
-    readonly status?: number,
-  ) {
-    super(code);
+export class PhotoCorrectionError extends TransportError<PhotoCorrectionErrorCode> {
+  constructor(code: PhotoCorrectionErrorCode | "network", status?: number) {
+    super(code, status);
     this.name = "PhotoCorrectionError";
-  }
-}
-
-async function parseErrorCode(
-  res: Response,
-): Promise<PhotoCorrectionErrorCode | "network"> {
-  try {
-    const data = (await res.json()) as { error?: PhotoCorrectionErrorCode };
-    return data.error ?? "server_error";
-  } catch {
-    return "server_error";
   }
 }
 
@@ -50,7 +37,10 @@ export async function submitPhotoCorrection(
     throw new PhotoCorrectionError("network");
   }
   if (!res.ok) {
-    throw new PhotoCorrectionError(await parseErrorCode(res), res.status);
+    throw new PhotoCorrectionError(
+      await parseErrorCode<PhotoCorrectionErrorCode>(res),
+      res.status,
+    );
   }
   return (await res.json()) as PhotoCorrectionResponse;
 }
