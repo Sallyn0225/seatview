@@ -20,7 +20,6 @@ import { clientIp, hashIp } from "@/server/ip";
 import { verifyTurnstile } from "@/server/turnstile";
 import { checkDailyLimit, incrementDaily } from "@/server/rate-limit";
 import { getDb } from "@/server/db";
-import { jsonError, parseCount } from "@/server/api-helpers";
 import {
   insertStagingVenue,
   listStagingVenues,
@@ -30,11 +29,27 @@ import {
   STAGING_DAILY_LIMIT,
   STAGING_NAME_MAX,
   type StagingCreateResponse,
+  type StagingErrorCode,
   type StagingListResponse,
   type StagingRequest,
 } from "@/lib/staging";
 
 export const prerender = false;
+
+function jsonError(code: StagingErrorCode, status: number): Response {
+  return new Response(JSON.stringify({ error: code }), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+/** Parse a non-negative integer query param, or undefined when absent/invalid. */
+function parseCount(value: string | null): number | undefined {
+  if (value === null) return undefined;
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return n;
+}
 
 export const POST: APIRoute = async ({ request }) => {
   const secret = env.TURNSTILE_SECRET_KEY;

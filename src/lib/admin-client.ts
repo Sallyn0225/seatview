@@ -23,13 +23,26 @@ import type {
   AdminUpdatePhotoCorrectionRequest,
   AdminUpdateStagingRequest,
 } from "@/lib/admin";
-import { parseErrorCode, TransportError } from "@/lib/transport";
 
 /** A typed transport failure the admin island maps to localized inline copy. */
-export class AdminError extends TransportError<AdminErrorCode> {
-  constructor(code: AdminErrorCode | "network", status?: number) {
-    super(code, status);
+export class AdminError extends Error {
+  constructor(
+    readonly code: AdminErrorCode | "network",
+    readonly status?: number,
+  ) {
+    super(code);
     this.name = "AdminError";
+  }
+}
+
+async function parseErrorCode(
+  res: Response,
+): Promise<AdminErrorCode | "network"> {
+  try {
+    const data = (await res.json()) as { error?: AdminErrorCode };
+    return data.error ?? "server_error";
+  } catch {
+    return "server_error";
   }
 }
 
@@ -41,7 +54,7 @@ async function jsonRequest<T>(url: string, init: RequestInit): Promise<T> {
     throw new AdminError("network");
   }
   if (!res.ok) {
-    throw new AdminError(await parseErrorCode<AdminErrorCode>(res), res.status);
+    throw new AdminError(await parseErrorCode(res), res.status);
   }
   return (await res.json()) as T;
 }

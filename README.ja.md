@@ -83,7 +83,7 @@
 | デプロイアダプター | **`@astrojs/cloudflare` v13.7** | Astro 6 は Cloudflare Pages 非対応となり、全面的に **Workers** を使用（SSR + 静的アセットを同一 Worker で） |
 | ランタイムバインディング | **`import { env } from "cloudflare:workers"`** | Astro v6 は `Astro.locals.runtime.env` を削除。型は `src/env.d.ts` の `Cloudflare.Env` を参照 |
 | スタイリング | **Tailwind v4.3**（Vite プラグイン `@tailwindcss/vite`） | 独立した `tailwind.config` なし。デザイントークンは `src/styles/global.css` に記述 |
-| UI コンポーネント | **すべて手書き**（`DESIGN.md` のトークンに準拠） | shadcn/ui 生成コンポーネントは使わない |
+| UI コンポーネント | **すべて手書き**（`DESIGN.md` のトークンに準拠） | `components.json` は存在するが、UI は shadcn/ui 生成ではない |
 | アイコン | `lucide-react` | |
 | 検索 | **Fuse.js**（クライアント側で全件） | 会場 ≤ 200、バンドル内の全件検索でレイテンシゼロ |
 | データベース | **Cloudflare D1 + Drizzle ORM** | photos / staging / photo corrections / venue ratings。schema は `src/server/db/schema.ts`。マイグレーションは `drizzle-kit generate` |
@@ -94,7 +94,7 @@
 | 匿名評価 | **D1 集約テーブル** + React island | 4項目の 1〜5 星評価。`venue_id + ip_hash` で重複排除し、`venue_rating_agg` から次元別集約を読み取り |
 | 画像処理 | `browser-image-compression` | 長辺 1920px / WebP / EXIF 除去 / 約 500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
-| ウォーターフォール | ネイティブ CSS columns | 実画像比率を保ち、追加依存なし |
+| ウォーターフォール | `react-photo-album`（masonry） | |
 | 座席表のズーム | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` でプログラム的にズーム |
 | i18n | **Astro 組み込み i18n ルーティング** | `/zh` `/ja` `/en` `/ko` の 4 プレフィックス、ルート直下は 302 |
 | SEO / 構造化データ | **手書き JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`（純粋関数 + 単体テスト）：canonical / 4 ロケールの hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |
