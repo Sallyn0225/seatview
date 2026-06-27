@@ -13,21 +13,14 @@ import { env } from "cloudflare:workers";
 import { clientIp, hashIp } from "@/server/ip";
 import { getDb } from "@/server/db";
 import { addVote } from "@/server/staging";
+import { jsonError } from "@/server/api-helpers";
 import {
   PLUSONE_DAILY_LIMIT,
-  type StagingErrorCode,
   type StagingVoteRequest,
   type StagingVoteResponse,
 } from "@/lib/staging";
 
 export const prerender = false;
-
-function jsonError(code: StagingErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 export const POST: APIRoute = async ({ request }) => {
   // TURNSTILE_SECRET_KEY doubles as the IP-hash salt (server/ip.ts) — required

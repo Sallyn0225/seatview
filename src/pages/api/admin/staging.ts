@@ -14,6 +14,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
+import { jsonError, parseCount } from "@/server/api-helpers";
 import {
   deleteStagingVenue,
   listStagingVenues,
@@ -22,27 +23,12 @@ import {
 import {
   ADMIN_STAGING_BATCH,
   type AdminDeleteStagingRequest,
-  type AdminErrorCode,
   type AdminStagingMutationResponse,
   type AdminStagingResponse,
   type AdminUpdateStagingRequest,
 } from "@/lib/admin";
 
 export const prerender = false;
-
-function jsonError(code: AdminErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
-
-function parseCount(value: string | null): number | undefined {
-  if (value === null) return undefined;
-  const n = Number.parseInt(value, 10);
-  if (!Number.isFinite(n) || n < 0) return undefined;
-  return n;
-}
 
 export const GET: APIRoute = async ({ request, url }) => {
   if (!maintainerEmail(request, env.DEV_ADMIN_EMAIL)) {

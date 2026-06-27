@@ -13,16 +13,10 @@ import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
 import { listAdminPhotoVenueFacets } from "@/server/photos";
-import type { AdminErrorCode, AdminPhotoVenuesResponse } from "@/lib/admin";
+import { jsonError } from "@/server/api-helpers";
+import type { AdminPhotoVenuesResponse } from "@/lib/admin";
 
 export const prerender = false;
-
-function jsonError(code: AdminErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 export const GET: APIRoute = async ({ request }) => {
   if (!maintainerEmail(request, env.DEV_ADMIN_EMAIL)) {
