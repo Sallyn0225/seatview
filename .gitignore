@@ -79,6 +79,7 @@ __pycache__/
 .claude/
 .codex/
 .agents/
+.pi/
 skills-lock.json
 AGENTS.md
 
