@@ -1,0 +1,32 @@
+{
+  "id": "rohm-theatre-kyoto",
+  "name_zh": "ROHM Theatre 京都",
+  "name_jp": "ロームシアター京都",
+  "name_romaji": "ROHM Theatre Kyoto",
+  "prefecture": "kyoto",
+  "city": "京都市左京区",
+  "aliases": [
+    "京都会館",
+    "Kyoto Kaikan",
+    "ロームシアター",
+    "罗姆剧场京都"
+  ],
+  "subMaps": [
+    {
+      "id": "main-hall",
+      "label_zh": "Main Hall",
+      "label_jp": "メインホール",
+      "imageUrl": "/seatmaps/rohm-theatre-kyoto/main-hall.webp",
+      "width": 1514,
+      "height": 2048
+    },
+    {
+      "id": "south-hall",
+      "label_zh": "South Hall",
+      "label_jp": "サウスホール",
+      "imageUrl": "/seatmaps/rohm-theatre-kyoto/south-hall.webp",
+      "width": 1483,
+      "height": 2048
+    }
+  ]
+}
