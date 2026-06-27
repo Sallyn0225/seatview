@@ -13,16 +13,10 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { getDb } from "@/server/db";
 import { listStagingNames } from "@/server/staging";
+import { jsonError } from "@/server/api-helpers";
 import { STAGING_MATCH_LIMIT, type StagingNamesResponse } from "@/lib/staging";
 
 export const prerender = false;
-
-function jsonError(code: string, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 export const GET: APIRoute = async () => {
   if (!env.DB) {

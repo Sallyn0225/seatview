@@ -17,6 +17,7 @@ import { verifyTurnstile } from "@/server/turnstile";
 import { checkDailyLimit, isCoolingDown } from "@/server/rate-limit";
 import { buildImageKey } from "@/server/r2/images";
 import { signTicket, TICKET_TTL_MS } from "@/server/upload-ticket";
+import { jsonError } from "@/server/api-helpers";
 import { getVenue } from "@/data/venues";
 import {
   DESCRIPTION_MAX,
@@ -26,17 +27,9 @@ import {
   UPLOAD_DAILY_LIMIT,
   type SignRequest,
   type SignResponse,
-  type UploadErrorCode,
 } from "@/lib/upload";
 
 export const prerender = false;
-
-function jsonError(code: UploadErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 /** Trim + clamp an optional free-text field; empty → null (no blank rows). */
 function optional(value: unknown, max: number): string | null {

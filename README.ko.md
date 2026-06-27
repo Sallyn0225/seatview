@@ -83,7 +83,7 @@
 | 배포 어댑터 | **`@astrojs/cloudflare` v13.7** | Astro 6 은 더 이상 Cloudflare Pages 를 지원하지 않아 전면적으로 **Workers** 를 사용(SSR + 정적 자산을 동일한 Worker 에서) |
 | 런타임 바인딩 | **`import { env } from "cloudflare:workers"`** | Astro v6 은 `Astro.locals.runtime.env` 를 제거했습니다. 타입은 `src/env.d.ts` 의 `Cloudflare.Env` 참조 |
 | 스타일링 | **Tailwind v4.3**(Vite 플러그인 `@tailwindcss/vite`) | 독립된 `tailwind.config` 없음. 디자인 토큰은 `src/styles/global.css` 에 작성 |
-| UI 컴포넌트 | **전부 수작업**(`DESIGN.md` 토큰 기준) | `components.json` 은 존재하지만, UI 는 shadcn/ui 로 생성된 것이 아님 |
+| UI 컴포넌트 | **전부 수작업**(`DESIGN.md` 토큰 기준) | shadcn/ui 생성 컴포넌트는 사용하지 않음 |
 | 아이콘 | `lucide-react` | |
 | 검색 | **Fuse.js**(클라이언트 측 전량) | 공연장 ≤ 200, 번들 내 전량 검색으로 지연 시간 제로 |
 | 데이터베이스 | **Cloudflare D1 + Drizzle ORM** | photos / staging / photo corrections / venue ratings. schema 는 `src/server/db/schema.ts` 참조. 마이그레이션은 `drizzle-kit generate` |
@@ -94,7 +94,7 @@
 | 익명 평점 | **D1 집계 테이블** + React island | 네 항목 1~5점 별점. `venue_id + ip_hash` 로 중복 제거하고 `venue_rating_agg` 에서 항목별 집계 읽기 |
 | 이미지 처리 | `browser-image-compression` | 긴 변 1920px / WebP / EXIF 제거 / 약 500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
-| 워터폴 | `react-photo-album`(masonry) | |
+| 워터폴 | 네이티브 CSS columns | 실제 이미지 비율 유지, 추가 의존성 없음 |
 | 좌석도 줌 | **`react-zoom-pan-pinch` v4.0** | `setTransform` / `resetTransform` 으로 프로그래밍 방식 줌 |
 | i18n | **Astro 내장 i18n 라우팅** | `/zh` `/ja` `/en` `/ko` 4개 프리픽스, 루트 직하는 302 |
 | SEO / 구조화 데이터 | **수작업 JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`(순수 함수 + 단위 테스트): canonical / 4개 로케일 hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |

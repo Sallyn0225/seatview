@@ -10,22 +10,15 @@ import { clientIp, hashIp } from "@/server/ip";
 import { checkDailyLimit, incrementDaily } from "@/server/rate-limit";
 import { verifyTurnstile } from "@/server/turnstile";
 import { createPhotoCorrectionRequest } from "@/server/photo-corrections";
+import { jsonError } from "@/server/api-helpers";
 import {
   PHOTO_CORRECTION_DAILY_LIMIT,
   PHOTO_CORRECTION_LABEL_MAX,
-  type PhotoCorrectionErrorCode,
   type PhotoCorrectionRequest,
   type PhotoCorrectionResponse,
 } from "@/lib/photo-corrections";
 
 export const prerender = false;
-
-function jsonError(code: PhotoCorrectionErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 export const POST: APIRoute = async ({ request }) => {
   const secret = env.TURNSTILE_SECRET_KEY;

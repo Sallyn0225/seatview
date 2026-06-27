@@ -83,7 +83,7 @@
 | 部署适配器 | **`@astrojs/cloudflare` v13.7** | Astro 6 已不支持 Cloudflare Pages，全面用 **Workers**（SSR + 静态资源同一个 Worker） |
 | 运行时绑定 | **`import { env } from "cloudflare:workers"`** | Astro v6 移除了 `Astro.locals.runtime.env`；类型见 `src/env.d.ts` 的 `Cloudflare.Env` |
 | 样式 | **Tailwind v4.3**（Vite 插件 `@tailwindcss/vite`） | 无独立 `tailwind.config`；设计 token 写在 `src/styles/global.css` |
-| UI 组件 | **全部手写**（按 `DESIGN.md` token） | `components.json` 虽在，但 UI 并非 shadcn/ui 生成 |
+| UI 组件 | **全部手写**（按 `DESIGN.md` token） | 不使用 shadcn/ui 生成组件 |
 | 图标 | `lucide-react` | |
 | 搜索 | **Fuse.js**（客户端全量） | 场馆 ≤ 200，bundle 内全量搜索零延迟 |
 | 数据库 | **Cloudflare D1 + Drizzle ORM** | photos / staging / photo corrections / venue ratings；schema 见 `src/server/db/schema.ts`；迁移用 `drizzle-kit generate` |
@@ -94,7 +94,7 @@
 | 匿名评分 | **D1 聚合表** + React island | 四项 1–5 星评分；`venue_id + ip_hash` 去重，`venue_rating_agg` 读四维聚合 |
 | 图片处理 | `browser-image-compression` | 长边 1920px / WebP / 去 EXIF / ~500KB |
 | Lightbox | `yet-another-react-lightbox` v3 | |
-| 瀑布流 | `react-photo-album`（masonry） | |
+| 瀑布流 | 原生 CSS columns | 保留真实图片比例，无额外依赖 |
 | 坐席图缩放 | **`react-zoom-pan-pinch` v4.0** | 用 `setTransform` / `resetTransform` 程序化缩放 |
 | i18n | **Astro 内置 i18n 路由** | `/zh` `/ja` `/en` `/ko` 四前缀，裸根 302 |
 | SEO / 结构化数据 | **手写 JSON-LD + hreflang + sitemap / llms.txt** | `src/lib/seo/`（纯函数 + 单测）：canonical / 四语 hreflang / `MusicVenue`·`Breadcrumb`·`ImageGallery` JSON-LD / `/sitemap.xml` / `/llms.txt` |

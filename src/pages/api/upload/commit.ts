@@ -25,20 +25,10 @@ import {
 } from "@/server/r2/images";
 import { getDb } from "@/server/db";
 import { insertPhoto } from "@/server/photos";
-import {
-  UPLOAD_COOLDOWN_S,
-  type CommitResponse,
-  type UploadErrorCode,
-} from "@/lib/upload";
+import { jsonError } from "@/server/api-helpers";
+import { UPLOAD_COOLDOWN_S, type CommitResponse } from "@/lib/upload";
 
 export const prerender = false;
-
-function jsonError(code: UploadErrorCode, status: number): Response {
-  return new Response(JSON.stringify({ error: code }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
 
 export const POST: APIRoute = async ({ request }) => {
   const secret = env.TURNSTILE_SECRET_KEY;

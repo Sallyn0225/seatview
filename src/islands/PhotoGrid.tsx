@@ -1,11 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  MasonryPhotoAlbum,
-  type Photo as AlbumPhoto,
-  type RenderImageContext,
-  type RenderImageProps,
-} from "react-photo-album";
-import "react-photo-album/masonry.css";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/i18n/config";
 import { useLocale } from "@/hooks/useLocale";
 import type { PhotoDto } from "@/lib/photos";
@@ -67,24 +60,6 @@ interface PhotoGridProps {
   onOpenSequence: (payload: OpenSequencePayload) => void;
   /** Empty-state CTA: open the upload Sheet (step 6 mount point). */
   onRequestUpload?: () => void;
-}
-
-/** AlbumPhoto carrying the original DTO so render fns reach seat_label / id. */
-interface GridAlbumPhoto extends AlbumPhoto {
-  dto: PhotoDto;
-}
-
-function toAlbumPhoto(dto: PhotoDto, altTmpl: string): GridAlbumPhoto {
-  // Real intrinsic dimensions from D1 — masonry lays each track out at the
-  // photo's true aspect ratio (no crop, no CLS, shape-photo-grid.md §10).
-  return {
-    key: dto.id,
-    src: imageKeyToUrl(dto.imageKey, R2_BASE_URL),
-    width: dto.width,
-    height: dto.height,
-    alt: fillTemplate(altTmpl, { label: dto.seatLabel }),
-    dto,
-  };
 }
 
 export default function PhotoGrid({
@@ -180,11 +155,6 @@ export default function PhotoGrid({
     return () => io.disconnect();
   }, [hasMore, loadPage]);
 
-  const albumPhotos = useMemo<GridAlbumPhoto[]>(
-    () => photos.map((p) => toAlbumPhoto(p, t.grid.imageAlt)),
-    [photos, t.grid.imageAlt],
-  );
-
   // Open the Lightbox in sequence mode with the full loaded set (so it can page
   // left/right) and the clicked photo's index.
   const openAt = useCallback(
@@ -199,16 +169,12 @@ export default function PhotoGrid({
     [photos, onOpenSequence],
   );
 
-  // Custom image render: card = photo + single seat_label caption, wired as one
-  // focusable target (Tab once per card). data-photo-id anchors the card for
-  // the Lightbox close → scrollIntoView (shape §7). Selected state darkens the
-  // photo (-5%) and bolds the caption — color/weight, never box-shadow.
-  const renderImage = useCallback(
-    (
-      { src, alt }: RenderImageProps,
-      { photo }: RenderImageContext<GridAlbumPhoto>,
-    ) => {
-      const dto = photo.dto;
+  // Card = photo + single seat_label caption, wired as one focusable target
+  // (Tab once per card). data-photo-id anchors the card for Lightbox close →
+  // scrollIntoView (shape §7). Selected state darkens the photo (-5%) and
+  // bolds the caption — color/weight, never box-shadow.
+  const renderCard = useCallback(
+    (dto: PhotoDto) => {
       const isSelected = dto.id === selectedPhotoId;
       // First time this id is rendered → fade it in once, then mark seen so
       // re-renders (e.g. selection changes) don't re-trigger the fade.
@@ -216,10 +182,10 @@ export default function PhotoGrid({
       if (isNew) seenIdsRef.current.add(dto.id);
       return (
         <PhotoCard
-          src={src}
-          alt={alt ?? ""}
+          src={imageKeyToUrl(dto.imageKey, R2_BASE_URL)}
+          alt={fillTemplate(t.grid.imageAlt, { label: dto.seatLabel })}
           dto={dto}
-          aspect={`${photo.width} / ${photo.height}`}
+          aspect={`${dto.width} / ${dto.height}`}
           selected={isSelected}
           fadeIn={isNew}
           ariaLabel={fillTemplate(t.grid.cardLabel, { label: dto.seatLabel })}
@@ -228,7 +194,13 @@ export default function PhotoGrid({
         />
       );
     },
-    [selectedPhotoId, openAt, t.grid.cardLabel, t.grid.imageError],
+    [
+      selectedPhotoId,
+      openAt,
+      t.grid.cardLabel,
+      t.grid.imageAlt,
+      t.grid.imageError,
+    ],
   );
 
   // ── Empty state (gentle 缝隙时刻) ─────────────────────────────────────────
@@ -249,24 +221,16 @@ export default function PhotoGrid({
 
   return (
     <div data-photo-grid>
-      <MasonryPhotoAlbum
-        photos={albumPhotos}
-        // 1 / 2 / 3 / 4 columns at <768 / 768-1023 / 1024-1279 / ≥1280
-        // (shape §5). containerWidth is the rendered grid width.
-        columns={(containerWidth) => {
-          if (containerWidth < 768) return 1;
-          if (containerWidth < 1024) return 2;
-          if (containerWidth < 1280) return 3;
-          return 4;
-        }}
-        // gap: desktop 20 / tablet 16 / mobile 12 (shape §5 / decision 3).
-        spacing={(containerWidth) => {
-          if (containerWidth < 768) return 12;
-          if (containerWidth < 1024) return 16;
-          return 20;
-        }}
-        render={{ image: renderImage }}
-      />
+      <div className="columns-1 gap-3 md:columns-2 md:gap-4 lg:columns-3 xl:columns-4 xl:gap-5">
+        {photos.map((photo) => (
+          <div
+            key={photo.id}
+            className="mb-3 break-inside-avoid md:mb-4 xl:mb-5"
+          >
+            {renderCard(photo)}
+          </div>
+        ))}
+      </div>
 
       {/* Sentinel + skeleton placeholders while a batch loads (no shimmer). */}
       {hasMore && (

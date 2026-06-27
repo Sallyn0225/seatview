@@ -10,25 +10,11 @@
 // paths (upload) carry Turnstile + KV limits in later steps.
 import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
+import { jsonError, parseCount } from "@/server/api-helpers";
 import { getDb } from "@/server/db";
 import { listSubMapPhotos } from "@/server/photos";
 
 export const prerender = false;
-
-function jsonError(message: string, status: number): Response {
-  return new Response(JSON.stringify({ error: message }), {
-    status,
-    headers: { "content-type": "application/json" },
-  });
-}
-
-/** Parse a non-negative integer query param, or undefined when absent/invalid. */
-function parseCount(value: string | null): number | undefined {
-  if (value === null) return undefined;
-  const n = Number.parseInt(value, 10);
-  if (!Number.isFinite(n) || n < 0) return undefined;
-  return n;
-}
 
 export const GET: APIRoute = async ({ url }) => {
   const venueId = url.searchParams.get("venue");
