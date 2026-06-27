@@ -5,7 +5,6 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { maintainerEmail } from "@/server/admin-auth";
 import { getDb } from "@/server/db";
-import { jsonError, parseCount } from "@/server/api-helpers";
 import {
   approvePhotoCorrection,
   listPhotoCorrectionsForAdmin,
@@ -13,12 +12,27 @@ import {
 } from "@/server/photo-corrections";
 import {
   ADMIN_PHOTO_CORRECTIONS_BATCH,
+  type AdminErrorCode,
   type AdminPhotoCorrectionMutationResponse,
   type AdminPhotoCorrectionsResponse,
   type AdminUpdatePhotoCorrectionRequest,
 } from "@/lib/admin";
 
 export const prerender = false;
+
+function jsonError(code: AdminErrorCode, status: number): Response {
+  return new Response(JSON.stringify({ error: code }), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function parseCount(value: string | null): number | undefined {
+  if (value === null) return undefined;
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return n;
+}
 
 export const GET: APIRoute = async ({ request, url }) => {
   if (!maintainerEmail(request, env.DEV_ADMIN_EMAIL)) {

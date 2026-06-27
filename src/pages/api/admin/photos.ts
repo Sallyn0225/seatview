@@ -32,10 +32,10 @@ import {
   updatePhotoSeatLabelForAdmin,
 } from "@/server/photos";
 import { deleteImage, imageExists } from "@/server/r2/images";
-import { jsonError, parseCount } from "@/server/api-helpers";
 import {
   ADMIN_PHOTOS_BATCH,
   type AdminDeletePhotoRequest,
+  type AdminErrorCode,
   type AdminPhotoMutationResponse,
   type AdminPhotosResponse,
   type AdminRenamePhotoSeatRequest,
@@ -44,6 +44,13 @@ import {
 import { SEAT_LABEL_MAX } from "@/lib/upload";
 
 export const prerender = false;
+
+function jsonError(code: AdminErrorCode, status: number): Response {
+  return new Response(JSON.stringify({ error: code }), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
 
 /** 200 with an admin mutation payload. No edge cache — admin views must reflect
  *  the delete/restore/purge immediately. */
@@ -55,6 +62,14 @@ function jsonResponse(payload: AdminPhotoMutationResponse): Response {
       "cache-control": "no-store",
     },
   });
+}
+
+/** Parse a non-negative integer query param, or undefined when absent/invalid. */
+function parseCount(value: string | null): number | undefined {
+  if (value === null) return undefined;
+  const n = Number.parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return n;
 }
 
 export const GET: APIRoute = async ({ request, url }) => {
