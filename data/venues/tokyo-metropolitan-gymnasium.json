@@ -1,0 +1,22 @@
+{
+  "id": "tokyo-metropolitan-gymnasium",
+  "name_zh": "东京体育馆",
+  "name_jp": "東京体育館",
+  "name_romaji": "Tokyo Metropolitan Gymnasium",
+  "prefecture": "tokyo",
+  "city": "渋谷区",
+  "aliases": [
+    "Tokyo Gymnasium",
+    "東京体育館メインアリーナ"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/tokyo-metropolitan-gymnasium/default.webp",
+      "width": 1912,
+      "height": 2048
+    }
+  ]
+}

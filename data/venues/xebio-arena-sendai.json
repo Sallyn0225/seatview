@@ -1,0 +1,22 @@
+{
+  "id": "xebio-arena-sendai",
+  "name_zh": "Xebio Arena 仙台",
+  "name_jp": "ゼビオアリーナ仙台",
+  "name_romaji": "Xebio Arena Sendai",
+  "prefecture": "miyagi",
+  "city": "仙台市",
+  "aliases": [
+    "ゼビオアリーナ",
+    "Xebio Arena"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/xebio-arena-sendai/default.webp",
+      "width": 2048,
+      "height": 1741
+    }
+  ]
+}
