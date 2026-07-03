@@ -79,10 +79,9 @@ export function venuePhotosLd(
   });
 }
 
-/** `BreadcrumbList`: Home → Prefecture (when known) → Venue. */
+/** `BreadcrumbList`: Home → Venue (prefectures have no landing page yet). */
 export function breadcrumbLd(
   venue: Venue,
-  prefecture: Prefecture | undefined,
   locale: Locale,
   siteUrl: string | URL,
   homeName: string,
@@ -93,7 +92,6 @@ export function breadcrumbLd(
     homeName,
     venueId: venue.id,
     venueName: venueName(venue, locale),
-    prefectureName: prefecture ? prefectureName(prefecture, locale) : undefined,
   });
 }
 

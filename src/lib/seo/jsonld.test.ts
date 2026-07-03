@@ -75,40 +75,37 @@ describe("buildMusicVenueLd aggregateRating", () => {
 });
 
 describe("buildBreadcrumbLd", () => {
-  it("builds Home -> Prefecture -> Venue breadcrumbs when prefecture is known", () => {
-    assert.deepEqual(
-      buildBreadcrumbLd({
-        locale: "zh",
-        siteUrl: "https://seat.genchi.top",
-        homeName: "首页",
-        prefectureName: "东京都",
-        venueName: "有明竞技馆",
-        venueId: "ariake-arena",
-      }),
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: "首页",
-            item: "https://seat.genchi.top/zh/",
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: "东京都",
-          },
-          {
-            "@type": "ListItem",
-            position: 3,
-            name: "有明竞技馆",
-            item: "https://seat.genchi.top/zh/v/ariake-arena",
-          },
-        ],
-      },
-    );
+  it("builds Home -> Venue breadcrumbs where every item carries an item URL", () => {
+    const ld = buildBreadcrumbLd({
+      locale: "zh",
+      siteUrl: "https://seat.genchi.top",
+      homeName: "首页",
+      venueName: "有明竞技馆",
+      venueId: "ariake-arena",
+    });
+    assert.deepEqual(ld, {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "首页",
+          item: "https://seat.genchi.top/zh/",
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "有明竞技馆",
+          item: "https://seat.genchi.top/zh/v/ariake-arena",
+        },
+      ],
+    });
+    // Google requirement: every non-last ListItem must carry `item`.
+    const items = ld.itemListElement as Record<string, unknown>[];
+    for (const entry of items.slice(0, -1)) {
+      assert.ok("item" in entry);
+    }
   });
 });
 
