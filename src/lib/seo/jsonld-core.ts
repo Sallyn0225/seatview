@@ -60,39 +60,32 @@ export interface BreadcrumbLdInput {
   homeName: string;
   venueId: string;
   venueName: string;
-  prefectureName?: string | undefined;
 }
 
-/** `BreadcrumbList`: Home → Prefecture (when known) → Venue. */
+/**
+ * `BreadcrumbList`: Home → Venue. Google requires `item` on every non-last
+ * ListItem, and prefectures have no landing page yet, so the prefecture level
+ * is omitted here (the visible breadcrumb nav still shows it). When prefecture
+ * hub pages land, the level comes back WITH an `item` URL.
+ */
 export function buildBreadcrumbLd(input: BreadcrumbLdInput): JsonLd {
-  const itemListElement: JsonLd[] = [
-    {
-      "@type": "ListItem",
-      position: 1,
-      name: input.homeName,
-      item: abs(`/${input.locale}/`, input.siteUrl),
-    },
-  ];
-
-  if (input.prefectureName) {
-    itemListElement.push({
-      "@type": "ListItem",
-      position: 2,
-      name: input.prefectureName,
-    });
-  }
-
-  itemListElement.push({
-    "@type": "ListItem",
-    position: itemListElement.length + 1,
-    name: input.venueName,
-    item: abs(`/${input.locale}/v/${input.venueId}`, input.siteUrl),
-  });
-
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement,
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: input.homeName,
+        item: abs(`/${input.locale}/`, input.siteUrl),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: input.venueName,
+        item: abs(`/${input.locale}/v/${input.venueId}`, input.siteUrl),
+      },
+    ],
   };
 }
 

@@ -18,6 +18,11 @@ function isAdminPath(pathname: string): boolean {
   return ADMIN_PAGE.test(pathname) || ADMIN_API.test(pathname);
 }
 
+// Routes that legitimately live outside the `[lang]/**` prefix. Anything else
+// whose first segment is not a supported locale is an invalid alias
+// (`/xx/`, `/foobar/v/...`) and must be a real 404, not a 200/redirect.
+const NON_LOCALE_PATH = /^\/(api\/|sitemap\.xml$|llms\.txt$|404\/?$|500\/?$)/;
+
 // Middleware responsibilities (run in order on every request):
 //   1. Bare root `/` → 302 to the best locale (Accept-Language, R9.2).
 //   2. Resolve the active locale from the URL prefix and expose it on
@@ -41,6 +46,14 @@ export const onRequest = defineMiddleware((context, next) => {
   const segment = pathname.split("/")[1];
   const locale = isLocale(segment) ? segment : defaultLocale;
   context.locals.locale = locale;
+
+  // Invalid locale prefix → rewrite to the 404 page (which sets status 404).
+  // No redirect: nothing legitimate links here, and a redirect would keep the
+  // infinite alias surface (`/xx/**` duplicating `/zh/**`) alive for crawlers.
+  // Static assets never reach this middleware (served by Vite/Cloudflare first).
+  if (!isLocale(segment) && !NON_LOCALE_PATH.test(pathname)) {
+    return next("/404");
+  }
 
   // Admin guard — fail closed when no maintainer identity is present.
   if (isAdminPath(pathname)) {
