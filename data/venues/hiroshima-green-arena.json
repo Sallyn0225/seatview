@@ -1,0 +1,24 @@
+{
+  "id": "hiroshima-green-arena",
+  "name_zh": "广岛绿色竞技场",
+  "name_jp": "広島グリーンアリーナ",
+  "name_romaji": "Hiroshima Green Arena",
+  "prefecture": "hiroshima",
+  "city": "広島市中区",
+  "aliases": [
+    "広島県立総合体育館",
+    "广岛县立综合体育馆",
+    "Green Arena Hiroshima",
+    "県立総合体育館"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/hiroshima-green-arena/default.webp",
+      "width": 2048,
+      "height": 1463
+    }
+  ]
+}
