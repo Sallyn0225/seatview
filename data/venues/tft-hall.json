@@ -1,0 +1,38 @@
+{
+  "id": "tft-hall",
+  "name_zh": "TFT Hall",
+  "name_jp": "TFTホール",
+  "name_romaji": "TFT Hall",
+  "prefecture": "tokyo",
+  "city": "江東区",
+  "aliases": [
+    "Tokyo Fashion Town Hall",
+    "東京ファッションタウンホール"
+  ],
+  "subMaps": [
+    {
+      "id": "hall-1000",
+      "label_zh": "1000厅",
+      "label_jp": "ホール1000",
+      "imageUrl": "/seatmaps/tft-hall/hall-1000.webp",
+      "width": 1463,
+      "height": 2048
+    },
+    {
+      "id": "hall-500",
+      "label_zh": "500厅",
+      "label_jp": "ホール500",
+      "imageUrl": "/seatmaps/tft-hall/hall-500.webp",
+      "width": 1463,
+      "height": 2048
+    },
+    {
+      "id": "hall-300",
+      "label_zh": "300厅",
+      "label_jp": "ホール300",
+      "imageUrl": "/seatmaps/tft-hall/hall-300.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
