@@ -30,7 +30,7 @@
     "@astrojs/cloudflare": "^14.0.2",
     "@astrojs/react": "^6.0.0",
     "@giscus/react": "^3.1.0",
-    "astro": "^7.0.4",
+    "astro": "^7.1.4",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.0",
