@@ -55,7 +55,7 @@
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "wrangler": "^4.120.0"
   },
   "overrides": {
