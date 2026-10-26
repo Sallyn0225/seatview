@@ -1,0 +1,23 @@
+{
+  "id": "nihon-kogakuin-arena",
+  "name_zh": "日本工学院竞技场",
+  "name_jp": "日本工学院アリーナ",
+  "name_romaji": "Nihon Kogakuin Arena",
+  "prefecture": "tokyo",
+  "city": "大田区",
+  "aliases": [
+    "工学院アリーナ",
+    "日本工学院 蒲田",
+    "Nippon Engineering College Arena"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/nihon-kogakuin-arena/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}
