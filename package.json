@@ -6,7 +6,7 @@
   "private": true,
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.23.4"
   },
   "scripts": {
     "dev": "astro dev",
@@ -27,8 +27,8 @@
     "gen:seed": "node scripts/gen-demo-seed.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.2",
-    "@astrojs/react": "^6.0.0",
+    "@astrojs/cloudflare": "^14.4.2",
+    "@astrojs/react": "^7.1.1",
     "@giscus/react": "^3.1.0",
     "astro": "^7.3.3",
     "browser-image-compression": "^2.0.2",
@@ -45,7 +45,7 @@
     "yet-another-react-lightbox": "^3.21.0"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
+    "@astrojs/check": "^0.9.12",
     "@cloudflare/workers-types": "^5.20260918.1",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^22.19.19",
