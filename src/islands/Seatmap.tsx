@@ -43,6 +43,9 @@ const MAX_SCALE = 6;
 // react-zoom-pan-pinch v4 removed v3's separate wheel.smoothStep; 0.001 keeps
 // one mouse-wheel notch near the old gradual zoom while leaving buttons intact.
 const WHEEL_ZOOM_STEP = 0.001;
+// Since 4.0.7 zoomIn/zoomOut take an ABSOLUTE scale increment; derive it from
+// the live scale so each button press stays a constant ×e^0.4 (~1.49) ratio.
+const BUTTON_ZOOM_LOG_STEP = 0.4;
 const FRAME_FALLBACK_WIDTH = 1.5;
 const FRAME_FALLBACK_HEIGHT = 1;
 /** Zoom multiplier applied when a cluster is clicked (shape §7: ×2). */
@@ -418,11 +421,21 @@ export default function Seatmap({
         maxScale={MAX_SCALE}
         showIndicator={isTransforming}
         onZoomIn={() => {
-          transformRef.current?.zoomIn(0.4, animTime, "easeOutQuart");
+          const api = transformRef.current;
+          api?.zoomIn(
+            api.instance.state.scale * (Math.exp(BUTTON_ZOOM_LOG_STEP) - 1),
+            animTime,
+            "easeOutQuart",
+          );
           wakeControls();
         }}
         onZoomOut={() => {
-          transformRef.current?.zoomOut(0.4, animTime, "easeOutQuart");
+          const api = transformRef.current;
+          api?.zoomOut(
+            api.instance.state.scale * (1 - Math.exp(-BUTTON_ZOOM_LOG_STEP)),
+            animTime,
+            "easeOutQuart",
+          );
           wakeControls();
         }}
         onReset={() => {
