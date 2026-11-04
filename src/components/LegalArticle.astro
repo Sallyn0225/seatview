@@ -46,18 +46,14 @@ const feedbackParts = t.legal.feedback.split("{github}");
       </p>
 
       <div class="mt-10 space-y-8">
-        {
-          sections.map((section) => (
-            <section>
-              <h2 class="text-foreground text-lg font-bold">
-                {section.heading}
-              </h2>
-              <p class="text-foreground/90 mt-2 text-base leading-relaxed">
-                {section.body}
-              </p>
-            </section>
-          ))
-        }
+        {sections.map((section) => (
+          <section>
+            <h2 class="text-foreground text-lg font-bold">{section.heading}</h2>
+            <p class="text-foreground/90 mt-2 text-base leading-relaxed">
+              {section.body}
+            </p>
+          </section>
+        ))}
       </div>
 
       <hr class="border-border mt-12 w-20" />

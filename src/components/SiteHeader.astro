@@ -23,13 +23,11 @@ const hasTreeTrigger = Astro.slots.has("tree-trigger");
 
 <header class="border-border bg-background sticky top-0 z-40 border-b">
   <div class="flex h-12 items-center gap-3 px-4 lg:h-14 lg:px-6">
-    {
-      hasTreeTrigger && (
-        <div class="lg:hidden">
-          <slot name="tree-trigger" />
-        </div>
-      )
-    }
+    {hasTreeTrigger && (
+      <div class="lg:hidden">
+        <slot name="tree-trigger" />
+      </div>
+    )}
 
     <a
       href={`/${locale}/`}
@@ -42,17 +40,16 @@ const hasTreeTrigger = Astro.slots.has("tree-trigger");
         height="28"
         class="h-6 w-6 lg:h-7 lg:w-7"
       />
-      <span class="font-serif text-lg font-medium tracking-tight">SeatView</span
-      >
+      <span class="font-serif text-lg font-medium tracking-tight">
+        SeatView
+      </span>
     </a>
 
-    {
-      withSearch && (
-        <div class="hidden flex-1 justify-center lg:flex">
-          <slot name="search" />
-        </div>
-      )
-    }
+    {withSearch && (
+      <div class="hidden flex-1 justify-center lg:flex">
+        <slot name="search" />
+      </div>
+    )}
 
     <div class="ml-auto flex items-center gap-2">
       <LanguageSwitcher locale={locale} client:idle />

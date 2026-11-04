@@ -73,9 +73,7 @@ const linkClass =
 
     <main class="flex-1">
       <article class="mx-auto max-w-[680px] px-6 pt-12 pb-16 lg:pt-16">
-        <h1
-          class="text-foreground text-3xl font-bold tracking-tight lg:text-4xl"
-        >
+        <h1 class="text-foreground text-3xl font-bold tracking-tight lg:text-4xl">
           {t.links.title}
         </h1>
         <p class="text-muted-foreground mt-4 text-base leading-relaxed">
@@ -83,58 +81,54 @@ const linkClass =
         </p>
 
         <div class="mt-10 space-y-10">
-          {
-            linkGroups.map((group) => (
-              <section>
-                <h2 class="text-foreground text-lg font-bold">
-                  {group.heading}
-                </h2>
+          {linkGroups.map((group) => (
+            <section>
+              <h2 class="text-foreground text-lg font-bold">{group.heading}</h2>
 
-                {group.subgroups && (
-                  <div class="mt-4 space-y-6">
-                    {group.subgroups.map((sub) => (
-                      <div>
-                        <h3 class="text-muted-foreground text-sm font-semibold">
-                          {sub.heading}
-                        </h3>
-                        <ul class="mt-2 space-y-2">
-                          {sub.items.map((item) => (
-                            <li>
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class={linkClass}
-                              >
-                                {item.name} ↗
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {group.subgroups && (
+                <div class="mt-4 space-y-6">
+                  {group.subgroups.map((sub) => (
+                    <div>
+                      <h3 class="text-muted-foreground text-sm font-semibold">
+                        {sub.heading}
+                      </h3>
+                      <ul class="mt-2 space-y-2">
+                        {sub.items.map((item) => (
+                          <li>
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class={linkClass}
+                            >
+                              {item.name} ↗
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-                {group.items && (
-                  <ul class="mt-4 space-y-2">
-                    {group.items.map((item) => (
-                      <li>
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class={linkClass}
-                        >
-                          {item.name} ↗
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))
-          }
+              {group.items && (
+                <ul class="mt-4 space-y-2">
+                  {group.items.map((item) => (
+                    <li>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class={linkClass}
+                      >
+                        {item.name} ↗
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
         </div>
       </article>
     </main>

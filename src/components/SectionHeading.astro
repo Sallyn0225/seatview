@@ -17,14 +17,12 @@ const { primary, alt } = Astro.props;
 
 <h2 class="text-foreground text-2xl font-bold leading-snug lg:text-[1.75rem]">
   {primary}
-  {
-    alt && (
-      <Fragment>
-        <span aria-hidden="true" class="text-muted-foreground mx-2">
-          ＼/
-        </span>
-        <span class="text-muted-foreground">{alt}</span>
-      </Fragment>
-    )
-  }
+  {alt && (
+    <Fragment>
+      <span aria-hidden="true" class="text-muted-foreground mx-2">
+        ＼/
+      </span>
+      <span class="text-muted-foreground">{alt}</span>
+    </Fragment>
+  )}
 </h2>
