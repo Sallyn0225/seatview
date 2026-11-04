@@ -21,6 +21,13 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
+    ignore:
+      # Node typings track the runtime (CI + engines are Node 22), not latest.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # TS 7 (native port) is held until @astrojs/check supports it.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
