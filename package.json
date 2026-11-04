@@ -51,7 +51,7 @@
     "@types/node": "^22.19.19",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "drizzle-kit": "^0.31.0",
+    "drizzle-kit": "^0.31.11",
     "prettier": "^3.9.1",
     "prettier-plugin-astro": "^0.14.1",
     "tailwindcss": "^4.3.1",
