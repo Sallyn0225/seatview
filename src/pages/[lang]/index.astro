@@ -65,29 +65,21 @@ const jsonLd = [
 ---
 
 <Layout locale={locale}>
-  {
-    jsonLd.map((ld) => (
-      <script
-        is:inline
-        slot="head"
-        type="application/ld+json"
-        set:html={JSON.stringify(ld)}
-      />
-    ))
-  }
+  {jsonLd.map((ld) => (
+    <script
+      is:inline
+      slot="head"
+      type="application/ld+json"
+      set:html={JSON.stringify(ld)}
+    />
+  ))}
   <div class="flex min-h-screen flex-col">
     <SiteHeader locale={locale} />
 
     <main class="flex-1">
-      {
-        /* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */
-      }
-      <section
-        class="relative mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]"
-      >
-        <h1
-          class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl"
-        >
+      {/* ── Hero: full first screen, Serif Display, ink-outline CTA ─────────── */}
+      <section class="relative mx-auto flex min-h-[calc(100svh-3rem)] max-w-[680px] flex-col justify-center px-6 lg:min-h-[calc(100svh-3.5rem)]">
+        <h1 class="text-foreground font-serif text-5xl leading-tight tracking-tight lg:text-7xl">
           SeatView
         </h1>
         <p class="text-foreground/80 mt-2 font-serif text-2xl lg:text-3xl">
@@ -96,9 +88,7 @@ const jsonLd = [
 
         <hr class="border-border my-8 w-20" />
 
-        <p
-          class="text-foreground max-w-prose text-lg leading-relaxed lg:text-xl"
-        >
+        <p class="text-foreground max-w-prose text-lg leading-relaxed lg:text-xl">
           {t.home.heroLine}
         </p>
 
@@ -123,11 +113,9 @@ const jsonLd = [
           </a>
         </div>
 
-        {
-          /* Scroll-down hint (issue #31): ink-outline-free, neutral chevron that
+        {/* Scroll-down hint (issue #31): ink-outline-free, neutral chevron that
              routes to #how so it works without JS (§7). sr-only label reuses the
-             section heading — accessible name without a visible text label. */
-        }
+             section heading — accessible name without a visible text label. */}
         <a
           href="#how"
           class="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute inset-x-0 bottom-6 mx-auto flex w-fit rounded-full p-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:outline-none"
@@ -148,105 +136,97 @@ const jsonLd = [
         </a>
       </section>
 
-      {
-        /* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */
-      }
+      {/* ── 怎么用 / 使い方 ──────────────────────────────────────────────── */}
       <section
         id="how"
         class="border-border mx-auto max-w-[680px] scroll-mt-12 border-t px-6 py-14 lg:scroll-mt-14 lg:py-16"
       >
         <SectionHeading primary={t.home.howTitle} alt={t.home.howTitleAlt} />
         <ol class="mt-8 grid gap-8 sm:grid-cols-3">
-          {
-            steps.map((step) => (
-              <li>
-                <p
-                  class="text-foreground text-2xl leading-none"
-                  aria-hidden="true"
-                >
-                  {step.n}
-                </p>
-                <p class="text-foreground mt-3 text-lg font-bold">
-                  {step.title}
-                </p>
-                <p class="text-muted-foreground mt-1 text-sm leading-relaxed">
-                  {step.body}
-                </p>
-              </li>
-            ))
-          }
+          {steps.map((step) => (
+            <li>
+              <p
+                class="text-foreground text-2xl leading-none"
+                aria-hidden="true"
+              >
+                {step.n}
+              </p>
+              <p class="text-foreground mt-3 text-lg font-bold">{step.title}</p>
+              <p class="text-muted-foreground mt-1 text-sm leading-relaxed">
+                {step.body}
+              </p>
+            </li>
+          ))}
         </ol>
       </section>
 
-      {
-        /* ── 推荐先看 / おすすめ — minimal text links, zero images (decision 3) ── */
-      }
-      <section
-        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
-      >
+      {/* ── 推荐先看 / おすすめ — minimal text links, zero images (decision 3) ── */}
+      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
         <SectionHeading
           primary={t.home.recommendTitle}
           alt={t.home.recommendTitleAlt}
         />
         <ul class="mt-6">
-          {
-            examples.map((ex) => (
-              <li class="border-border border-b last:border-b-0">
-                <a
-                  href={`/${locale}/v/${ex.id}`}
-                  class="group focus-visible:ring-ring -mx-2 flex items-baseline justify-between gap-4 rounded-sm px-2 py-4 focus-visible:ring-2 focus-visible:outline-none"
+          {examples.map((ex) => (
+            <li class="border-border border-b last:border-b-0">
+              <a
+                href={`/${locale}/v/${ex.id}`}
+                class="group focus-visible:ring-ring -mx-2 flex items-baseline justify-between gap-4 rounded-sm px-2 py-4 focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <span class="min-w-0">
+                  <span class="text-foreground block font-serif text-xl group-hover:underline">
+                    {ex.name}
+                  </span>
+                  {ex.romaji && (
+                    <span class="text-muted-foreground block text-sm">
+                      {ex.romaji}
+                    </span>
+                  )}
+                  <span class="text-muted-foreground mt-0.5 block text-sm">
+                    {ex.note}
+                  </span>
+                </span>
+                <span
+                  class="text-muted-foreground shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+                  aria-hidden="true"
                 >
-                  <span class="min-w-0">
-                    <span class="text-foreground block font-serif text-xl group-hover:underline">
-                      {ex.name}
-                    </span>
-                    {ex.romaji && (
-                      <span class="text-muted-foreground block text-sm">
-                        {ex.romaji}
-                      </span>
-                    )}
-                    <span class="text-muted-foreground mt-0.5 block text-sm">
-                      {ex.note}
-                    </span>
-                  </span>
-                  <span
-                    class="text-muted-foreground shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
-                    aria-hidden="true"
-                  >
-                    →
-                  </span>
-                </a>
-              </li>
-            ))
-          }
+                  →
+                </span>
+              </a>
+            </li>
+          ))}
         </ul>
       </section>
 
-      {
-        /* ── 关于上传 / 投稿について ───────────────────────────────────────── */
-      }
-      <section
-        class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16"
-      >
+      {/* ── 关于上传 / 投稿について ───────────────────────────────────────── */}
+      <section class="border-border mx-auto max-w-[680px] border-t px-6 py-14 lg:py-16">
         <SectionHeading
           primary={t.home.uploadTitle}
           alt={t.home.uploadTitleAlt}
         />
         <ul class="text-foreground mt-6 space-y-2 text-base leading-relaxed">
           <li class="flex gap-2">
-            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span aria-hidden="true" class="text-muted-foreground">
+              ·
+            </span>
             <span>{t.home.rule1}</span>
           </li>
           <li class="flex gap-2">
-            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span aria-hidden="true" class="text-muted-foreground">
+              ·
+            </span>
             <span>{t.home.rule2}</span>
           </li>
           <li class="flex gap-2">
-            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span aria-hidden="true" class="text-muted-foreground">
+              ·
+            </span>
             <span>{t.home.rule4}</span>
           </li>
           <li class="flex gap-2">
-            <span aria-hidden="true" class="text-muted-foreground">·</span>
+            <span aria-hidden="true" class="text-muted-foreground">
+              ·
+            </span>
             <span>
               {rule3Parts[0]}
               <a
@@ -266,9 +246,7 @@ const jsonLd = [
         </p>
       </section>
 
-      {
-        /* ── 贡献新场馆入口 (R13.2) ────────────────────────────────────────── */
-      }
+      {/* ── 贡献新场馆入口 (R13.2) ────────────────────────────────────────── */}
       <section class="mx-auto max-w-[680px] px-6 pb-8">
         <p class="text-sm">
           <a
