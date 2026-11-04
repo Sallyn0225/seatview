@@ -1,0 +1,23 @@
+{
+  "id": "chunichi-hall",
+  "name_zh": "中日大厅",
+  "name_jp": "中日ホール",
+  "name_romaji": "Chunichi Hall",
+  "prefecture": "aichi",
+  "city": "名古屋市中区",
+  "aliases": [
+    "中日ホール＆カンファレンス",
+    "Chunichi Hall & Conference",
+    "中日ビル"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/chunichi-hall/default.webp",
+      "width": 1474,
+      "height": 2048
+    }
+  ]
+}

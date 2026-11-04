@@ -1,0 +1,23 @@
+{
+  "id": "kt-zepp-yokohama",
+  "name_zh": "KT Zepp 横滨",
+  "name_jp": "KT Zepp横浜",
+  "name_romaji": "KT Zepp Yokohama",
+  "prefecture": "kanagawa",
+  "city": "横浜市西区",
+  "aliases": [
+    "KT Zepp 横浜",
+    "ゼップ横浜",
+    "横滨 Zepp"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/kt-zepp-yokohama/default.webp",
+      "width": 1463,
+      "height": 2048
+    }
+  ]
+}

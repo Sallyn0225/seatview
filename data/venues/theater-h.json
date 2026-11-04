@@ -1,0 +1,23 @@
+{
+  "id": "theater-h",
+  "name_zh": "Theater H 剧场",
+  "name_jp": "シアターH",
+  "name_romaji": "Theater H",
+  "prefecture": "tokyo",
+  "city": "品川区",
+  "aliases": [
+    "シアターH（品川）",
+    "Theater H Shinagawa",
+    "大井竞马场前剧场"
+  ],
+  "subMaps": [
+    {
+      "id": "default",
+      "label_zh": "全场",
+      "label_jp": "全体",
+      "imageUrl": "/seatmaps/theater-h/default.webp",
+      "width": 1301,
+      "height": 2048
+    }
+  ]
+}
