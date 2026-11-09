@@ -52,7 +52,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "drizzle-kit": "^0.31.11",
-    "prettier": "^3.9.1",
+    "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
