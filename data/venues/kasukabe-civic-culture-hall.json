@@ -1,0 +1,32 @@
+{
+  "id": "kasukabe-civic-culture-hall",
+  "name_zh": "春日部市民文化会馆",
+  "name_jp": "正和工業にじいろホール（春日部市民文化会館）",
+  "name_romaji": "Kasukabe Civic Culture Hall",
+  "prefecture": "saitama",
+  "city": "春日部市",
+  "aliases": [
+    "Seiwa Kogyo Nijiiro Hall",
+    "Kasukabe Shimin Bunka Kaikan",
+    "正和工业 Nijiiro Hall",
+    "正和工业彩虹大厅"
+  ],
+  "subMaps": [
+    {
+      "id": "large",
+      "label_zh": "大厅",
+      "label_jp": "大ホール",
+      "imageUrl": "/seatmaps/kasukabe-civic-culture-hall/large.webp",
+      "width": 1707,
+      "height": 2048
+    },
+    {
+      "id": "small",
+      "label_zh": "小厅",
+      "label_jp": "小ホール",
+      "imageUrl": "/seatmaps/kasukabe-civic-culture-hall/small.webp",
+      "width": 1638,
+      "height": 2048
+    }
+  ]
+}
