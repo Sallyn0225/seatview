@@ -33,7 +33,7 @@
     "astro": "^7.4.12",
     "browser-image-compression": "^2.0.2",
     "clsx": "^2.1.1",
-    "drizzle-orm": "^0.45.0",
+    "drizzle-orm": "^0.45.4",
     "fuse.js": "^7.4.2",
     "libheif-js": "^1.23.5",
     "lucide-react": "^1.75.0",
